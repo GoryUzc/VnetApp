@@ -281,7 +281,10 @@ def get_estadisticas():
 #PROCESOS DE ADMINISTRACION DE INSTALACIONES
 def consulta_Nro_orden(Nro_orden):
     """
-    Consulta una instalación en la base de datos por su número de orden."""
+    Consulta una instalación en la base de datos por su número de orden.
+    :param Nro_orden: Número de orden de la instalación.
+    :return: Un diccionario con los detalles de la instalación o un mensaje de error si no se encuentra.
+    """
     db = get_db()
     cursor = db.cursor(dictionary=True)
     try:
