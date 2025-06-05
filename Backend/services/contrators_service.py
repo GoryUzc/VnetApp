@@ -4,7 +4,9 @@ from flask_socketio import emit, SocketIO
 from app import SocketIO, socketio
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+import tempfile
 import os
+
 
 
 #Creacion de contratista
@@ -226,42 +228,50 @@ def finish_installation(Nro_orden, estado, verificacion, observacion):
 
 
 #Datos orden de insalacion.
-def orden_instalacion(dato_cliente, ont_1puerto, conector_SC_APC, pathcore_scapc_apcsc, roseta, scapc_adapter, ont_4puertos, conector_scupc, canaletas, cable_drop, cantidad_cabledrop, potencia_planificada, potencia_recibida, mac_ont, serial_ont, puerto_nap, nroequipos_conectar, puerto_olt, etiqueta_cliente, router, tecnico, vehiculo, fecha, hora_inicio, hora_final, contratista, nombre_cliente, firma):
+def orden_instalacion(dato_cliente, ont_1puerto, conector_SC_APC, pathcore_scapc_apcsc, roseta, scapc_adapter, ont_4puertos, conector_scupc, canaletas, cable_drop, cantidad_cabledrop, potencia_cajanap, potencia_ont, mac_ont, serial_ont, puerto_nap, nroequipos_conectar, etiqueta_cliente, router, fecha, hora_inicio, hora_final, contratista, nombre_cliente, firma):
     """
-    Datos de la orden de instalacion para gernerar el pdf. 
-    :param dato_cliente: Toda a informacion del cliente. 
-    :param ont_1puerto: 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    Datos de la orden de instalacion para gernerar el pdf.
+    :param dato_cliente: Toda a informacion del cliente (numero de cuenta, direccion, telefono, etc.). 
+    :param ont_1puerto: Cantidad de ONT de 1 puerto.
+    :param conector_SC_APC: Cantidad de conectores SC/APC.
+    :param pathcore_scapc_apcsc: Cantidad del cable de fibra optica desde la ONT hasta el conector SC/APC.
+    :param roseta: Cantidad de roseta utilizada para la instalacion.
+    :param scapc_adapter: Cantidad adaptador SC/APC utilizado.
+    :param ont_4puertos: Cantidad ONT de 4 puertos.
+    :param conector_scupc: Cantidad de conector SC/UPC utilizado.
+    :param canaletas: Cantidad de canaletas utilizadas para la instalacion.
+    :param cable_drop: Cable drop utilizado (hilo de fibra optica).
+    :param cantidad_cabledrop: Cantidad de cable drop utilizado.
+    :param potencia_cajanap: Potencia recibida para la instalacion en la roseta.
+    :param potencia_ont: Potencia recibida para la instalacion en la caja nap.
+    :param mac_ont: MAC address 
+    :param serial_ont: Numero de serial.
+    :param puerto_nap: Indica el puerto donde esta conectado en la caja nap.
+    :param nroequipos_conectar: Numero de equipos a conectar a la onu.
+    :param etiqueta_cliente: Numero de identificacion del cliente. 
+    :param router: Marca y modelo del router del cliente. 
+    :param fecha: Fecha que se hizo la instalacion.
+    :param hora_inicio: Hora de inicio de la instalacion
+    :param hora_final: Hora de finalizacion de la instalacion. 
+    :param contratista: Nombre del contratista 
+    :param nombre_cliente: Nombre del cliente. 
+    :param firma: Firma digital del cliente.
+    :return: Diccionario con los datos
+    
     """
     db = get_db()
     cursor = db.cursor()
     try: 
         cursor.execute(
-            "INSERT INTO doc.ordenes (dato_cliente, ont_1puerto, conector_SC_APC, pathcore_scapc_apcsc, roseta, scapc_adapter, ont_4puertos, conector_scupc, canaletas, cable_drop, cantidad_cabledrop, potencia_planificada, potencia_recibida, mac_ont, serial_ont, puerto_nap, nroequipos_conectar, puerto_olt, etiqueta_cliente, router, tecnico, vehiculo, fecha, hora_inicio, hora_final, contratista, nombre_cliente, firma) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-            (dato_cliente, ont_1puerto, conector_SC_APC, pathcore_scapc_apcsc, roseta, scapc_adapter, ont_4puertos, conector_scupc, canaletas, cable_drop, cantidad_cabledrop, potencia_planificada, potencia_recibida, mac_ont, serial_ont, puerto_nap, nroequipos_conectar, puerto_olt, etiqueta_cliente, router, tecnico, vehiculo, fecha, hora_inicio, hora_final, contratista, nombre_cliente, firma)
+            "INSERT INTO doc.ordenes (dato_cliente, ont_1puerto, conector_SC_APC, pathcore_scapc_apcsc, roseta, scapc_adapter, ont_4puertos, conector_scupc, canaletas, cable_drop, cantidad_cabledrop, potencia_cajanap, potencia_ont, mac_ont, serial_ont, puerto_nap, nroequipos_conectar, etiqueta_cliente, router, fecha, hora_inicio, hora_final, contratista, nombre_cliente, firma) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            (dato_cliente, ont_1puerto, conector_SC_APC, pathcore_scapc_apcsc, roseta, scapc_adapter, ont_4puertos, conector_scupc, canaletas, cable_drop, cantidad_cabledrop, potencia_cajanap, potencia_ont, mac_ont, serial_ont, puerto_nap, nroequipos_conectar, etiqueta_cliente, router, fecha, hora_inicio, hora_final, contratista, nombre_cliente, firma)
         )
         db.commit()
         id = cursor.lastrowid
-        return {"message": "Datos almacenados con exito."}
+        return {
+            "id": id,
+            "message": "Datos almacenados con exito."
+        }
     except Exception as e:
         db.rollback()
         raise Exception(f"Error: Error al almacenar los datos {str(e)}")
@@ -269,30 +279,98 @@ def orden_instalacion(dato_cliente, ont_1puerto, conector_SC_APC, pathcore_scapc
         cursor.close()
         db.close()
 
- 
- #Generar orden instalacion.
+
+#Datos de la orden de instalacion
+def datos_instalacion(id): 
+    """
+    Obtiene los datos de la orden de instalacion como diccionario a partir de la id. 
+    :param id: Numero de identificacion de los datos en la base de datos.
+    :return: Diccionario con los datos de la orden o None si no existe. 
+    
+    """
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    try: 
+        cursor.execute(
+            "SELECT * FROM doc.ordenes WHERE id = %s", (id,)
+        )
+        datos = cursor.fetchone()
+        return datos #Un diccionario o un none 
+    except Exception as e: 
+        raise Exception(f"Error al consultar los datos de la orden: {str(e)}")
+    finally: 
+        cursor.close()
+        db.close()
+
+
+#Cambiar el formato de la firma del cliente 
+def guardar_firma_blob_en_imagen(firma_blob):
+    """
+    Guarda el blob de la firma en un archivo temporal y retorna la ruta.
+    """
+    temp = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+    temp.write(firma_blob)
+    temp.close()
+    return temp.name
+
+
+#Generar orden instalacion.
 def generar_pdf_instalacion(Nro_orden, datos_instalacion, ruta_destino=None):
-    """
-    Genera un PDF con los datos de la instalación.
-    :param Nro_orden: Número de orden de la instalación.
-    :param datos_instalacion: Diccionario con los datos relevantes de la instalación.
-    :param ruta_destino: Ruta donde guardar el PDF (opcional).
-    :return: Ruta del archivo PDF generado.
-    """
     if not ruta_destino:
         ruta_destino = f"orden_instalacion_{Nro_orden}.pdf"
     c = canvas.Canvas(ruta_destino, pagesize=letter)
     width, height = letter
 
-    c.setFont("Helvetica-Bold", 16)
-    c.drawString(50, height - 50, f"Orden de Instalación N° {Nro_orden}")
+    # --- Logo ---
+    logo_path = "ruta/al/logo.png"
+    if os.path.exists(logo_path):
+        c.drawImage(logo_path, 50, height - 100, width=120, height=60, mask='auto')
 
+    # --- Título ---
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(200, height - 60, f"Orden de Instalación N° {Nro_orden}")
+
+    # --- Línea separadora ---
+    c.setLineWidth(1)
+    c.line(40, height - 110, width - 40, height - 110)
+
+    # --- Datos de la instalación ---
     c.setFont("Helvetica", 12)
-    y = height - 100
+    y = height - 140
     for key, value in datos_instalacion.items():
+        if key == "firma":
+            continue
         c.drawString(50, y, f"{key}: {value}")
-        y -= 20
+        y -= 18
+        if y < 100:
+            c.showPage()
+            y = height - 50
+
+    # --- Firma digital (desde BLOB) ---
+    firma_blob = datos_instalacion.get("firma")
+    if firma_blob:
+        firma_path = guardar_firma_blob_en_imagen(firma_blob)
+        c.drawString(50, y - 30, "Firma digital del cliente:")
+        c.drawImage(firma_path, 200, y - 50, width=120, height=60, mask='auto')
+        os.remove(firma_path)
 
     c.save()
     return os.path.abspath(ruta_destino)
-#Ojo regular las ordenes de instalacion de los contratistas por medio del numero de cuadrillas que tengan disponible. 
+
+
+#Generar y notificar pdf
+def generar_y_notificar_pdf(Nro_orden, datos_instalacion, socketio):
+    ruta_pdf = generar_pdf_instalacion(Nro_orden, datos_instalacion)
+    socketio.emit(
+        'pdf_generado',
+        {
+            'message': f'Se generó el PDF de la orden {Nro_orden}.',
+            'Nro_orden': Nro_orden,
+            'ruta_pdf': f'/descargar_pdf/{Nro_orden}'
+        },
+        namespace='/admin'
+    )
+    return ruta_pdf
+
+#Ojo regular las ordenes de instalacion de los contratistas por medio del numero de cuadrillas que tengan disponible.
+
