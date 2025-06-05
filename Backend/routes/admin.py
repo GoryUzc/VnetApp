@@ -526,6 +526,8 @@ def instalaciones_no_autorizadas():
     
 
 @admin_bp.route("/descargar_pdf/<int:nro_orden>", methods=['GET'])
+@token_required
+@handle_errors
 def descargar_pdf(nro_orden):
     """
     Ruta para descargar el PDF de instalación.
