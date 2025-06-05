@@ -10,7 +10,7 @@ import os
 
 
 #Creacion de contratista
-def create_contrators(ci_rif, nombre, telefono, USUARIO, CONTRASEÑA, correo, sucursal, cuadrillas, cuadrilla1, cuadrilla2, cuadrilla3, cuadrilla4):
+def create_contrators(ci_rif, nombre, telefono, USUARIO, CONTRASEÑA, correo, sucursal, cuadrillas, cuadrilla1, cuadrilla2, cuadrilla3, cuadrilla4, cuadrilla5, cuadrilla6, cuadrilla7, cuadrilla8, cuadrilla9, cuadrilla10):
     """
     Crear un nuevo contratista en la base de datos. 
     :param ci_rif: Cedula de identidad o RIF del contratista.
@@ -31,8 +31,8 @@ def create_contrators(ci_rif, nombre, telefono, USUARIO, CONTRASEÑA, correo, su
     hashed_contraseña = generate_password_hash(CONTRASEÑA, method="pbkdf2:sha256", salt_length=8)
     try: 
         cursor.execute(
-         "INSERT INTO contratistas (ci_rif, nombre, telefono, USUARIO, CONTRASEÑA, correo, sucursal, cuadrillas, cuadrilla1, cuadrilla2, cuadrilla3, cuadrilla4) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", 
-         (ci_rif, nombre, telefono, USUARIO, hashed_contraseña, correo, sucursal, cuadrillas, cuadrilla1, cuadrilla2, cuadrilla3, cuadrilla4)
+         "INSERT INTO contratistas (ci_rif, nombre, telefono, USUARIO, CONTRASEÑA, correo, sucursal, cuadrillas, cuadrilla1, cuadrilla2, cuadrilla3, cuadrilla4,  cuadrilla5, cuadrilla6, cuadrilla7, cuadrilla8, cuadrilla9, cuadrilla10) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", 
+         (ci_rif, nombre, telefono, USUARIO, hashed_contraseña, correo, sucursal, cuadrillas, cuadrilla1, cuadrilla2, cuadrilla3, cuadrilla4,  cuadrilla5, cuadrilla6, cuadrilla7, cuadrilla8, cuadrilla9, cuadrilla10)
     )  
         db.commit()
         return {"message":"Contratista creado con exito."} 

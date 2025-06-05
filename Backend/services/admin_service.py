@@ -196,7 +196,7 @@ def consulta_contratista(ci_rif, nombre):
   
     
 #Actualiza la información de un contratista.
-def update_contratista (ci_rif, nombre, telefono, USUARIO, CONTRASEÑA, correo, sucursal, cuadrillas, cuadrilla1, cuadrilla2, cuadrilla3, cuadrilla4, instalaciones_exitosas, instalaciones_fallidas):
+def update_contratista (ci_rif, nombre, telefono, USUARIO, CONTRASEÑA, correo, sucursal, cuadrillas, cuadrilla1, cuadrilla2, cuadrilla3, cuadrilla4,  cuadrilla5, cuadrilla6, cuadrilla7, cuadrilla8, cuadrilla9, cuadrilla10, instalaciones_exitosas, instalaciones_fallidas):
     """
     Actualiza la información de un contratista en la base de datos.
     """
@@ -204,8 +204,8 @@ def update_contratista (ci_rif, nombre, telefono, USUARIO, CONTRASEÑA, correo, 
     cursor = db.cursor()
     try:
         cursor.execute(
-            "UPDATE contratistas SET nombre = %s, telefono = %s, USUARIO = %s, CONTRASEÑA = %s, correo = %s, sucursal = %s, cuadrillas = %s, cuadrilla1 = %s, cuadrilla2 = %s, cuadrilla3 = %s, cuadrilla4 = %s, instalaciones_exitosas = %s, instalaciones_fallidas = %s WHERE ci_rif = %s",
-            (nombre, telefono, USUARIO, CONTRASEÑA, correo, sucursal, cuadrillas, cuadrilla1, cuadrilla2, cuadrilla3, cuadrilla4, instalaciones_exitosas, instalaciones_fallidas, ci_rif)
+            "UPDATE contratistas SET nombre = %s, telefono = %s, USUARIO = %s, CONTRASEÑA = %s, correo = %s, sucursal = %s, cuadrillas = %s, cuadrilla1 = %s, cuadrilla2 = %s, cuadrilla3 = %s, cuadrilla4 = %s,  cuadrilla5 = %s, cuadrilla6 = %s, cuadrilla7 = %s, cuadrilla8 = %s, cuadrilla9 = %s, cuadrilla10 = %s, instalaciones_exitosas = %s, instalaciones_fallidas = %s WHERE ci_rif = %s",
+            (nombre, telefono, USUARIO, CONTRASEÑA, correo, sucursal, cuadrillas, cuadrilla1, cuadrilla2, cuadrilla3, cuadrilla4,  cuadrilla5, cuadrilla6, cuadrilla7, cuadrilla8, cuadrilla9, cuadrilla10, instalaciones_exitosas, instalaciones_fallidas, ci_rif)
         )
         db.commit()
         return {"message": "Contratista actualizado con éxito"}
