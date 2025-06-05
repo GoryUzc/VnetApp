@@ -60,10 +60,10 @@ class ConstraSchema(Schema):
     correo = fields.Str(required=True, validate=length_1_15)
     sucursal = fields.Str(required=True, validate=length_1_20) 
     cuadrillas = fields.Int(required=True, validate=[length_1_15, validacion_numerica])
-    cuadrilla1 = fields.Str(required=True, validate=length_1_100)
-    cuadrilla2 = fields.Str(required=True, validate=length_1_100)
-    cuadrilla3 = fields.Str(required=True, validate=length_1_100)
-    cuadrilla4 = fields.Str(required=True, validate=length_1_100)
+    cuadrilla1 = fields.Str(required=True, validate=length_1_200)
+    cuadrilla2 = fields.Str(required=True, validate=length_1_200)
+    cuadrilla3 = fields.Str(required=True, validate=length_1_200)
+    cuadrilla4 = fields.Str(required=True, validate=length_1_200)
 
 
 class InitInstallSchema(Schema):

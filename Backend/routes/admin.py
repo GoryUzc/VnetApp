@@ -9,6 +9,8 @@ from schemas.admin_schema import (
     CreateAdminSchema, CreateClienteSchema, AsignacionInstalacionSchema, validate_data, LoginSchema, UpdateContratistaSchema, UpdateClienteSchema,
 )
 from functools import wraps
+from flask import send_file
+import os
 
 
 SECRET_KEY = "miclavesegura123"  
@@ -111,6 +113,7 @@ def admin_menu():
             {"nombre": "Eliminar Contratista", "ruta": "/api/v1/admins/eliminar-contratista"},
             {"nombre": "ordenes no autorizadas", "ruta": "api/v1/admins/ordenes-no-autorizadas"},
             {"nombre": "Autorizacion de clientes", "ruta": "api/v1/admins/autorizacion-cliente"},
+            {"nombre": "Descargar PDF de Instalación", "ruta": "/descargar_pdf/<int:nro_orden>"},
             
         ]
     }
@@ -520,3 +523,21 @@ def instalaciones_no_autorizadas():
         return jsonify(result), 200
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "details": str(e)}), 500
+    
+
+@admin_bp.route("/descargar_pdf/<int:nro_orden>", methods=['GET'])
+def descargar_pdf(nro_orden):
+    """
+    Ruta para descargar el PDF de instalación.
+    :param nro_orden: Número de orden de instalación.
+    :return: El archivo PDF de instalación.
+    :raises 404: Si no existe el PDF o no hay datos para generarlo.
+    """
+    ruta_pdf = f"orden_instalacion_{nro_orden}.pdf"
+    if not os.path.exists(ruta_pdf):
+        from Backend.services.contrators_service import datos_instalacion, generar_pdf_instalacion
+        datos = datos_instalacion(nro_orden)
+        if not datos:
+            return {"error": "No existe la orden o no hay datos para generar el PDF"}, 404
+        ruta_pdf = generar_pdf_instalacion(nro_orden, datos)
+    return send_file(ruta_pdf, as_attachment=True)
