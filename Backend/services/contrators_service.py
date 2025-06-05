@@ -131,7 +131,7 @@ def get_assigned_installation(contratista):
 
 
 #Inicio proceso de instalacion
-def init_installation(Nro_orden, contratista, usuarioID, contraseñaID, estado, observacion):
+def init_installation(Nro_orden, contratista, usuarioID, contraseñaID, estado, observacion_contratista):
     """
     Inicia el proceso de instalacion hasta la finalizacion. 
     :param Nro_orden: Numero de orden de la instalacion a procesar. 
@@ -154,8 +154,8 @@ def init_installation(Nro_orden, contratista, usuarioID, contraseñaID, estado, 
             return {"error": "La instalacion no existe o no esta asignada a este contratista."}
 
         cursor.execute(
-            "UPDATE ordenes_instalacion SET usuarioID = %s, contraseñaID = %s, estado = %s, observaciones = %s WHERE Nro_orden = %s",
-            (usuarioID, contraseñaID, "en_proceso", observacion, Nro_orden)
+            "UPDATE ordenes_instalacion SET usuarioID = %s, contraseñaID = %s, estado = %s, observacion_contratista = %s WHERE Nro_orden = %s",
+            (usuarioID, contraseñaID, "en_proceso", observacion_contratista, Nro_orden)
         )
         db.commit()
 
@@ -198,7 +198,7 @@ def notificar_administrador_orden(Nro_orden, contratista):
 
 
 #Final proceso de instalacion.
-def finish_installation(Nro_orden, estado, verificacion, observacion):
+def finish_installation(Nro_orden, estado, verificacion, observacion_contratista):
     """
     Finaliza el proceso de instalacion, verificacion de red. 
     :param Nro_orden: Numero de orden de la instalacion a finalizar. 
@@ -210,8 +210,8 @@ def finish_installation(Nro_orden, estado, verificacion, observacion):
     cursor = db.cursor()
     try:
         cursor.execute(
-            "UPDATE ordenes_instalacion SET estado = %s, observaciones = %s, verificacion = %s WHERE Nro_orden = %s",
-        (estado, observacion, True, Nro_orden)
+            "UPDATE ordenes_instalacion SET estado = %s, observacion_contratista = %s, verificacion = %s WHERE Nro_orden = %s",
+        (estado, observacion_contratista, True, Nro_orden)
         )
         db.commit()
 
