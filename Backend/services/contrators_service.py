@@ -67,7 +67,7 @@ def get_all_installations():
 
 
 #Tomar una instalacion. 
-def take_installation(Nro_orden, contratista):
+def take_installation(Nro_orden, contratista, ci_rif):
     """
     Asigna una instalacion (orden) a un contratista y actualiza su estado. 
     :param Nro_orden: Numero de orden de la instalacion a tomar.
@@ -76,7 +76,45 @@ def take_installation(Nro_orden, contratista):
     """
     db = get_db()
     cursor = db.cursor()
-    try: 
+    try:
+        # Obtener el numero de cuadrillas del contratista
+        cursor.execute("SELECT cuadrillas FROM contratistas WHERE ci_rif = %s", (ci_rif,))
+        contratista_datos = cursor.fetchone()
+        if not contratista_datos:
+            return {"error": "El contratista no existe."}
+        num_cuadrillas = contratista_datos['cuadrillas']
+
+        #Contar órdenes asignadas al contratista el mismo día y hora (sin minutos/segundos)
+        # Obtener la fecha y hora de la orden a tomar
+        cursor.execute(
+            "SELECT fecha_hora1, fecha_hora2 FROM ordenes_instalacion WHERE Nro_orden = %s",
+            (Nro_orden,)
+        )
+        orden = cursor.fetchone()
+        if not orden:
+            return {"error": "La instalacion no esta disponible o ya fue tomada."}
+
+    # La hora y la fecha para tomar la validacion.
+        objetivo1 = orden['fecha_hora1']  
+        objetivo2 = orden['fecha_hora2']
+
+        cursor.execute(
+            """
+            SELECT COUNT(*) as total
+            FROM ordenes_instalacion
+            WHERE contratista = %s
+              AND estado IN ('en_proceso', 'asignada')
+              AND (
+                    (DATE(fecha_hora1) = DATE(%s) AND HOUR(fecha_hora1) = HOUR(%s))
+                 OR (DATE(fecha_hora2) = DATE(%s) AND HOUR(fecha_hora2) = HOUR(%s))
+              )
+            """,
+            (contratista, objetivo1, objetivo1, objetivo2, objetivo2)
+        )
+        ordenes_tomadas = cursor.fetchone()["total"]
+        if ordenes_tomadas >= num_cuadrillas:
+            return {"error": "El contratista ya ha tomado el máximo de instalaciones permitidas para esta hora."}
+
         #Verifica que la orden exista y este disponible. 
         cursor.execute(
             "SELECT * FROM ordenes_instalacion WHERE Nro_orden = %s AND (contratista IS NULL OR contratista = '') AND estado = %s",
