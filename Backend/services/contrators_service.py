@@ -6,6 +6,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 import tempfile
 import os
+from datetime import datetime, timedelta
 
 
 
@@ -145,6 +146,7 @@ def init_installation(Nro_orden, contratista, usuarioID, contraseñaID, estado, 
     db = get_db()
     cursor = db.cursor()
     try:
+        hora_inicio = datetime.now()
         cursor.execute(
             "SELECT * FROM ordenes_instalacion WHERE Nro_orden = %s AND contratista = %s",
             (Nro_orden, contratista)
@@ -154,8 +156,8 @@ def init_installation(Nro_orden, contratista, usuarioID, contraseñaID, estado, 
             return {"error": "La instalacion no existe o no esta asignada a este contratista."}
 
         cursor.execute(
-            "UPDATE ordenes_instalacion SET usuarioID = %s, contraseñaID = %s, estado = %s, observacion_contratista = %s WHERE Nro_orden = %s",
-            (usuarioID, contraseñaID, "en_proceso", observacion_contratista, Nro_orden)
+            "UPDATE ordenes_instalacion SET usuarioID = %s, contraseñaID = %s, estado = %s, observacion_contratista = %s, hora_inicio = %s WHERE Nro_orden = %s",
+            (usuarioID, contraseñaID, "en_proceso", observacion_contratista, hora_inicio, Nro_orden)
         )
         db.commit()
 
@@ -198,7 +200,7 @@ def notificar_administrador_orden(Nro_orden, contratista):
 
 
 #Final proceso de instalacion.
-def finish_installation(Nro_orden, estado, verificacion, observacion_contratista):
+def finish_installation(ci_rif, Nro_orden, estado, verificacion, observacion_contratista):
     """
     Finaliza el proceso de instalacion, verificacion de red. 
     :param Nro_orden: Numero de orden de la instalacion a finalizar. 
@@ -209,16 +211,49 @@ def finish_installation(Nro_orden, estado, verificacion, observacion_contratista
     db = get_db()
     cursor = db.cursor()
     try:
+        # Obtener la hora de inicio de la instalacion
         cursor.execute(
-            "UPDATE ordenes_instalacion SET estado = %s, observacion_contratista = %s, verificacion = %s WHERE Nro_orden = %s",
-        (estado, observacion_contratista, True, Nro_orden)
+            "SELECT hora_inicio FROM ordenes_instalacion WHERE Nro_orden = %s",
+            (Nro_orden,)
         )
-        db.commit()
+        orden = cursor.fetchone()
+        if not orden or not orden['hora_inicio']:
+            raise Exception ("No se encontró la hora de inicio de la orden de instalacion.")
+        
+        hora_inicio = orden['hora_inicio']
+        hora_final = datetime.now()
 
-        # Notificar al administrador
-        notificar_administrador_instalacion(Nro_orden, "Finalizada")
-
-        return {"message": "Instalacion finalizada con exito."}
+        # Verificar si ya pasaron mas de 12 horas 
+        if hora_final - hora_inicio > timedelta(hours=12):
+            estado = "fallida"
+            # Sumar al contador de fallidas
+            cursor.execute(
+                "UPDATE contratistas SET instalaciones_fallidas = instalaciones_fallidas + 1 WHERE ci_rif = %s",
+                (ci_rif,)
+            )
+            # Actualizar el estado de la orden de instalacion a fallida
+            cursor.execute(
+                "UPDATE ordenes_instalacion SET estado = %s, observacion_contratista = %s, verificacion = %s WHERE Nro_orden = %s",
+                (estado, observacion_contratista, False, Nro_orden)
+            )
+            db.commit()
+            notificar_administrador_instalacion(Nro_orden, "Finalizada")
+            return {"message": "Instalacion finalizada como fallida."}
+        else:
+            estado = "exitosa"
+            # Actualizar el estado de la orden de instalacion
+            cursor.execute(
+                "UPDATE ordenes_instalacion SET estado = %s, observacion_contratista = %s, verificacion = %s WHERE Nro_orden = %s",
+                (estado, observacion_contratista, True, Nro_orden)
+            )
+            # Sumar al contador de exitosas
+            cursor.execute(
+                "UPDATE contratistas SET instalaciones_exitosas = instalaciones_exitosas + 1 WHERE ci_rif = %s",
+                (ci_rif,)
+            )
+            db.commit()
+            notificar_administrador_instalacion(Nro_orden, "Finalizada")
+            return {"message": "Instalacion finalizada con exito."}
     except Exception as e:
         db.rollback()
         raise Exception(f"Error al finalizar la instalacion: {str(e)}")
