@@ -3,7 +3,7 @@ import datetime
 from flask import Blueprint, jsonify, request
 from werkzeug.security import check_password_hash
 from services.admin_service import (
-    create_administrador, create_cliente, consulta_cliente, update_cliente, delete_cliente, asignar_instalacion, consulta_contratista, update_contratista, delete_contratista, get_estadisticas, consulta_Nro_orden, consulta_admin_por_usuario, autorizar_instalacion, ordenes_no_autorizadas,
+    create_administrador, create_cliente, consulta_cliente, update_cliente, delete_cliente, asignar_instalacion, consulta_contratista, update_contratista, delete_contratista, get_estadisticas, consulta_Nro_orden, consulta_admin_por_usuario, autorizar_instalacion, ordenes_no_autorizadas, delete_orden,
 )
 from schemas.admin_schema import (
     CreateAdminSchema, CreateClienteSchema, AsignacionInstalacionSchema, validate_data, LoginSchema, UpdateContratistaSchema, UpdateClienteSchema,
@@ -100,10 +100,10 @@ def admin_menu():
     menu = {
         "opciones": [
             {"nombre": "Crear Administrador", "ruta": "/api/v1/admins/crear-admin"},
-             {"nombre": "Consultar Estadísticas", "ruta": "/api/v1/admins/estadisticas"},
-             {"nombre": "Consultar Orden", "ruta": "/api/v1/admins/consultar-orden"},
-             {"nombre": "Consulta Admin por Usuario", "ruta": "/api/v1/admins/consulta-admin-por-usuario"},
-             {"nombre": "Asignar Instalacion", "ruta": "/api/v1/admins/asignacion-instalacion"},
+            {"nombre": "Consultar Estadísticas", "ruta": "/api/v1/admins/estadisticas"},
+            {"nombre": "Consultar Orden", "ruta": "/api/v1/admins/consultar-orden"},
+            {"nombre": "Consulta Admin por Usuario", "ruta": "/api/v1/admins/consulta-admin-por-usuario"},
+            {"nombre": "Asignar Instalacion", "ruta": "/api/v1/admins/asignacion-instalacion"},
             {"nombre": "Crear Cliente", "ruta": "/api/v1/admins/crear-cliente"},
             {"nombre": "Consultar Cliente", "ruta": "/api/v1/admins/consultar-cliente"},
             {"nombre": "Actualizar Cliente", "ruta": "/api/v1/admins/actualizar-cliente"},
@@ -111,6 +111,7 @@ def admin_menu():
             {"nombre": "Consultar Contratista", "ruta": "/api/v1/admins/consultar-contratista"},
             {"nombre": "Actualizar Contratista", "ruta": "/api/v1/admins/actualizar-contratista"},
             {"nombre": "Eliminar Contratista", "ruta": "/api/v1/admins/eliminar-contratista"},
+            {"nombre": "Eliminar Orden instalacion", "ruta": "/api/v1/admins/eliminar-orden"},
             {"nombre": "ordenes no autorizadas", "ruta": "api/v1/admins/ordenes-no-autorizadas"},
             {"nombre": "Autorizacion de clientes", "ruta": "api/v1/admins/autorizacion-cliente"},
             {"nombre": "Descargar PDF de Instalación", "ruta": "/descargar_pdf/<int:nro_orden>"},
@@ -469,7 +470,9 @@ def eliminarCliente():
         return jsonify({"message": "Cliente eliminado con exito.", "details": result}), 200
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "details": str(e)}), 500
-    
+
+
+#Ruta para autorizar la entrada del cliente a la red
 @admin_bp.route("api/v1/admins/autorizacion-cliente", methods=["PUT"])
 @token_required
 @handle_errors
@@ -489,25 +492,36 @@ def autorizacion_cliente():
     return jsonify(result), 200
 
 
-@admin_bp.route("/api/v1/admins/autorizar-instalacion", methods=["PUT"])
+#Ruta para eliminar una orden de instalacion
+@admin_bp.route("api/v1/admins/eliminar-orden", methods=["DELETE"]) 
 @token_required
 @handle_errors
-def autorizar_instalacion_route():
+def eliminar_orden():
     """
-    Ruta para que el administrador autorice una orden de instalación.
-    Espera un JSON con Nro_orden y contratista.
+    Ruta para eliminar una orden de instalación.
+    :queryparam Nro_orden: Número de orden a eliminar (en los parámetros de la URL).
+    :return: Un mensaje de éxito si la orden fue eliminada con éxito.
+    :raises 400: Si no se proporciona el número de orden.
+    :raises 404: Si no se encuentra la orden.
     """
-    data = request.get_json()
-    nro_orden = data.get("Nro_orden")
-    contratista = data.get("contratista")
-    if not nro_orden or not contratista:
-        return jsonify({"error": "Nro_orden y contratista son requeridos"}), 400
+    nro_orden = request.args.get("Nro_orden")
+    nro_cuenta = request.args.get("Nro_cuenta")
+    if not nro_orden or not nro_cuenta:
+        return jsonify({"error": "El número de orden es requerido o el numero de cuenta"}), 400
 
-    result = autorizar_instalacion(nro_orden, contratista)
-    if "error" in result:
-        return jsonify(result), 400
-    return jsonify(result), 200
+    try:
+        # Consultar la orden en la base de datos
+        orden = consulta_Nro_orden(nro_orden)
+        if not orden:
+            return jsonify({"error": "Orden no encontrada"}), 404
 
+        # Eliminar la orden de la base de datos
+        result = delete_orden(nro_orden)
+        return jsonify({"message": "Orden eliminada con éxito.", "details": result}), 200
+    except Exception as e:
+        return jsonify({"error": "Error interno del servidor", "details": str(e)}), 500
+
+#Ruta para ver las ordenes de instalacion no autorizadas
 @admin_bp.route("api/v1/admins/ordenes-no-autorizadas", methods=["GET"])
 @token_required
 @handle_errors
@@ -523,8 +537,9 @@ def instalaciones_no_autorizadas():
         return jsonify(result), 200
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "details": str(e)}), 500
-    
 
+    
+# Ruta para descargar el PDF de instalación
 @admin_bp.route("/descargar_pdf/<int:nro_orden>", methods=['GET'])
 @token_required
 @handle_errors

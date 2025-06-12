@@ -220,7 +220,10 @@ def update_contratista (ci_rif, nombre, telefono, USUARIO, CONTRASEÑA, correo, 
 #Borra un contratista de la base de datos.
 def delete_contratista(ci_rif):
     """
-    Elimina un contratista de la base de datos."""
+    Elimina un contratista de la base de datos.
+    :param ci_rif: Cedula de identidad o RIF del contratista.
+    return: Mensaje de exito o error.
+    """
     db = get_db()
     cursor = db.cursor()
     try:
@@ -236,8 +239,33 @@ def delete_contratista(ci_rif):
     finally:
         cursor.close()
         db.close()
+        
             
-   
+#Borrar orden en caso del que el cliente cancele. 
+def delete_orden (Nro_orden, Nro_cuenta):
+    """
+    Funcion para eliminar una orden de instalacion.
+    :param Nro_orden: Numero de orden de instalacion.
+    :param Nro_cuenta: Numero de cuenta del cliente.
+    :return: Mensaje de exito o error.
+    """
+    db = get_db()
+    cursor = db.cursor()
+    try:
+        cursor.execute(
+            "DELETE FROM ordenes_instalacion WHERE Nro_cuenta = %s OR Nro_orden = %s",
+            (Nro_cuenta, Nro_orden)
+        )
+        db.commit()
+        return {"message": "Orden eliminada con éxito"}
+    except Exception as e:
+        db.rollback()
+        raise Exception(f"Error al eliminar orden: {str(e)}")
+    finally:
+        cursor.close()
+        db.close()
+
+
 #Obtiene estadísticas generales de la aplicación.
 def get_estadisticas():
     """
