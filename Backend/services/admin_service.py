@@ -410,3 +410,25 @@ def ordenes_no_autorizadas():
     finally: 
         cursor.close()
         db.close()
+
+
+#lista de ordenes de instalacion
+def ordenes_instalacion():
+    """
+    Retorna la lista de ordenes de instalacion.
+    :return: Lista de ordenes pendientes de instalacion.
+    """
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    try:
+        cursor.execute(
+            "SELECT * FROM ordenes_instalacion",
+            
+        )
+        ordenes = cursor.fetchall()
+        return ordenes
+    except Exception as e:
+        return {"error": f"Error al consultar las ordenes pendientes de instalacion: {str(e)}"}
+    finally:
+        cursor.close()
+        db.close()

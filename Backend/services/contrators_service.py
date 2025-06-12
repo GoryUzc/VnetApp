@@ -444,6 +444,3 @@ def generar_y_notificar_pdf(Nro_orden, datos_instalacion, socketio):
         namespace='/admin'
     )
     return ruta_pdf
-
-#Ojo regular las ordenes de instalacion de los contratistas por medio del numero de cuadrillas que tengan disponible.
-

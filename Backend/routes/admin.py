@@ -3,7 +3,7 @@ import datetime
 from flask import Blueprint, jsonify, request
 from werkzeug.security import check_password_hash
 from services.admin_service import (
-    create_administrador, create_cliente, consulta_cliente, update_cliente, delete_cliente, asignar_instalacion, consulta_contratista, update_contratista, delete_contratista, get_estadisticas, consulta_Nro_orden, consulta_admin_por_usuario, autorizar_instalacion, ordenes_no_autorizadas, delete_orden,
+    create_administrador, create_cliente, consulta_cliente, update_cliente, delete_cliente, asignar_instalacion, consulta_contratista, update_contratista, delete_contratista, get_estadisticas, consulta_Nro_orden, consulta_admin_por_usuario, autorizar_instalacion, ordenes_no_autorizadas, delete_orden, ordenes_instalacion, 
 )
 from schemas.admin_schema import (
     CreateAdminSchema, CreateClienteSchema, AsignacionInstalacionSchema, validate_data, LoginSchema, UpdateContratistaSchema, UpdateClienteSchema,
@@ -112,6 +112,7 @@ def admin_menu():
             {"nombre": "Actualizar Contratista", "ruta": "/api/v1/admins/actualizar-contratista"},
             {"nombre": "Eliminar Contratista", "ruta": "/api/v1/admins/eliminar-contratista"},
             {"nombre": "Eliminar Orden instalacion", "ruta": "/api/v1/admins/eliminar-orden"},
+            {"nombre": "Ver Ordenes de Instalacion", "ruta": "/api/v1/admins/ordenes"},
             {"nombre": "ordenes no autorizadas", "ruta": "api/v1/admins/ordenes-no-autorizadas"},
             {"nombre": "Autorizacion de clientes", "ruta": "api/v1/admins/autorizacion-cliente"},
             {"nombre": "Descargar PDF de Instalación", "ruta": "/descargar_pdf/<int:nro_orden>"},
@@ -520,6 +521,27 @@ def eliminar_orden():
         return jsonify({"message": "Orden eliminada con éxito.", "details": result}), 200
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "details": str(e)}), 500
+
+
+#Ruta para ver una lista de ordenes de instalacion. 
+@admin_bp.route("api/v1/admins/ordenes", methods=["GET"])
+@token_required
+@handle_errors
+def ver_ordenes():
+    """
+    Ruta para ver una lista de ordenes de instalacion.
+    :return: Una lista de ordenes de instalacion.
+    :raises 500: Si ocurre un error interno del servidor.
+    """
+    try:
+        result = ordenes_instalacion()
+        if not result:
+            return jsonify([]), 200
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({"error": "Error interno del servidor", "details": str(e)}), 500
+    
+
 
 #Ruta para ver las ordenes de instalacion no autorizadas
 @admin_bp.route("api/v1/admins/ordenes-no-autorizadas", methods=["GET"])
