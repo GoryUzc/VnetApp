@@ -52,7 +52,7 @@ def validar_firma_blob(firma):
     
 
 class ConstraSchema(Schema):
-    ci_rif = fields.Int(required=True, validate=[length_1_20, validacion_numerica])
+    ci_rif = fields.Int(required=True, validate=length_1_20)
     nombre = fields.Str(required=True, validate=length_1_50)
     telefono = fields.Str(required=True, validate=length_1_20)
     USUARIO = fields.Str(required=True, validate=length_1_20)
@@ -60,11 +60,16 @@ class ConstraSchema(Schema):
     correo = fields.Str(required=True, validate=length_1_15)
     sucursal = fields.Str(required=True, validate=length_1_20) 
     cuadrillas = fields.Int(required=True, validate=[length_1_15, validacion_numerica])
-    cuadrilla1 = fields.Str(required=True, validate=length_1_200)
-    cuadrilla2 = fields.Str(required=True, validate=length_1_200)
-    cuadrilla3 = fields.Str(required=True, validate=length_1_200)
-    cuadrilla4 = fields.Str(required=True, validate=length_1_200)
-
+    cuadrilla1 = fields.Str(required=True, validate=length_1_50)
+    cuadrilla2 = fields.Str(required=True, validate=length_1_50)
+    cuadrilla3 = fields.Str(required=True, validate=length_1_50)
+    cuadrilla4 = fields.Str(required=True, validate=length_1_50)
+    cuadrilla5 = fields.Str(required=True, validate=length_1_50)
+    cuadrilla6 = fields.Str(required=True, validate=length_1_50)
+    cuadrilla7 = fields.Str(required=True, validate=length_1_50)
+    cuadrilla8 = fields.Str(required=True, validate=length_1_50)
+    cuadrilla9 = fields.Str(required=True, validate=length_1_50)
+    cuadrilla10 = fields.Str(required=True, validate=length_1_50)
 
 class InitInstallSchema(Schema):
     """
@@ -73,14 +78,14 @@ class InitInstallSchema(Schema):
     usuarioID = fields.Str(required=True, validate=length_1_20)
     contraseñaID = fields.Str(required=True, validate=length_1_20)
     estado = fields.Str(required=None)
-    observacion_contratista = fields.Str(required=True, validate=length_1_200)
+    observacion_contratista = fields.Str(required=True, validate=length_1_500)
 
 class FinishInstallSchema(Schema):
     """
     Esquema de validación para la finalización de instalaciones.
     """
     estado = fields.Str(required=None)
-    observacion_contratista = fields.Str(required=True, validate=length_1_200)
+    observacion_contratista = fields.Str(required=True, validate=length_1_500)
 
 class DateOrderInstallSchema(Schema):
     """
