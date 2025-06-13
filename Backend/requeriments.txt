@@ -4,7 +4,7 @@ Flask-SocketIO==5.3.6
 eventlet==0.33.3
 Werkzeug==2.3.6
 mysql-connector-python==8.0.33
-reportlab==4.0.8
+reportlab==4.4.1
 python-dotenv==1.0.1
 marshmallow==3.20.2
 PyJWT==2.8.0

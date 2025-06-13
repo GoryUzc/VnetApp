@@ -64,14 +64,18 @@ class LoginSchema(Schema):
     CONTRASEÑA = fields.Str(required=True, validate=[length_8_20, validacion_contraseña])
 
 class ConstraSchema(Schema):
-    ci_rif = fields.Int(required=True, validate=length_1_20)
+    ci_rif = fields.Str(required=True, validate=length_1_20)
     nombre = fields.Str(required=True, validate=length_1_50)
     telefono = fields.Str(required=True, validate=length_1_20)
     USUARIO = fields.Str(required=True, validate=length_1_20)
     CONTRASEÑA = fields.Str(required=True, validate=[length_8_20, validacion_contraseña])
     correo = fields.Str(required=True, validate=length_1_15)
     sucursal = fields.Str(required=True, validate=length_1_20) 
-    cuadrillas = fields.Int(required=True, validate=[length_1_15, validacion_numerica])
+    cuadrillas = fields.Integer(
+    required=True,
+    validate=[
+        validate.Range(min=1, max=10)
+    ])
     cuadrilla1 = fields.Str(required=True, validate=length_1_50)
     cuadrilla2 = fields.Str(required=True, validate=length_1_50)
     cuadrilla3 = fields.Str(required=True, validate=length_1_50)
@@ -82,6 +86,7 @@ class ConstraSchema(Schema):
     cuadrilla8 = fields.Str(required=True, validate=length_1_50)
     cuadrilla9 = fields.Str(required=True, validate=length_1_50)
     cuadrilla10 = fields.Str(required=True, validate=length_1_50)
+
 
 class InitInstallSchema(Schema):
     """

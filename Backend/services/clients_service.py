@@ -1,11 +1,12 @@
 from models.database import get_db
-from app import socketio
+
 
 def emitir_notificacion_contratista(data):
     """
     Emite una notificación al contratista a través de WebSocket.
     :param data: Datos de la notificación.
     """
+    from app import socketio
     socketio.emit('notificacion_contratista', data, namespace='/contratista')
 
 def emitir_notificacion_admin(data):
@@ -13,6 +14,7 @@ def emitir_notificacion_admin(data):
     Emite una notificación al administrador a través de WebSocket.
     :param data: Datos de la notificación.
     """
+    from app import socketio
     socketio.emit('notificacion_admin', data, namespace='/admin')
 
 
@@ -44,7 +46,10 @@ def create_order(Nro_cuenta, fecha_hora1, fecha_hora2, latitud, longitud, coment
         db.commit()
         nro_orden = cursor.lastrowid
 
-               # Notificar al administrador
+        # Notificar a los contratistas y al administrador a través de WebSocket
+        from app import socketio
+
+        # Notificar al administrador
         socketio.emit(
             'nueva_orden_cliente',
             {

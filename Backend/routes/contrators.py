@@ -13,7 +13,7 @@ from schemas.contrators_shema import (
 
 
 SECRETA_KEY = "miclavesegura456"
-contratista_bp = Blueprint("contrators", __name__)
+contrators_bp = Blueprint("contrators", __name__)
 
 
 # Decorador para validar el token de autenticación del contratista
@@ -49,7 +49,7 @@ def handle_errors(f):
     return decorated
 
 
-@contratista_bp.route("/api/v1/contrators/create", methods=["POST"])
+@contrators_bp.route("/api/v1/contrators/create", methods=["POST"])
 @handle_errors
 def create_contrator():
     """
@@ -65,7 +65,7 @@ def create_contrator():
         return jsonify({"error": "Datos inválidos", "details": err.messages}), 400
     
 
-@contratista_bp.route("/api/v1/contrators/login", methods=["POST"])
+@contrators_bp.route("/api/v1/contrators/login", methods=["POST"])
 @handle_errors
 def login_contrator():
     """
@@ -109,7 +109,7 @@ def login_contrator():
     
 
 #Ruta menu para el contratista 
-@contratista_bp.route("/api/contrators/menu", methods=["GET"])
+@contrators_bp.route("/api/v1/contrators/menu", methods=["GET"])
 @contratista_token_required
 @handle_errors
 def contratista_menu():
@@ -134,7 +134,7 @@ def contratista_menu():
 
 
 #Instalaciones disponibles para el contratista
-@contratista_bp.route("/api/v1/contrators/installations", methods=["GET"])
+@contrators_bp.route("/api/v1/contrators/installations", methods=["GET"])
 @contratista_token_required
 @handle_errors
 def get_installations():
@@ -147,7 +147,7 @@ def get_installations():
 
 
 #Instalaciones asignadas al contratista
-@contratista_bp.route("/api/v1/contrators/assigned_installations", methods=["GET"])
+@contrators_bp.route("/api/v1/contrators/assigned_installations", methods=["GET"])
 @contratista_token_required
 @handle_errors  
 def get_assigned_installations():
@@ -160,7 +160,7 @@ def get_assigned_installations():
 
 
 #Tomar una instalacion
-@contratista_bp.route("/api/v1/contrators/take_installations", methods=["POST"])
+@contrators_bp.route("/api/v1/contrators/take_installations", methods=["POST"])
 @contratista_token_required
 @handle_errors
 def take_installation_route():
@@ -179,7 +179,7 @@ def take_installation_route():
 
 
 #Iniciar una instalacion
-@contratista_bp.route("/api/v1/contrators/init_installation", methods=["POST"])
+@contrators_bp.route("/api/v1/contrators/init_installation", methods=["POST"])
 @contratista_token_required
 @handle_errors
 def init_installation_route():
@@ -199,7 +199,7 @@ def init_installation_route():
 
 
 #Finalizar una instalacion
-@contratista_bp.route("/api/v1/contrators/finish_installation", methods=["POST"])
+@contrators_bp.route("/api/v1/contrators/finish_installation", methods=["POST"])
 @contratista_token_required
 @handle_errors
 def finish_installation_route():
@@ -219,7 +219,7 @@ def finish_installation_route():
 
 
 #Orden de instalacion
-@contratista_bp.route("/api/v1/contrators/order_installation", methods=["POST"])
+@contrators_bp.route("/api/v1/contrators/order_installation", methods=["POST"])
 @contratista_token_required
 @handle_errors
 def order_installation_route():
@@ -239,7 +239,7 @@ def order_installation_route():
 
 
 #Datos de instalacion
-@contratista_bp.route("/api/v1/contrators/data_installation", methods=["POST"])
+@contrators_bp.route("/api/v1/contrators/data_installation", methods=["POST"])
 @contratista_token_required
 @handle_errors
 def data_installation_route():
@@ -257,7 +257,7 @@ def data_installation_route():
    
     
 #Generar PDF de instalacion
-@contratista_bp.route("/api/v1/contrators/generate_pdf_installation", methods=["POST"])
+@contrators_bp.route("/api/v1/contrators/generate_pdf_installation", methods=["POST"])
 @contratista_token_required
 @handle_errors
 def generate_pdf_installation_route():

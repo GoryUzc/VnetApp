@@ -1,12 +1,12 @@
 from models.database import get_db
 from werkzeug.security import generate_password_hash
 from flask_socketio import emit, SocketIO
-from app import SocketIO, socketio
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 import tempfile
 import os
 from datetime import datetime, timedelta
+
 
 
 
@@ -169,7 +169,7 @@ def get_assigned_installation(contratista):
         db.close()
 
 
-#Inicio proceso de instalacion
+#Inicio proceso de instalacio.
 def init_installation(Nro_orden, contratista, usuarioID, contraseñaID, estado, observacion_contratista):
     """
     Inicia el proceso de instalacion hasta la finalizacion. 
@@ -211,8 +211,9 @@ def init_installation(Nro_orden, contratista, usuarioID, contraseñaID, estado, 
         db.close()
 
 
-#emitir notificacion al administrador instalacion. 
+#emitir notificacion al administrador instalacion.
 def notificar_administrador_instalacion(Nro_orden, contratista):
+    from app import socketio
     socketio.emit(
         'solicitud_autorizacion',
         {
@@ -226,6 +227,7 @@ def notificar_administrador_instalacion(Nro_orden, contratista):
 
 #emitir notificacion siobre orden de instalacion tomada por el contratista. 
 def notificar_administrador_orden(Nro_orden, contratista):
+    from app import socketio
     socketio.emit(
         'solicitud_autorizacion',
         {
@@ -434,7 +436,7 @@ def generar_pdf_instalacion(Nro_orden, datos_instalacion, ruta_destino=None):
 #Consulta contratista por usuario
 def consulta_contratista_por_usuario(usuario):
     """
-    Obtiene un administrador por su nombre de usuario.
+    Obtiene un contratista por su nombre de usuario.
     """
     db = get_db()
     cursor = db.cursor(dictionary=True)
@@ -451,6 +453,7 @@ def consulta_contratista_por_usuario(usuario):
 
 #Generar y notificar pdf
 def generar_y_notificar_pdf(Nro_orden, datos_instalacion, socketio):
+    from app import socketio
     ruta_pdf = generar_pdf_instalacion(Nro_orden, datos_instalacion)
     socketio.emit(
         'pdf_generado',

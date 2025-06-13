@@ -113,8 +113,8 @@ def admin_menu():
             {"nombre": "Eliminar Contratista", "ruta": "/api/v1/admins/eliminar-contratista"},
             {"nombre": "Eliminar Orden instalacion", "ruta": "/api/v1/admins/eliminar-orden"},
             {"nombre": "Ver Ordenes de Instalacion", "ruta": "/api/v1/admins/ordenes"},
-            {"nombre": "ordenes no autorizadas", "ruta": "api/v1/admins/ordenes-no-autorizadas"},
-            {"nombre": "Autorizacion de clientes", "ruta": "api/v1/admins/autorizacion-cliente"},
+            {"nombre": "ordenes no autorizadas", "ruta": "/api/v1/admins/ordenes-no-autorizadas"},
+            {"nombre": "Autorizacion de clientes", "ruta": "/api/v1/admins/autorizacion-cliente"},
             {"nombre": "Descargar PDF de Instalación", "ruta": "/descargar_pdf/<int:nro_orden>"},
             
         ]
@@ -122,7 +122,7 @@ def admin_menu():
     return jsonify(menu), 200
 
 #Crear administrados 
-@admin_bp.route("api/v1/admins/crear-admin", methods=["POST"])
+@admin_bp.route("/api/v1/admins/crear-admin", methods=["POST"])
 @token_required
 @handle_errors
 def crearAdmin():
@@ -186,7 +186,7 @@ def get_app_estadisticas():
 
 
 #Consulta Numero de Orden 
-@admin_bp.route("api/v1/admins/consulta-orden", methods=["GET"])
+@admin_bp.route("/api/v1/admins/consulta-orden", methods=["GET"])
 @token_required
 @handle_errors
 def consult_NroOrden(): 
@@ -213,7 +213,7 @@ def consult_NroOrden():
 
 
 #Consulta Admin por usuario 
-@admin_bp.route("api/v1/admins/consulta-admin-por-usuario", methods=["GET"])
+@admin_bp.route("/api/v1/admins/consulta-admin-por-usuario", methods=["GET"])
 @token_required
 @handle_errors
 def consult_adiminUsuario(): 
@@ -240,7 +240,7 @@ def consult_adiminUsuario():
 
 
 #Consulta Contratista 
-@admin_bp.route("api/v1/admins/consulta-contratista", methods=["GET"])
+@admin_bp.route("/api/v1/admins/consulta-contratista", methods=["GET"])
 @token_required
 @handle_errors
 def consultaContratista(): 
@@ -267,7 +267,7 @@ def consultaContratista():
 
 
 #Actualizacion contratista
-@admin_bp.route("api/v1/admins/actualizar-contratista", methods=["PUT"])
+@admin_bp.route("/api/v1/admins/actualizar-contratista", methods=["PUT"])
 @token_required
 @handle_errors
 def actualizarContratista(): 
@@ -311,7 +311,7 @@ def actualizarContratista():
     
 
 # Eliminar contratista  
-@admin_bp.route("api/v1/admins/eliminar-contratista", methods=["DELETE"])
+@admin_bp.route("/api/v1/admins/eliminar-contratista", methods=["DELETE"])
 @token_required
 @handle_errors
 def eliminarContratista(): 
@@ -343,7 +343,7 @@ def eliminarContratista():
 
 
 #Crear cliente
-@admin_bp.route("api/v1/admins/crear-cliente", methods=["POST"])
+@admin_bp.route("/api/v1/admins/crear-cliente", methods=["POST"])
 @token_required
 @handle_errors
 def crearCliente(): 
@@ -378,7 +378,7 @@ def crearCliente():
 
 
 #Consultar cliente
-@admin_bp.route("api/v1/admins/consultar-cliente", methods=["GET"])
+@admin_bp.route("/api/v1/admins/consultar-cliente", methods=["GET"])
 @token_required
 @handle_errors
 def consultarCliente(): 
@@ -405,7 +405,7 @@ def consultarCliente():
     
 
 #Actualizar cliente
-@admin_bp.route("api/v1/admins/actualizar-cliente", methods=["PUT"])
+@admin_bp.route("/api/v1/admins/actualizar-cliente", methods=["PUT"])
 @token_required
 @handle_errors
 def actualizarCliente(): 
@@ -445,7 +445,7 @@ def actualizarCliente():
 
 
 #Eliminar cliente
-@admin_bp.route("api/v1/admins/eliminar-cliente", methods=["DELETE"])
+@admin_bp.route("/api/v1/admins/eliminar-cliente", methods=["DELETE"])
 @token_required
 @handle_errors
 def eliminarCliente(): 
@@ -474,7 +474,7 @@ def eliminarCliente():
 
 
 #Ruta para autorizar la entrada del cliente a la red
-@admin_bp.route("api/v1/admins/autorizacion-cliente", methods=["PUT"])
+@admin_bp.route("/api/v1/admins/autorizacion-cliente", methods=["PUT"])
 @token_required
 @handle_errors
 def autorizacion_cliente():
@@ -494,7 +494,7 @@ def autorizacion_cliente():
 
 
 #Ruta para eliminar una orden de instalacion
-@admin_bp.route("api/v1/admins/eliminar-orden", methods=["DELETE"]) 
+@admin_bp.route("/api/v1/admins/eliminar-orden", methods=["DELETE"]) 
 @token_required
 @handle_errors
 def eliminar_orden():
@@ -524,7 +524,7 @@ def eliminar_orden():
 
 
 #Ruta para ver una lista de ordenes de instalacion. 
-@admin_bp.route("api/v1/admins/ordenes", methods=["GET"])
+@admin_bp.route("/api/v1/admins/ordenes", methods=["GET"])
 @token_required
 @handle_errors
 def ver_ordenes():
@@ -544,7 +544,7 @@ def ver_ordenes():
 
 
 #Ruta para ver las ordenes de instalacion no autorizadas
-@admin_bp.route("api/v1/admins/ordenes-no-autorizadas", methods=["GET"])
+@admin_bp.route("/api/v1/admins/ordenes-no-autorizadas", methods=["GET"])
 @token_required
 @handle_errors
 def instalaciones_no_autorizadas():

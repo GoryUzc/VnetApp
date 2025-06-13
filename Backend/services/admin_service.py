@@ -1,8 +1,6 @@
 from models.database import get_db
 from werkzeug.security import generate_password_hash
-from flask_socketio import emit, SocketIO
-from app import socketio
-from contrators_service import (notificacion_contratista,)
+from services.contrators_service import (notificar_administrador_instalacion,)
 
 #creacion Administrador
 def create_administrador(ci_rif, nombre, USUARIO, CONTRASEÑA, telefono, sucursal):
@@ -380,6 +378,7 @@ def autorizar_instalacion(Nro_orden, contratista):
 
 #Notificacion al contratista. 
 def notificar_contratista_autorizacion(Nro_orden, contratista):
+    from app import socketio
     socketio.emit(
         'autorizacion_instalacion',
         {
@@ -397,7 +396,7 @@ def ordenes_no_autorizadas():
     :return: Lista de ordenes no autorizadas.
     """
     db = get_db()
-    cursor = db.cursor(dicctionary=True)
+    cursor = db.cursor(dictionary=True)
     try: 
         cursor.execute(
             "SELECT * FROM ordenes_instalacion WHERE aradial_olt = %s OR aradial_olt IS NULL",
