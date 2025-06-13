@@ -49,7 +49,19 @@ def validar_firma_blob(firma):
     """
     if not isinstance(firma, bytes):
         raise ValidationError("La firma debe ser un blob (bytes).")
-    
+
+
+def validate_data(schema, data):
+    try:
+        schema.load(data)
+    except ValidationError as err:
+        return {"error": err.messages}
+    return None
+
+
+class LoginSchema(Schema):
+    USUARIO = fields.Str(required=True)
+    CONTRASEÑA = fields.Str(required=True, validate=[length_8_20, validacion_contraseña])
 
 class ConstraSchema(Schema):
     ci_rif = fields.Int(required=True, validate=length_1_20)

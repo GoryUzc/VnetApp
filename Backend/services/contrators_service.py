@@ -431,6 +431,24 @@ def generar_pdf_instalacion(Nro_orden, datos_instalacion, ruta_destino=None):
     return os.path.abspath(ruta_destino)
 
 
+#Consulta contratista por usuario
+def consulta_contratista_por_usuario(usuario):
+    """
+    Obtiene un administrador por su nombre de usuario.
+    """
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT * FROM contratistas WHERE USUARIO = %s", (usuario,))
+        admin = cursor.fetchone()
+        return admin
+    except Exception as e:
+        raise Exception(f"Error al obtener el administrador: {str(e)}")
+    finally:
+        cursor.close()
+        db.close()
+
+
 #Generar y notificar pdf
 def generar_y_notificar_pdf(Nro_orden, datos_instalacion, socketio):
     ruta_pdf = generar_pdf_instalacion(Nro_orden, datos_instalacion)
