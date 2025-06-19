@@ -9,6 +9,8 @@ from schemas.clients_schema import (
 
 clients_bp = Blueprint("clients", __name__)
 
+
+# Ruta para autenticar al cliente en la base de datos.
 @clients_bp.route("/api/v1/clients/autenticacion", methods=["POST"])
 def autentic_client_route():
     """
@@ -32,8 +34,12 @@ def autentic_client_route():
         }), 500
 
 
+# Ruta para crear una orden de instalación.
 @clients_bp.route("/api/v1/clients/orden", methods=["POST"])
 def crear_orden():
+    """Ruta para crear una orden de instalación.
+    :return: Mensaje de éxito o error.  
+    """
     data = request.get_json()
     validation_error = validate_data(OrderSchema(), data)
     if validation_error:
@@ -60,8 +66,8 @@ def crear_orden():
             "route": request.path
         }), 500
 
-@clients_bp.route("/api/v1/clients/consulta-orden", methods=["GET"])
-def consulta_cliente_orden():
+@clients_bp.route("/api/v1/clients/consulta-orden/<Nro_orden>", methods=["GET"])
+def consulta_cliente_orden(Nro_orden):
     """
     Ruta para consultar la orden de instalación de un cliente.
     :param Nro_cuenta: número de cuenta del cliente.

@@ -54,6 +54,8 @@ def handle_errors(f):
 def create_contrator():
     """
     Endpoint para crear un nuevo contratista.
+    :return: Un mensaje de éxito o error.
+    :raises 400: Si los datos son inválidos o faltan campos requeridos.
     """
     data = request.json
     try:
@@ -121,7 +123,7 @@ def contratista_menu():
         "opciones": 
         [
              {"nombre": "instalaciones disponibles", "ruta": "/api/v1/contrators/installations"},
-             {"nombre": "instalaciones asignadas", "ruta": "/api/v1/contrators/assigned_installations"},
+             {"nombre": "instalaciones asignadas", "ruta": "/api/v1/contrators/assigned_installations/"},
              {"nombre": "tomar instalacion", "ruta": "/api/v1/contrators/take_installations"},
              {"nombre": "iniciar instalacion", "ruta": "/api/v1/contrators/init_installation"},
              {"nombre": "finalizar instalacion", "ruta": "/api/v1/contrators/finish_installation"},
@@ -179,10 +181,10 @@ def take_installation_route():
 
 
 #Iniciar una instalacion
-@contrators_bp.route("/api/v1/contrators/init_installation", methods=["POST"])
+@contrators_bp.route("/api/v1/contrators/init_installation/<Nro_orden>", methods=["POST"])
 @contratista_token_required
 @handle_errors
-def init_installation_route():
+def init_installation_route(Nro_orden):
     """
     Ruta para que el contratista inicie una instalación.
     :return: Un mensaje de éxito o error.
@@ -199,10 +201,10 @@ def init_installation_route():
 
 
 #Finalizar una instalacion
-@contrators_bp.route("/api/v1/contrators/finish_installation", methods=["POST"])
+@contrators_bp.route("/api/v1/contrators/finish_installation/<Nro_orden>", methods=["POST"])
 @contratista_token_required
 @handle_errors
-def finish_installation_route():
+def finish_installation_route(Nro_orden):
     """
     Ruta para que el contratista finalice una instalación.
     :return: Un mensaje de éxito o error.
@@ -218,13 +220,13 @@ def finish_installation_route():
 
 
 
-#Orden de instalacion
+# Datos para el pdf de la orden de instalacion
 @contrators_bp.route("/api/v1/contrators/order_installation", methods=["POST"])
 @contratista_token_required
 @handle_errors
 def order_installation_route():
     """
-    Ruta para que el contratista obtenga la orden de instalación.
+    Ruta para que el contratista obtenga el pdf de la orden de instalación.
     :return: Un mensaje de éxito o error.
     """
     data = request.json
@@ -238,13 +240,13 @@ def order_installation_route():
 
 
 
-#Datos de instalacion
-@contrators_bp.route("/api/v1/contrators/data_installation", methods=["POST"])
+#Datos del pdf de la orden instalacion
+@contrators_bp.route("/api/v1/contrators/data_installation/<id>", methods=["GET"])
 @contratista_token_required
 @handle_errors
-def data_installation_route():
+def data_installation_route(id):
     """
-    Ruta para que el contratista obtenga los datos de una instalación.
+    Ruta para que el contratista obtenga los datos del pdf de una orden de instalacion.
     :return: Un mensaje de éxito o error.
     """
     data = request.json
@@ -257,10 +259,10 @@ def data_installation_route():
    
     
 #Generar PDF de instalacion
-@contrators_bp.route("/api/v1/contrators/generate_pdf_installation", methods=["POST"])
+@contrators_bp.route("/api/v1/contrators/generate_pdf_installation/<Nro_orden>", methods=["POST"])
 @contratista_token_required
 @handle_errors
-def generate_pdf_installation_route():
+def generate_pdf_installation_route(Nro_orden):
     """
     Ruta para que el contratista genere un PDF de una instalación.
     :return: Un mensaje de éxito o error.

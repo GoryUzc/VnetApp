@@ -225,7 +225,7 @@ def notificar_administrador_instalacion(Nro_orden, contratista):
     )
 
 
-#emitir notificacion siobre orden de instalacion tomada por el contratista. 
+#emitir notificacion sobre orden de instalacion tomada por el contratista. 
 def notificar_administrador_orden(Nro_orden, contratista):
     from app import socketio
     socketio.emit(
@@ -274,7 +274,7 @@ def finish_installation(ci_rif, Nro_orden, estado, verificacion, observacion_con
             # Actualizar el estado de la orden de instalacion a fallida
             cursor.execute(
                 "UPDATE ordenes_instalacion SET estado = %s, observacion_contratista = %s, verificacion = %s WHERE Nro_orden = %s",
-                (estado, observacion_contratista, False, Nro_orden)
+                ("finalizado", observacion_contratista, False, Nro_orden)
             )
             db.commit()
             notificar_administrador_instalacion(Nro_orden, "Finalizada")
@@ -437,6 +437,8 @@ def generar_pdf_instalacion(Nro_orden, datos_instalacion, ruta_destino=None):
 def consulta_contratista_por_usuario(usuario):
     """
     Obtiene un contratista por su nombre de usuario.
+    :param usuario: Nombre de usuario del contratista.
+    :return: Diccionario con los datos del contratista o None si no existe.
     """
     db = get_db()
     cursor = db.cursor(dictionary=True)

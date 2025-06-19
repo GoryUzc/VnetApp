@@ -69,7 +69,7 @@ class ConstraSchema(Schema):
     telefono = fields.Str(required=True, validate=length_1_20)
     USUARIO = fields.Str(required=True, validate=length_1_20)
     CONTRASEÑA = fields.Str(required=True, validate=[length_8_20, validacion_contraseña])
-    correo = fields.Str(required=True, validate=length_1_15)
+    correo = fields.Email(required=True, error_messages={"error": "Correo electrónico inválido"})
     sucursal = fields.Str(required=True, validate=length_1_20) 
     cuadrillas = fields.Integer(
     required=True,
@@ -128,8 +128,8 @@ class DateOrderInstallSchema(Schema):
     etiqueta_cliente = fields.Str(required=True, validate=length_1_20)
     router = fields.Str(required=True, validate=length_1_50)
     fecha = fields.Date(required=True, validate=length_1_20)
-    hora_inicio = fields.Time(required=True, validate=length_1_20)
-    hora_final = fields.Time(required=True, validate=length_1_20)
+    hora_inicio = fields.Time(required=True)
+    hora_final = fields.Time(required=True)
     contratista = fields.Str(required=True, validate=length_1_50)
     nombre_cliente = fields.Str(required=True, validate=length_1_50)
     firma = fields.Raw(required=True, validate=validar_firma_blob)

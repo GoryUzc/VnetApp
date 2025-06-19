@@ -13,12 +13,12 @@ class OrderSchema(Schema):
     Nro_contrato = fields.Str(required=True, validate=length_1_20)
     fecha_hora1 = fields.DateTime(required=True)
     fecha_hora2 = fields.DateTime(required=True)
-    latitud = fields.Float(required=True, validate=length_1_20)
-    longitud = fields.Float(required=True, validate=length_1_20)
+    latitud = fields.Float(required=True)
+    longitud = fields.Float(required=True)
     comentario = fields.Str(required=True, validate=length_1_200)
 
 class AtenthicationClientsSchema(Schema):
-    ci_rif = fields.Int(required=True, validate=length_1_20)
+    ci_rif = fields.Str(required=True, validate=length_1_20)
 
 def validate_data(schema, data):
     try:

@@ -101,21 +101,21 @@ def admin_menu():
         "opciones": [
             {"nombre": "Crear Administrador", "ruta": "/api/v1/admins/crear-admin"},
             {"nombre": "Consultar Estadísticas", "ruta": "/api/v1/admins/estadisticas"},
-            {"nombre": "Consultar Orden", "ruta": "/api/v1/admins/consultar-orden"},
-            {"nombre": "Consulta Admin por Usuario", "ruta": "/api/v1/admins/consulta-admin-por-usuario"},
+            {"nombre": "Consultar Orden", "ruta": "/api/v1/admins/consultar-orden/<Nro_orden>"},
+            {"nombre": "Consulta Admin por Usuario", "ruta": "/api/v1/admins/consulta-admin-por-usuario/<usuario>"},
             {"nombre": "Asignar Instalacion", "ruta": "/api/v1/admins/asignacion-instalacion"},
             {"nombre": "Crear Cliente", "ruta": "/api/v1/admins/crear-cliente"},
-            {"nombre": "Consultar Cliente", "ruta": "/api/v1/admins/consultar-cliente"},
-            {"nombre": "Actualizar Cliente", "ruta": "/api/v1/admins/actualizar-cliente"},
-            {"nombre": "Eliminar Cliente", "ruta": "/api/v1/admins/eliminar-cliente"},
-            {"nombre": "Consultar Contratista", "ruta": "/api/v1/admins/consultar-contratista"},
-            {"nombre": "Actualizar Contratista", "ruta": "/api/v1/admins/actualizar-contratista"},
-            {"nombre": "Eliminar Contratista", "ruta": "/api/v1/admins/eliminar-contratista"},
-            {"nombre": "Eliminar Orden instalacion", "ruta": "/api/v1/admins/eliminar-orden"},
+            {"nombre": "Consultar Cliente", "ruta": "/api/v1/admins/consultar-cliente/<ci_rif>"},
+            {"nombre": "Actualizar Cliente", "ruta": "/api/v1/admins/actualizar-cliente/<ci_rif>"},
+            {"nombre": "Eliminar Cliente", "ruta": "/api/v1/admins/eliminar-cliente/<ci_rif>"},
+            {"nombre": "Consultar Contratista", "ruta": "/api/v1/admins/consultar-contratista/<contratista>"},
+            {"nombre": "Actualizar Contratista", "ruta": "/api/v1/admins/actualizar-contratista/<ci_rif>"},
+            {"nombre": "Eliminar Contratista", "ruta": "/api/v1/admins/eliminar-contratista/<ci_rif>"},
+            {"nombre": "Eliminar Orden instalacion", "ruta": "/api/v1/admins/eliminar-orden/<int:Nro_orden>"},
             {"nombre": "Ver Ordenes de Instalacion", "ruta": "/api/v1/admins/ordenes"},
             {"nombre": "ordenes no autorizadas", "ruta": "/api/v1/admins/ordenes-no-autorizadas"},
-            {"nombre": "Autorizacion de clientes", "ruta": "/api/v1/admins/autorizacion-cliente"},
-            {"nombre": "Descargar PDF de Instalación", "ruta": "/descargar_pdf/<int:nro_orden>"},
+            {"nombre": "Autorizacion de clientes", "ruta": "/api/v1/admins/autorizacion-cliente/<Nro_orden>"},
+            {"nombre": "Descargar PDF de Instalación", "ruta": "/descargar_pdf/<Nro_orden>"},
             
         ]
     }
@@ -186,7 +186,7 @@ def get_app_estadisticas():
 
 
 #Consulta Numero de Orden 
-@admin_bp.route("/api/v1/admins/consulta-orden", methods=["GET"])
+@admin_bp.route("/api/v1/admins/consultar-orden/<Nro_orden>", methods=["GET"])
 @token_required
 @handle_errors
 def consult_NroOrden(): 
@@ -213,7 +213,7 @@ def consult_NroOrden():
 
 
 #Consulta Admin por usuario 
-@admin_bp.route("/api/v1/admins/consulta-admin-por-usuario", methods=["GET"])
+@admin_bp.route("/api/v1/admins/consulta-admin-por-usuario/<usuario>", methods=["GET"])
 @token_required
 @handle_errors
 def consult_adiminUsuario(): 
@@ -240,7 +240,7 @@ def consult_adiminUsuario():
 
 
 #Consulta Contratista 
-@admin_bp.route("/api/v1/admins/consulta-contratista", methods=["GET"])
+@admin_bp.route("/api/v1/admins/consulta-contratista/<contratista>", methods=["GET"])
 @token_required
 @handle_errors
 def consultaContratista(): 
@@ -267,7 +267,7 @@ def consultaContratista():
 
 
 #Actualizacion contratista
-@admin_bp.route("/api/v1/admins/actualizar-contratista", methods=["PUT"])
+@admin_bp.route("/api/v1/admins/actualizar-contratista/<ci_rif>", methods=["PUT"])
 @token_required
 @handle_errors
 def actualizarContratista(): 
@@ -311,7 +311,7 @@ def actualizarContratista():
     
 
 # Eliminar contratista  
-@admin_bp.route("/api/v1/admins/eliminar-contratista", methods=["DELETE"])
+@admin_bp.route("/api/v1/admins/eliminar-contratista/<ci_rif>", methods=["DELETE"])
 @token_required
 @handle_errors
 def eliminarContratista(): 
@@ -378,7 +378,7 @@ def crearCliente():
 
 
 #Consultar cliente
-@admin_bp.route("/api/v1/admins/consultar-cliente", methods=["GET"])
+@admin_bp.route("/api/v1/admins/consultar-cliente/<ci_rif>", methods=["GET"])
 @token_required
 @handle_errors
 def consultarCliente(): 
@@ -405,7 +405,7 @@ def consultarCliente():
     
 
 #Actualizar cliente
-@admin_bp.route("/api/v1/admins/actualizar-cliente", methods=["PUT"])
+@admin_bp.route("/api/v1/admins/actualizar-cliente/<ci_rif>", methods=["PUT"])
 @token_required
 @handle_errors
 def actualizarCliente(): 
@@ -445,7 +445,7 @@ def actualizarCliente():
 
 
 #Eliminar cliente
-@admin_bp.route("/api/v1/admins/eliminar-cliente", methods=["DELETE"])
+@admin_bp.route("/api/v1/admins/eliminar-cliente/<ci_rif>", methods=["DELETE"])
 @token_required
 @handle_errors
 def eliminarCliente(): 
@@ -474,7 +474,7 @@ def eliminarCliente():
 
 
 #Ruta para autorizar la entrada del cliente a la red
-@admin_bp.route("/api/v1/admins/autorizacion-cliente", methods=["PUT"])
+@admin_bp.route("/api/v1/admins/autorizacion-cliente/<Nro_orden>", methods=["PUT"])
 @token_required
 @handle_errors
 def autorizacion_cliente():
@@ -494,7 +494,7 @@ def autorizacion_cliente():
 
 
 #Ruta para eliminar una orden de instalacion
-@admin_bp.route("/api/v1/admins/eliminar-orden", methods=["DELETE"]) 
+@admin_bp.route("/api/v1/admins/eliminar-orden/<Nro_orden>", methods=["DELETE"]) 
 @token_required
 @handle_errors
 def eliminar_orden():
@@ -562,7 +562,7 @@ def instalaciones_no_autorizadas():
 
     
 # Ruta para descargar el PDF de instalación
-@admin_bp.route("/descargar_pdf/<int:nro_orden>", methods=['GET'])
+@admin_bp.route("/descargar_pdf/<Nro_orden>", methods=['GET'])
 @token_required
 @handle_errors
 def descargar_pdf(nro_orden):
