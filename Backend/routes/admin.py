@@ -49,10 +49,41 @@ def handle_errors(f):
 @handle_errors
 def login_admin():
     """
-    Ruta para que el administrador inicie sesión.
-    :return: Un token JWT si las credenciales son correctas.
-    :raises 400: Si faltan datos en la solicitud o los datos son inválidos.
-    :raises 401: Si las credenciales son incorrectas.
+    Iniciar sesión de administrador
+    ---
+    tags:
+      - Administradores
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              USUARIO:
+                type: string
+                example: admin1
+              CONTRASEÑA:
+                type: string
+                example: clave_segura
+    responses:
+      200:
+        description: Inicio de sesión exitoso, retorna un token JWT.
+        examples:
+          application/json: { "token": "eyJ0eXAiOiJKV1QiLCJhbGciOi..." }
+      400:
+        description: Datos inválidos o faltantes.
+        examples:
+          application/json: { "error": "Datos inválidos" }
+      401:
+        description: Usuario o contraseña incorrectos.
+        examples:
+          application/json: { "error": "Usuario o contraseña incorrectos" }
+      500:
+        description: Error interno del servidor.
+        examples:
+          application/json: { "error": "Error interno del servidor" }
+    
     """
     data = request.get_json()
 
@@ -94,8 +125,42 @@ def login_admin():
 @handle_errors
 def admin_menu():
     """
-    ruta para obtener el menu de opciones del administrador. 
-    :return: Un diccionario con las opciones disponibles para el administrador.
+     Obtener el menú de opciones del administrador
+    ---
+    tags:
+      - Administradores
+    security:
+      - ApiKeyAuth: []
+    responses:
+      200:
+        description: Menú de opciones disponible para el administrador.
+        examples:
+          application/json:
+            {
+              "opciones": [
+                {"nombre": "Crear Administrador", "ruta": "/api/v1/admins/crear-admin"},
+                {"nombre": "Consultar Estadísticas", "ruta": "/api/v1/admins/estadisticas"},
+                {"nombre": "Consultar Orden", "ruta": "/api/v1/admins/consultar-orden/<Nro_orden>"},
+                {"nombre": "Consulta Admin por Usuario", "ruta": "/api/v1/admins/consulta-admin-por-usuario/<usuario>"},
+                {"nombre": "Asignar Instalacion", "ruta": "/api/v1/admins/asignacion-instalacion"},
+                {"nombre": "Crear Cliente", "ruta": "/api/v1/admins/crear-cliente"},
+                {"nombre": "Consultar Cliente", "ruta": "/api/v1/admins/consultar-cliente/<ci_rif>"},
+                {"nombre": "Actualizar Cliente", "ruta": "/api/v1/admins/actualizar-cliente/<ci_rif>"},
+                {"nombre": "Eliminar Cliente", "ruta": "/api/v1/admins/eliminar-cliente/<ci_rif>"},
+                {"nombre": "Consultar Contratista", "ruta": "/api/v1/admins/consultar-contratista/<contratista>"},
+                {"nombre": "Actualizar Contratista", "ruta": "/api/v1/admins/actualizar-contratista/<ci_rif>"},
+                {"nombre": "Eliminar Contratista", "ruta": "/api/v1/admins/eliminar-contratista/<ci_rif>"},
+                {"nombre": "Eliminar Orden instalacion", "ruta": "/api/v1/admins/eliminar-orden/<int:Nro_orden>"},
+                {"nombre": "Ver Ordenes de Instalacion", "ruta": "/api/v1/admins/ordenes"},
+                {"nombre": "ordenes no autorizadas", "ruta": "/api/v1/admins/ordenes-no-autorizadas"},
+                {"nombre": "Autorizacion de clientes", "ruta": "/api/v1/admins/autorizacion-cliente/<Nro_orden>"},
+                {"nombre": "Descargar PDF de Instalación", "ruta": "/descargar_pdf/<Nro_orden>"}
+              ]
+            }
+      401:
+        description: Token no válido o no enviado.
+        examples:
+          application/json: { "error": "Token es requerido" }
     """
     menu = {
         "opciones": [
@@ -127,9 +192,54 @@ def admin_menu():
 @handle_errors
 def crearAdmin():
     """
-    Ruta para crear un administrador. 
-    :return: Un mensaje de exito si el administrador fue creado con exito. 
-    :raises 400: Si los datos pproporcionados son invalidos. 
+   Crear un nuevo administrador
+    ---
+    tags:
+      - Administradores
+    security:
+      - ApiKeyAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              ci_rif:
+                type: string
+                example: V12345678
+              nombre:
+                type: string
+                example: Juan Pérez
+              USUARIO:
+                type: string
+                example: admin1
+              CONTRASEÑA:
+                type: string
+                example: clave_segura
+              telefono:
+                type: string
+                example: "04141234567"
+              sucursal:
+                type: string
+                example: Sucursal Centro
+    responses:
+      201:
+        description: Administrador creado con éxito
+        examples:
+          application/json: { "message": "Administrador creado con éxito" }
+      400:
+        description: Datos inválidos o faltantes
+        examples:
+          application/json: { "error": "Datos inválidos" }
+      401:
+        description: Token no válido o no enviado
+        examples:
+          application/json: { "error": "Token es requerido" }
+      500:
+        description: Error interno del servidor
+        examples:
+          application/json: { "error": "Error al crear al administrador" }
     """
     data = request.get_json()
 
@@ -160,7 +270,43 @@ def crearAdmin():
 @handle_errors
 def asignaciones_instalaciones():
     """ 
-    Asigna un contratista a una orden de instalación."""
+    Asignar un contratista a una orden de instalación
+    ---
+    tags:
+      - Administradores
+    security:
+      - ApiKeyAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              Nro_orden:
+                type: integer
+                example: 123
+              contratista:
+                type: string
+                example: "contratista_prueba"
+    responses:
+      200:
+        description: Contratista asignado exitosamente a la orden.
+        examples:
+          application/json: { "message": "Contratista asignado exitosamente" }
+      400:
+        description: Datos inválidos o faltantes.
+        examples:
+          application/json: { "error": "Datos inválidos" }
+      401:
+        description: Token no válido o no enviado.
+        examples:
+          application/json: { "error": "Token es requerido" }
+      500:
+        description: Error interno del servidor.
+        examples:
+          application/json: { "error": "Error interno del servidor" }
+    """
     data = request.get_json()
     validation_error = validate_data(AsignacionInstalacionSchema(), data)
     if validation_error:
@@ -175,7 +321,33 @@ def asignaciones_instalaciones():
 @handle_errors
 def get_app_estadisticas():
     """
-    Ruta para obtener estadísticas generales de la aplicación.
+    Obtener estadísticas generales de la aplicación
+    ---
+    tags:
+      - Administradores
+    security:
+      - ApiKeyAuth: []
+    responses:
+      200:
+        description: Estadísticas generales obtenidas exitosamente.
+        examples:
+          application/json:
+            {
+              "total_administradores": 5,
+              "total_clientes": 120,
+              "total_contratistas": 8,
+              "ordenes_instalacion": 45,
+              "ordenes_finalizadas": 30,
+              "ordenes_pendientes": 15
+            }
+      401:
+        description: Token no válido o no enviado.
+        examples:
+          application/json: { "error": "Token es requerido" }
+      500:
+        description: Error interno del servidor.
+        examples:
+          application/json: { "error": "Error interno del servidor" }
     """
     try:
         stats = get_estadisticas()
@@ -191,11 +363,43 @@ def get_app_estadisticas():
 @handle_errors
 def consult_NroOrden(): 
     """
-    Ruta para consultar una orden de instalacion por su numero de orden. 
-    :queyparam Nro_orden: Numero de orden a consultar (en los parametros de URL). 
-    :return: Los detalles de la orden si se encuentra. 
-    :raises 400: Si no se proporciona el numero de orden. 
-    :raises 404: Si no se encuentra la orden.
+    Consultar una orden de instalación por su número de orden
+    ---
+    tags:
+      - Administradores
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - in: path
+        name: Nro_orden
+        required: true
+        schema:
+          type: integer
+        description: Número de orden a consultar
+    responses:
+      200:
+        description: Detalles de la orden encontrados
+        examples:
+          application/json:
+            {
+              "Nro_orden": 123,
+              "cliente": "Juan Pérez",
+              "contratista": "contratista_prueba",
+              "estado": "En Proceso",
+              "fecha": "2024-06-20T10:00:00"
+            }
+      400:
+        description: El número de orden es requerido
+        examples:
+          application/json: { "error": "El numero de orden es requerido" }
+      404:
+        description: Orden no encontrada
+        examples:
+          application/json: { "error": "Orden no encontrada" }
+      500:
+        description: Error interno del servidor
+        examples:
+          application/json: { "error": "Error interno del servidor" }
     """
     #obtener el numero de orden de los parametros de la URL 
     nro_orden = request.args.get("Nro_orden")
@@ -218,11 +422,44 @@ def consult_NroOrden():
 @handle_errors
 def consult_adiminUsuario(): 
     """
-    Ruta para consultar al administrador por el usuario. 
-    :queyparam usuario: Nombre del usuario del administrador a consultar (en los parametros de URL). 
-    :return: Los detalles del administrador si se encuentra. 
-    :raises 400: Si no se proporciona el nombre del usuario. 
-    :raises 404: Si no se encuentra el administrador.
+   Consultar administrador por nombre de usuario
+    ---
+    tags:
+      - Administradores
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - in: path
+        name: usuario
+        required: true
+        schema:
+          type: string
+        description: Nombre de usuario del administrador a consultar
+    responses:
+      200:
+        description: Detalles del administrador encontrados
+        examples:
+          application/json:
+            {
+              "ci_rif": "V12345678",
+              "nombre": "Juan Pérez",
+              "USUARIO": "admin1",
+              "CONTRASEÑA": "clave_segura",
+              "telefono": "04141234567",
+              "sucursal": "Sucursal Centro"
+            }
+      400:
+        description: El nombre del usuario es requerido
+        examples:
+          application/json: { "error": "El nombre del usuario es requerido" }
+      404:
+        description: Administrador no encontrado
+        examples:
+          application/json: { "error": "Administrador no encontrado" }
+      500:
+        description: Error interno del servidor
+        examples:
+          application/json: { "error": "Error interno del servidor" }
     """
     #obtener el nombre del administrador de los parametros de la URL 
     usuario = request.args.get("USUARIO")
@@ -245,11 +482,48 @@ def consult_adiminUsuario():
 @handle_errors
 def consultaContratista(): 
     """
-    Ruta para la consultar a los contratistas con la cedula de identidad o rif. 
-    :queryparam ci_rif: Cedula de identidad o rif del contratista a consultar (en los parametros URL). 
-    :return: Los detalles del contratista si se encuentra. 
-    :raises 400: Si no se proporciona cedula de identidad o rif del contratista.
-    :raises 404: Si no se encuentra el contratista. 
+    Consultar contratista por cédula de identidad o RIF
+    ---
+    tags:
+      - Administradores
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - in: path
+        name: contratista
+        required: true
+        schema:
+          type: string
+        description: Cédula de identidad o RIF del contratista a consultar
+    responses:
+      200:
+        description: Detalles del contratista encontrados
+        examples:
+          application/json:
+            {
+              "ci_rif": "V12345678",
+              "nombre": "Contratista Ejemplo",
+              "telefono": "04141234567",
+              "USUARIO": "contratista1",
+              "correo": "correo@ejemplo.com",
+              "sucursal": "Sucursal Centro",
+              "cuadrillas": 3,
+              "cuadrilla1": "Cuadrilla A",
+              "cuadrilla2": "Cuadrilla B",
+              "cuadrilla3": "Cuadrilla C"
+            }
+      400:
+        description: La cédula de identidad o RIF es requerida
+        examples:
+          application/json: { "error": "La cédula de identidad o RIF es requerido" }
+      404:
+        description: Contratista no encontrado
+        examples:
+          application/json: { "error": "Contratista no encontrado" }
+      500:
+        description: Error interno del servidor
+        examples:
+          application/json: { "error": "Error interno del servidor" }
     """
 #Obtener la cedula de identidad o rif del contratistas. 
     keycontratista = request.args.get("ci_rif")
@@ -272,10 +546,98 @@ def consultaContratista():
 @handle_errors
 def actualizarContratista(): 
     """
-    ACtualiza los datos de un contratista. 
-    :return: Un mensaje de exito si el contratista fue actualizado con exito. 
-    :raises 400: Si los datos porporcionados son validos. 
-    :raises 404: Si los contratista no se encuentra. 
+   Actualizar los datos de un contratista
+    ---
+    tags:
+      - Administradores
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - in: path
+        name: ci_rif
+        required: true
+        schema:
+          type: string
+        description: Cédula de identidad o RIF del contratista a actualizar
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              nombre:
+                type: string
+                example: "Contratista Actualizado"
+              telefono:
+                type: string
+                example: "04123456789"
+              USUARIO:
+                type: string
+                example: "usuario_actualizado"
+              CONTRASEÑA:
+                type: string
+                example: "clave_actualizada"
+              correo:
+                type: string
+                example: "correo@ejemplo.com"
+              sucursal:
+                type: string
+                example: "Sucursal Actualizada"
+              cuadrillas:
+                type: integer
+                example: 4
+              cuadrilla1:
+                type: string
+                example: "Cuadrilla 1 Actualizada"
+              cuadrilla2:
+                type: string
+                example: "Cuadrilla 2 Actualizada"
+              cuadrilla3:
+                type: string
+                example: "Cuadrilla 3 Actualizada"
+              cuadrilla4:
+                type: string
+                example: "Cuadrilla 4 Actualizada"
+              cuadrilla5:
+                type: string
+                example: "Cuadrilla 5 Actualizada"
+              cuadrilla6:
+                type: string
+                example: "Cuadrilla 6 Actualizada"
+              cuadrilla7:
+                type: string
+                example: "Cuadrilla 7 Actualizada"
+              cuadrilla8:
+                type: string
+                example: "Cuadrilla 8 Actualizada"
+              cuadrilla9: 
+                type: string
+                example: "Cuadrilla 9 Actualizada"
+              cuadrilla10:
+                type: string
+                example: "Cuadrilla 10 Actualizada"
+    responses:
+      200:
+        description: Contratista actualizado con éxito.
+        examples:
+          application/json: { "message": "Contratista actualizado con exito.", "details": { } }
+      400:
+        description: Datos inválidos o faltantes.
+        examples:
+          application/json: { "error": "Datos inválidos" }
+      404:
+        description: Contratista no encontrado.
+        examples:
+          application/json: { "error": "Contratista no encontrado" }
+      401:
+        description: Token no válido o no enviado.
+        examples:
+          application/json: { "error": "Token es requerido" }
+      500:
+        description: Error interno del servidor.
+        examples:
+          application/json: { "error": "Error interno del servidor" } 
     """
     data = request.get_json()
 
@@ -297,6 +659,12 @@ def actualizarContratista():
     cuadrilla2 = data.get("cuadrilla2")
     cuadrilla3 = data.get("cuadrilla3")
     cuadrilla4 = data.get("cuadrilla4")
+    cuadrilla5 = data.get("cuadrilla5")
+    cuadrilla6 = data.get("cuadrilla6")
+    cuadrilla7 = data.get("cuadrilla7")
+    cuadrilla8 = data.get("cuadrilla8") 
+    cuadrilla9 = data.get("cuadrilla9")
+    cuadrilla10 = data.get("cuadrilla10")
 
     try: 
         #Verificar si el contratista existe.
@@ -316,12 +684,41 @@ def actualizarContratista():
 @handle_errors
 def eliminarContratista(): 
     """
-     Ruta para eliminar un contratista.
-
-    :queryparam ci_rif: Cédula de identidad o RIF del contratista a eliminar (en los parámetros de la URL).
-    :return: Un mensaje de éxito si el contratista se elimina correctamente.
-    :raises 400: Si no se proporciona la cédula de identidad o RIF.
-    :raises 404: Si el contratista no se encuentra.
+     Eliminar un contratista por cédula de identidad o RIF
+    ---
+    tags:
+      - Administradores
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - in: path
+        name: ci_rif
+        required: true
+        schema:
+          type: string
+        description: Cédula de identidad o RIF del contratista a eliminar
+    responses:
+      200:
+        description: Contratista eliminado con éxito.
+        examples:
+          application/json: { "message": "Contratista eliminado con éxito.", "details": {} }
+      400:
+        description: La cédula de identidad o RIF es requerida.
+        examples:
+          application/json: { "error": "La cédula de identidad o RIF es requerida" }
+      404:
+        description: Contratista no encontrado.
+        examples:
+          application/json: { "error": "Contratista no encontrado" }
+      401:
+        description: Token no válido o no enviado.
+        examples:
+          application/json: { "error": "Token es requerido" }
+      500:
+        description: Error interno del servidor.
+        examples:
+          application/json: { "error": "Error interno del servidor" }
+    
 
     """
     # Obtener la cédula de identidad o RIF del contratista de los parámetros de la URL
@@ -348,9 +745,60 @@ def eliminarContratista():
 @handle_errors
 def crearCliente(): 
     """
-    Ruta para crear un cliente. 
-    :return: Un mensaje de exito si el cliente fue creado con exito.
-    :raises 400: Si los datos proporcionados son invalidos. 
+    Crear un nuevo cliente
+    ---
+    tags:
+      - Administradores
+    security:
+      - ApiKeyAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              Nro_cuenta:
+                type: string
+                example: "1234567890"
+              nombre:
+                type: string
+                example: "Cliente Prueba"
+              ci_rif:
+                type: string
+                example: "V12345678"
+              telefono:
+                type: string
+                example: "04141234567"
+              direccion:
+                type: string
+                example: "Calle Falsa 123"
+              municipio:
+                type: string
+                example: "Municipio Prueba"
+              sector:
+                type: string
+                example: "Sector Prueba"
+              plan_contrato:
+                type: string
+                example: "Plan Basico 200"
+    responses:
+      201:
+        description: Cliente creado con éxito
+        examples:
+          application/json: { "message": "Cliente creado con éxito" }
+      400:
+        description: Datos inválidos o faltantes
+        examples:
+          application/json: { "error": "Datos inválidos" }
+      401:
+        description: Token no válido o no enviado
+        examples:
+          application/json: { "error": "Token es requerido" }
+      500:
+        description: Error interno del servidor
+        examples:
+          application/json: { "error": "Error al crear al cliente" }
     """
     data = request.get_json()
 
@@ -383,11 +831,50 @@ def crearCliente():
 @handle_errors
 def consultarCliente(): 
     """
-    Ruta para consultar un cliente por su numero de cuenta. 
-    :queryparam Nro_cuenta: Numero de cuenta del cliente a consultar (en los parametros de URL). 
-    :return: Los detalles del cliente si se encuentra. 
-    :raises 400: Si no se proporciona el numero de cuenta. 
-    :raises 404: Si no se encuentra el cliente.
+    Consultar un cliente por su cédula de identidad o RIF
+    ---
+    tags:
+      - Administradores
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - in: path
+        name: ci_rif
+        required: true
+        schema:
+          type: string
+        description: Cédula de identidad o RIF del cliente a consultar
+    responses:
+      200:
+        description: Detalles del cliente encontrados
+        examples:
+          application/json:
+            {
+              "Nro_cuenta": "1234567890",
+              "nombre": "Cliente Prueba",
+              "ci_rif": "V12345678",
+              "telefono": "04141234567",
+              "direccion": "Calle Falsa 123",
+              "municipio": "Municipio Prueba",
+              "sector": "Sector Prueba",
+              "plan_contrato": "Plan Basico 200"
+            }
+      400:
+        description: La cédula de identidad o RIF es requerida
+        examples:
+          application/json: { "error": "La cédula de identidad o RIF es requerida" }
+      404:
+        description: Cliente no encontrado
+        examples:
+          application/json: { "error": "Cliente no encontrado" }
+      401:
+        description: Token no válido o no enviado
+        examples:
+          application/json: { "error": "Token es requerido" }
+      500:
+        description: Error interno del servidor
+        examples:
+          application/json: { "error": "Error interno del servidor" }
     """
     #Obtener el numero de cuenta de los parametros de la URL 
     nro_cuenta = request.args.get("Nro_cuenta")
@@ -410,10 +897,71 @@ def consultarCliente():
 @handle_errors
 def actualizarCliente(): 
     """
-    Ruta para actualizar los datos de un cliente. 
-    :return: Un mensaje de exito si el cliente fue actualizado con exito. 
-    :raises 400: Si los datos proporcionados son invalidos. 
-    :raises 404: Si el cliente no se encuentra. 
+   Actualizar los datos de un cliente
+    ---
+    tags:
+      - Administradores
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - in: path
+        name: ci_rif
+        required: true
+        schema:
+          type: string
+        description: Cédula de identidad o RIF del cliente a actualizar
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              Nro_cuenta:
+                type: string
+                example: "1234567890"
+              nombre:
+                type: string
+                example: "Cliente Actualizado"
+              ci_rif:
+                type: string
+                example: "V12345678"
+              telefono:
+                type: string
+                example: "04141234567"
+              direccion:
+                type: string
+                example: "Calle Nueva 456"
+              municipio:
+                type: string
+                example: "Municipio Actualizado"
+              sector:
+                type: string
+                example: "Sector Actualizado"
+              plan_contrato:
+                type: string
+                example: "Plan Avanzado 500"
+    responses:
+      200:
+        description: Cliente actualizado con éxito.
+        examples:
+          application/json: { "message": "Cliente actualizado con exito.", "details": {} }
+      400:
+        description: Datos inválidos o faltantes.
+        examples:
+          application/json: { "error": "Datos inválidos" }
+      404:
+        description: Cliente no encontrado.
+        examples:
+          application/json: { "error": "Cliente no encontrado" }
+      401:
+        description: Token no válido o no enviado.
+        examples:
+          application/json: { "error": "Token es requerido" }
+      500:
+        description: Error interno del servidor.
+        examples:
+          application/json: { "error": "Error interno del servidor" }
     """
     data = request.get_json()
 
@@ -450,11 +998,40 @@ def actualizarCliente():
 @handle_errors
 def eliminarCliente(): 
     """
-    Ruta para eliminar un cliente. 
-    :queryparam Nro_cuenta: Numero de cuenta del cliente a eliminar (en los parametros de URL). 
-    :return: Un mensaje de exito si el cliente fue eliminado con exito. 
-    :raises 400: Si no se proporciona el numero de cuenta. 
-    :raises 404: Si el cliente no se encuentra. 
+    Eliminar un cliente por su cédula de identidad o RIF
+    ---
+    tags:
+      - Administradores
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - in: path
+        name: ci_rif
+        required: true
+        schema:
+          type: string
+        description: Cédula de identidad o RIF del cliente a eliminar
+    responses:
+      200:
+        description: Cliente eliminado con éxito.
+        examples:
+          application/json: { "message": "Cliente eliminado con exito.", "details": {} }
+      400:
+        description: La cédula de identidad o RIF es requerida.
+        examples:
+          application/json: { "error": "La cédula de identidad o RIF es requerida" }
+      404:
+        description: Cliente no encontrado.
+        examples:
+          application/json: { "error": "Cliente no encontrado" }
+      401:
+        description: Token no válido o no enviado.
+        examples:
+          application/json: { "error": "Token es requerido" }
+      500:
+        description: Error interno del servidor.
+        examples:
+          application/json: { "error": "Error interno del servidor" }
     """
     #Obtener el numero de cuenta de los parametros de la URL 
     nro_cuenta = request.args.get("Nro_cuenta")
@@ -479,8 +1056,49 @@ def eliminarCliente():
 @handle_errors
 def autorizacion_cliente():
     """
-    Ruta para realizar y confirmar la autorizacion de la entrada del cliente a la red. 
-    Espera un JSON con Nro_orden y contratista.
+    Autorizar la entrada del cliente a la red
+    ---
+    tags:
+      - Administradores
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - in: path
+        name: Nro_orden
+        required: true
+        schema:
+          type: integer
+        description: Número de orden de instalación a autorizar
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              Nro_orden:
+                type: integer
+                example: 123
+              contratista:
+                type: string
+                example: "contratista_prueba"
+    responses:
+      200:
+        description: Autorización realizada con éxito.
+        examples:
+          application/json: { "message": "Cliente autorizado para la red" }
+      400:
+        description: Nro_orden y contratista son requeridos o datos inválidos.
+        examples:
+          application/json: { "error": "Nro_orden y contratista son requeridos" }
+      401:
+        description: Token no válido o no enviado.
+        examples:
+          application/json: { "error": "Token es requerido" }
+      500:
+        description: Error interno del servidor.
+        examples:
+          application/json: { "error": "Error interno del servidor" }
     """
     data = request.get_json()
     nro_orden = data.get("Nro_orden")
@@ -499,11 +1117,46 @@ def autorizacion_cliente():
 @handle_errors
 def eliminar_orden():
     """
-    Ruta para eliminar una orden de instalación.
-    :queryparam Nro_orden: Número de orden a eliminar (en los parámetros de la URL).
-    :return: Un mensaje de éxito si la orden fue eliminada con éxito.
-    :raises 400: Si no se proporciona el número de orden.
-    :raises 404: Si no se encuentra la orden.
+   Eliminar una orden de instalación por su número de orden
+    ---
+    tags:
+      - Administradores
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - in: path
+        name: Nro_orden
+        required: true
+        schema:
+          type: integer
+        description: Número de orden a eliminar
+      - in: query
+        name: Nro_cuenta
+        required: true
+        schema:
+          type: string
+        description: Número de cuenta asociado a la orden
+    responses:
+      200:
+        description: Orden eliminada con éxito.
+        examples:
+          application/json: { "message": "Orden eliminada con éxito.", "details": {} }
+      400:
+        description: El número de orden o el número de cuenta es requerido.
+        examples:
+          application/json: { "error": "El número de orden es requerido o el numero de cuenta" }
+      404:
+        description: Orden no encontrada.
+        examples:
+          application/json: { "error": "Orden no encontrada" }
+      401:
+        description: Token no válido o no enviado.
+        examples:
+          application/json: { "error": "Token es requerido" }
+      500:
+        description: Error interno del servidor.
+        examples:
+          application/json: { "error": "Error interno del servidor" }
     """
     nro_orden = request.args.get("Nro_orden")
     nro_cuenta = request.args.get("Nro_cuenta")
@@ -529,9 +1182,41 @@ def eliminar_orden():
 @handle_errors
 def ver_ordenes():
     """
-    Ruta para ver una lista de ordenes de instalacion.
-    :return: Una lista de ordenes de instalacion.
-    :raises 500: Si ocurre un error interno del servidor.
+     Ver lista de órdenes de instalación
+    ---
+    tags:
+      - Administradores
+    security:
+      - ApiKeyAuth: []
+    responses:
+      200:
+        description: Lista de órdenes de instalación obtenida exitosamente.
+        examples:
+          application/json:
+            [
+              {
+                "Nro_orden": 123,
+                "cliente": "Juan Pérez",
+                "contratista": "contratista_prueba",
+                "estado": "En Proceso",
+                "fecha": "2024-06-20T10:00:00"
+              },
+              {
+                "Nro_orden": 124,
+                "cliente": "Ana Gómez",
+                "contratista": "contratista2",
+                "estado": "Finalizada",
+                "fecha": "2024-06-19T09:00:00"
+              }
+            ]
+      401:
+        description: Token no válido o no enviado.
+        examples:
+          application/json: { "error": "Token es requerido" }
+      500:
+        description: Error interno del servidor.
+        examples:
+          application/json: { "error": "Error interno del servidor" }
     """
     try:
         result = ordenes_instalacion()
@@ -549,8 +1234,34 @@ def ver_ordenes():
 @handle_errors
 def instalaciones_no_autorizadas():
     """
-    Ruta donde se visualiza todas las ordenes de instalación no autorizadas.
-    Espera lista de ordenes.
+    Ver lista de órdenes de instalación no autorizadas
+    ---
+    tags:
+      - Administradores
+    security:
+      - ApiKeyAuth: []
+    responses:
+      200:
+        description: Lista de órdenes de instalación no autorizadas obtenida exitosamente.
+        examples:
+          application/json:
+            [
+              {
+                "Nro_orden": 125,
+                "cliente": "Carlos Ruiz",
+                "contratista": "contratista3",
+                "estado": "En proceso",
+                "fecha": "2024-06-18T15:00:00"
+              }
+            ]
+      401:
+        description: Token no válido o no enviado.
+        examples:
+          application/json: { "error": "Token es requerido" }
+      500:
+        description: Error interno del servidor.
+        examples:
+          application/json: { "error": "Error interno del servidor" }
    """
     try:
         result = ordenes_no_autorizadas()
@@ -567,10 +1278,39 @@ def instalaciones_no_autorizadas():
 @handle_errors
 def descargar_pdf(nro_orden):
     """
-    Ruta para descargar el PDF de instalación.
-    :param nro_orden: Número de orden de instalación.
-    :return: El archivo PDF de instalación.
-    :raises 404: Si no existe el PDF o no hay datos para generarlo.
+   Descargar el PDF de la orden de instalación
+    ---
+    tags:
+      - Administradores
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - in: path
+        name: Nro_orden
+        required: true
+        schema:
+          type: integer
+        description: Número de orden de instalación para generar o descargar el PDF
+    responses:
+      200:
+        description: PDF generado y descargado exitosamente.
+        content:
+          application/pdf:
+            schema:
+              type: string
+              format: binary
+      404:
+        description: No existe la orden o no hay datos para generar el PDF.
+        examples:
+          application/json: { "error": "No existe la orden o no hay datos para generar el PDF" }
+      401:
+        description: Token no válido o no enviado.
+        examples:
+          application/json: { "error": "Token es requerido" }
+      500:
+        description: Error interno del servidor.
+        examples:
+          application/json: { "error": "Error interno del servidor" }
     """
     ruta_pdf = f"orden_instalacion_{nro_orden}.pdf"
     if not os.path.exists(ruta_pdf):

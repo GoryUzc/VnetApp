@@ -14,8 +14,47 @@ clients_bp = Blueprint("clients", __name__)
 @clients_bp.route("/api/v1/clients/autenticacion", methods=["POST"])
 def autentic_client_route():
     """
-    Ruta para autenticar al cliente en la base de datos.
-    :return: Datos del cliente o mensaje de error.
+    Autenticar cliente por cédula de identidad o RIF
+    ---
+    tags:
+      - Clientes
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              ci_rif:
+                type: string
+                example: V12345678
+    responses:
+      200:
+        description: Cliente autenticado exitosamente.
+        examples:
+          application/json:
+            {
+              "Nro_cuenta": "1234567890",
+              "nombre": "Cliente Prueba",
+              "ci_rif": "V12345678",
+              "telefono": "04141234567",
+              "direccion": "Calle Falsa 123",
+              "municipio": "Municipio Prueba",
+              "sector": "Sector Prueba",
+              "plan_contrato": "Plan Basico 200"
+            }
+      400:
+        description: Datos inválidos o faltantes.
+        examples:
+          application/json: { "error": "Datos inválidos" }
+      404:
+        description: Cliente no encontrado.
+        examples:
+          application/json: { "error": "Cliente no encontrado" }
+      500:
+        description: Error interno del servidor.
+        examples:
+          application/json: { "error": "Error interno del servidor" }
 
     """
     data = request.get_json()
@@ -37,8 +76,49 @@ def autentic_client_route():
 # Ruta para crear una orden de instalación.
 @clients_bp.route("/api/v1/clients/orden", methods=["POST"])
 def crear_orden():
-    """Ruta para crear una orden de instalación.
-    :return: Mensaje de éxito o error.  
+    """
+   Crear una orden de instalación
+    ---
+    tags:
+      - Clientes
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              Nro_cuenta:
+                type: string
+                example: "1234567890"
+              fecha_hora1:
+                type: string
+                example: "2023-10-01T10:00:00"
+              fecha_hora2:
+                type: string
+                example: "2023-10-01T12:00:00"
+              latitud:
+                type: number
+                example: 10.123456
+              longitud:
+                type: number
+                example: -64.123456
+              comentario:
+                type: string
+                example: "Instalación de servicio"
+    responses:
+      201:
+        description: Orden creada exitosamente
+        examples:
+          application/json: { "message": "Orden creada exitosamente", "Nro_orden": 1 }
+      400:
+        description: Datos inválidos o faltantes
+        examples:
+          application/json: { "error": "Datos inválidos" }
+      500:
+        description: Error interno del servidor
+        examples:
+          application/json: { "error": "Error interno del servidor" }
     """
     data = request.get_json()
     validation_error = validate_data(OrderSchema(), data)
@@ -66,13 +146,56 @@ def crear_orden():
             "route": request.path
         }), 500
 
+
+# Ruta para consultar la orden de instalación de un cliente.
 @clients_bp.route("/api/v1/clients/consulta-orden/<Nro_orden>", methods=["GET"])
 def consulta_cliente_orden(Nro_orden):
     """
-    Ruta para consultar la orden de instalación de un cliente.
-    :param Nro_cuenta: número de cuenta del cliente.
-    :param Nro_orden: número de orden de instalación.
-    :return: Datos de la orden o mensaje de error.
+    Consultar la orden de instalación de un cliente
+    ---
+    tags:
+      - Clientes
+    parameters:
+      - in: path
+        name: Nro_orden
+        required: true
+        schema:
+          type: string
+        description: Número de orden de instalación a consultar
+      - in: query
+        name: Nro_cuenta
+        required: false
+        schema:
+          type: string
+        description: Número de cuenta del cliente (opcional)
+    responses:
+      200:
+        description: Datos de la orden encontrados
+        examples:
+          application/json:
+            {
+              "Nro_orden": "1",
+              "Nro_cuenta": "1234567890",
+              "fecha_hora1": "2023-10-01T10:00:00",
+              "fecha_hora2": "2023-10-01T12:00:00",
+              "latitud": 10.123456,
+              "longitud": -64.123456,
+              "comentario": "Instalación de servicio",
+              "estado": "Asignada"
+              "contratista": "Contratista Ejemplo"
+            }
+         400:
+        description: Se requiere Nro_cuenta o Nro_orden
+        examples:
+          application/json: { "error": "Se requiere Nro_cuenta o Nro_orden" }
+      404:
+        description: Orden no encontrada
+        examples:
+          application/json: { "error": "Orden no encontrada" }
+      500:
+        description: Error interno del servidor
+        examples:
+          application/json: { "error": "Error interno del servidor" }    
     """
     Nro_cuenta = request.args.get("Nro_cuenta")
     Nro_orden = request.args.get("Nro_orden")

@@ -74,6 +74,12 @@ class UpdateContratistaSchema(Schema):
     cuadrilla2 = fields.Str(required=True, validate=length_1_100)
     cuadrilla3 = fields.Str(required=True, validate=length_1_100)
     cuadrilla4 = fields.Str(required=True, validate=length_1_100)
+    cuadrilla5 = fields.Str(required=True, validate=length_1_100)
+    cuadrilla6 = fields.Str(required=True, validate=length_1_100)
+    cuadrilla7 = fields.Str(required=True, validate=length_1_100)
+    cuadrilla8 = fields.Str(required=True, validate=length_1_100)
+    cuadrilla9 = fields.Str(required=True, validate=length_1_100)
+    cuadrilla10 = fields.Str(required=True, validate=length_1_100)
 
 class LoginSchema(Schema):
     USUARIO = fields.Str(required=True)

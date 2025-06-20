@@ -53,9 +53,84 @@ def handle_errors(f):
 @handle_errors
 def create_contrator():
     """
-    Endpoint para crear un nuevo contratista.
-    :return: Un mensaje de éxito o error.
-    :raises 400: Si los datos son inválidos o faltan campos requeridos.
+    Crear un nuevo contratista
+    ---
+    tags:
+      - Contratistas
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              ci_rif:
+                type: string
+                example: "V12345678"
+              nombre:
+                type: string
+                example: "Contratista Ejemplo"
+              USUARIO:
+                type: string
+                example: "contratista1"
+              CONTRASEÑA:
+                type: string
+                example: "clave_segura"
+              telefono:
+                type: string
+                example: "04141234567"
+              correo:
+                type: string
+                example: "correo@ejemplo.com"
+              sucursal:
+                type: string
+                example: "Sucursal Centro"
+              cuadrillas:
+                type: integer
+                example: 3
+              cuadrilla1:
+                type: string
+                example: "Cuadrilla A"
+              cuadrilla2:
+                type: string
+                example: "Cuadrilla B"
+              cuadrilla3:
+                type: string
+                example: "Cuadrilla C"
+                cuadrilla4:
+                type: string
+                example: "Cuadrilla D"
+                cuadrilla5:
+                type: string
+                example: "Cuadrilla E"
+                cuadrilla6:
+                type: string
+                example: "Cuadrilla F"
+                cuadrilla7:
+                type: string
+                example: "Cuadrilla G"
+                cuadrilla8:
+                type: string
+                example: "Cuadrilla H"
+                cuadrilla9:
+                type: string    
+                example: "Cuadrilla I"
+                cuadrilla10:
+                type: string
+                example: "Cuadrilla J"
+    responses:
+      201:
+        description: Contratista creado exitosamente
+        examples:
+          application/json: { "message": "Contratista creado exitosamente", "contrator": { } }
+      400:
+        description: Datos inválidos o faltantes
+        examples:
+          application/json: { "error": "Datos inválidos" }
+      500:
+        description: Error interno del servidor
+        examples:
+          application/json: { "error": "Error interno del servidor" }
     """
     data = request.json
     try:
@@ -71,10 +146,40 @@ def create_contrator():
 @handle_errors
 def login_contrator():
     """
-    Ruta para que el contratista inicie sesión.
-    :return: Un token JWT si las credenciales son correctas.
-    :raises 400: Si faltan datos en la solicitud o los datos son inválidos.
-    :raises 401: Si las credenciales son incorrectas.
+    Iniciar sesión de contratista
+    ---
+    tags:
+      - Contratistas
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              USUARIO:
+                type: string
+                example: "contratista1"
+              CONTRASEÑA:
+                type: string
+                example: "clave_segura"
+    responses:
+      200:
+        description: Inicio de sesión exitoso, retorna un token JWT.
+        examples:
+          application/json: { "token": "eyJ0eXAiOiJKV1QiLCJhbGciOi..." }
+      400:
+        description: Datos inválidos o faltantes.
+        examples:
+          application/json: { "error": "Datos inválidos" }
+      401:
+        description: Usuario o contraseña incorrectos.
+        examples:
+          application/json: { "error": "Usuario o contraseña incorrectos" }
+      500:
+        description: Error interno del servidor.
+        examples:
+          application/json: { "error": "Error interno del servidor" }
     """
     data = request.get_json()
 
@@ -116,8 +221,37 @@ def login_contrator():
 @handle_errors
 def contratista_menu():
     """
-    Ruta para obtener el menu de opciones del contratista. 
-    :return: Un diccionario con las opciones del contratista. 
+   Obtener el menú de opciones del contratista
+    ---
+    tags:
+      - Contratistas
+    security:
+      - ApiKeyAuth: []
+    responses:
+      200:
+        description: Menú de opciones disponible para el contratista.
+        examples:
+          application/json:
+            {
+              "opciones": [
+                {"nombre": "instalaciones disponibles", "ruta": "/api/v1/contrators/installations"},
+                {"nombre": "instalaciones asignadas", "ruta": "/api/v1/contrators/assigned_installations/"},
+                {"nombre": "tomar instalacion", "ruta": "/api/v1/contrators/take_installations"},
+                {"nombre": "iniciar instalacion", "ruta": "/api/v1/contrators/init_installation"},
+                {"nombre": "finalizar instalacion", "ruta": "/api/v1/contrators/finish_installation"},
+                {"nombre": "orden de instalacion", "ruta": "/api/v1/contrators/order_installation"},
+                {"nombre": "datos de instalacion", "ruta": "/api/v1/contrators/data_installation"},
+                {"nombre": "generar PDF de instalacion", "ruta": "/api/v1/contrators/generate_pdf_installation"}
+              ]
+            }
+      401:
+        description: Token no válido o no enviado.
+        examples:
+          application/json: { "error": "Token es requerido" }
+      500:
+        description: Error interno del servidor.
+        examples:
+          application/json: { "error": "Error interno del servidor" } 
     """
     menu = {
         "opciones": 
@@ -141,8 +275,46 @@ def contratista_menu():
 @handle_errors
 def get_installations():
     """
-    Ruta para obtener todas las instalaciones disponibles para el contratista.
-    :return: Una lista de instalaciones disponibles.
+     Obtener todas las instalaciones disponibles para el contratista
+    ---
+    tags:
+      - Contratistas
+    security:
+      - ApiKeyAuth: []
+    responses:
+      200:
+        description: Lista de instalaciones disponibles obtenida exitosamente.
+        examples:
+          application/json:
+            {
+              "installations": [
+                {
+                  "Nro_orden": 101,
+                  "cliente": "Juan Pérez",
+                  "direccion": "Calle Falsa 123",
+                  "estado": "Pendiente",
+                  "fecha_programada1": "2024-06-21T09:00:00"
+                  "fecha_programada2": "2024-06-21T11:00:00"
+                  "comentario_cliente": "Instalación de servicio de internet"
+                },
+                {
+                  "Nro_orden": 102,
+                  "cliente": "Ana Gómez",
+                  "direccion": "Av. Principal 456",
+                  "estado": "Pendiente",
+                  "fecha_programada1": "2024-06-22T14:00:00"
+                  "fecha_programada2": "2024-06-22T16:00:00"
+                }
+              ]
+            }
+      401:
+        description: Token no válido o no enviado.
+        examples:
+          application/json: { "error": "Token es requerido" }
+      500:
+        description: Error interno del servidor.
+        examples:
+          application/json: { "error": "Error interno del servidor" }
     """
     installations = get_all_installations()
     return jsonify({"installations": installations}), 200
@@ -154,8 +326,47 @@ def get_installations():
 @handle_errors  
 def get_assigned_installations():
     """
-    Ruta para obtener las instalaciones asignadas al contratista.
-    :return: Una lista de instalaciones asignadas.
+    Obtener las instalaciones asignadas al contratista autenticado
+    ---
+    tags:
+      - Contratistas
+    security:
+      - ApiKeyAuth: []
+    responses:
+      200:
+        description: Lista de instalaciones asignadas obtenida exitosamente.
+        examples:
+          application/json:
+            {
+              "assigned_installations": [
+                {
+                  "Nro_orden": 201,
+                  "cliente": "Pedro López",
+                  "direccion": "Calle 1, Edif. Azul",
+                  "estado": "Asignada",
+                  "fecha_programada1": "2024-06-22T10:00:00"
+                  "fecha_programada2": "2024-06-22T12:00:00"
+                  "comentario_cliente": "Instalación de servicio de televisión"
+                },
+                {
+                  "Nro_orden": 202,
+                  "cliente": "María Torres",
+                  "direccion": "Av. Central 123",
+                  "estado": "Asignada",
+                  "fecha_programada1": "2024-06-23T14:00:00"
+                  "fecha_programada2": "2024-06-23T16:00:00"
+                  "comentario_cliente": "Instalación de servicio de telefonía"
+                }
+              ]
+            }
+      401:
+        description: Token no válido o no enviado.
+        examples:
+          application/json: { "error": "Token es requerido" }
+      500:
+        description: Error interno del servidor.
+        examples:
+          application/json: { "error": "Error interno del servidor" }
     """
     assigned_installations = get_assigned_installation(request.contratista_ci_rif)
     return jsonify({"assigned_installations": assigned_installations}), 200
@@ -167,8 +378,42 @@ def get_assigned_installations():
 @handle_errors
 def take_installation_route():
     """
-    Ruta para que el contratista tome una instalación.
-    :return: Un mensaje de éxito o error.
+    Tomar una instalación disponible por el contratista
+    ---
+    tags:
+      - Contratistas
+    security:
+      - ApiKeyAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              Nro_orden:
+                type: integer
+                example: 101
+              contratista:
+                type: string
+                example: "Contratista Ejemplo"
+    responses:
+      200:
+        description: Instalación tomada exitosamente.
+        examples:
+          application/json: { "message": "Instalación tomada exitosamente" }
+      400:
+        description: Datos inválidos o faltantes.
+        examples:
+          application/json: { "error": "Datos inválidos" }
+      401:
+        description: Token no válido o no enviado.
+        examples:
+          application/json: { "error": "Token es requerido" }
+      500:
+        description: Error interno del servidor.
+        examples:
+          application/json: { "error": "Error interno del servidor" }
     """
     data = request.json
     try:
@@ -186,8 +431,63 @@ def take_installation_route():
 @handle_errors
 def init_installation_route(Nro_orden):
     """
-    Ruta para que el contratista inicie una instalación.
-    :return: Un mensaje de éxito o error.
+    Iniciar una instalación por parte del contratista
+    ---
+    tags:
+      - Contratistas
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - in: path
+        name: Nro_orden
+        required: true
+        schema:
+          type: integer
+        description: Número de orden de instalación a iniciar
+        in : path
+        name : contratista
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              hora _inicio:
+                type: timestamp
+                example: "2024-06-21T09:00:00"
+                "estado":
+                type: string
+                example: "En progreso"
+                usuarioID:
+                type: string
+                example: "usuario123"
+                contraseñaID:
+                type: string
+                example: "contraseña_segura"
+                observacion_contratista:
+                type: string
+                example: "Iniciando instalación"
+    responses:
+      200:
+        description: Instalación iniciada exitosamente.
+        examples:
+          application/json: { "message": "Instalación iniciada exitosamente" }
+      400:
+        description: Datos inválidos o faltantes.
+        examples:
+          application/json: { "error": "Datos inválidos" }
+      401:
+        description: Token no válido o no enviado.
+        examples:
+          application/json: { "error": "Token es requerido" }
+      500:
+        description: Error interno del servidor.
+        examples:
+          application/json: { "error": "Error interno del servidor" }
     """
     data = request.json
     try:
@@ -206,8 +506,56 @@ def init_installation_route(Nro_orden):
 @handle_errors
 def finish_installation_route(Nro_orden):
     """
-    Ruta para que el contratista finalice una instalación.
-    :return: Un mensaje de éxito o error.
+    Finalizar una instalación por parte del contratista
+    ---
+    tags:
+      - Contratistas
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - in: path
+        name: Nro_orden
+        required: true
+        schema:
+          type: integer
+        description: Número de orden de instalación a finalizar
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              Nro_orden:
+                type: integer
+                example: 1
+              estado:
+                type: string
+                example: "Finalizada"
+              verificacion:
+                type: boolean
+                example: true
+              observacion_contratista:
+                type: string
+                example: "Instalación finalizada con éxito"
+    responses:
+      200:
+        description: Instalación finalizada exitosamente.
+        examples:
+          application/json: { "message": "Instalación finalizada exitosamente"}
+          application/json: { "message": "Instalación finalizada fallidamente" }
+      400:
+        description: Datos inválidos o faltantes.
+        examples:
+          application/json: { "error": "Datos inválidos" }
+      401:
+        description: Token no válido o no enviado.
+        examples:
+          application/json: { "error": "Token es requerido" }
+      500:
+        description: Error interno del servidor.
+        examples:
+          application/json: { "error": "Error interno del servidor" }
     """
     data = request.json
     try:
@@ -226,8 +574,112 @@ def finish_installation_route(Nro_orden):
 @handle_errors
 def order_installation_route():
     """
-    Ruta para que el contratista obtenga el pdf de la orden de instalación.
-    :return: Un mensaje de éxito o error.
+   Registrar los datos para el PDF de la orden de instalación
+    ---
+    tags:
+      - Contratistas
+    security:
+      - ApiKeyAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              dato_cliente:
+                type: string
+                example: "cliente_prueba"
+              ont_1puerto:
+                type: string
+                example: "ONT 1 Puerto"
+              conector_SC_APC:
+                type: string
+                example: "Conector SC APC"
+              pathcore_scapc_apcsc:
+                type: string
+                example: "20"
+              roseta:
+                type: string
+                example: "1"
+              scapc_adapter:
+                type: string
+                example: "SC/APC Adapter"
+              ont_4puertos:
+                type: string
+                example: "ONT 4 Puertos"
+              conector_scupc:
+                type: string
+                example: "Conector SC UPC"
+              canaletas:
+                type: string
+                example: "6"
+              cable_drop:
+                type: string
+                example: "Cable Drop"
+              cantidad_cabledrop:
+                type: string
+                example: "10"
+              potencia_cajanap:
+                type: string
+                example: "Potencia Caja NAP"
+              potencia_ont:
+                type: string
+                example: "Potencia ONT"
+              mac_ont:
+                type: string
+                example: "MAC ONT"
+              serial_ont:
+                type: string
+                example: "Serial ONT"
+              puerto_nap:
+                type: string
+                example: "Puerto NAP"
+              nroequipos_conectar:
+                type: string
+                example: "5"
+              etiqueta_cliente:
+                type: string
+                example: "Etiqueta Cliente"
+              router:
+                type: string
+                example: "Router Modelo X"
+              fecha:
+                type: string
+                example: "2023-10-01"
+              hora_inicio:
+                type: string
+                example: "10:00:00"
+              hora_final:
+                type: string
+                example: "12:00:00"
+              contratista:
+                type: string
+                example: "Contratista Prueba"
+              nombre_cliente:
+                type: string
+                example: "Cliente Prueba"
+              firma:
+                type: blob
+                description: Firma del cliente en formato blob
+                example: "Firma del Cliente"
+    responses:
+      200:
+        description: Datos de la orden de instalación registrados exitosamente.
+        examples:
+          application/json: { "message": "Orden de instalación obtenida exitosamente" }
+      400:
+        description: Datos inválidos o faltantes.
+        examples:
+          application/json: { "error": "Datos inválidos" }
+      401:
+        description: Token no válido o no enviado.
+        examples:
+          application/json: { "error": "Token es requerido" }
+      500:
+        description: Error interno del servidor.
+        examples:
+          application/json: { "error": "Error interno del servidor" }
     """
     data = request.json
     try:
@@ -246,8 +698,67 @@ def order_installation_route():
 @handle_errors
 def data_installation_route(id):
     """
-    Ruta para que el contratista obtenga los datos del pdf de una orden de instalacion.
-    :return: Un mensaje de éxito o error.
+     Obtener los datos del PDF de una orden de instalación
+    ---
+    tags:
+      - Contratistas
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        description: ID de la orden de instalación
+    responses:
+      200:
+        description: Datos de la orden de instalación obtenidos exitosamente.
+        examples:
+          application/json:
+            {
+              "dato_cliente": "cliente_prueba",
+              "ont_1puerto": "ONT 1 Puerto",
+              "conector_SC_APC": "Conector SC APC",
+              "pathcore_scapc_apcsc": "20",
+              "roseta": "1",
+              "scapc_adapter": "SC/APC Adapter",
+              "ont_4puertos": "ONT 4 Puertos",
+              "conector_scupc": "Conector SC UPC",
+              "canaletas": "6",
+              "cable_drop": "Cable Drop",
+              "cantidad_cabledrop": "10",
+              "potencia_cajanap": "Potencia Caja NAP",
+              "potencia_ont": "Potencia ONT",
+              "mac_ont": "MAC ONT",
+              "serial_ont": "Serial ONT",
+              "puerto_nap": "Puerto NAP",
+              "nroequipos_conectar": "5",
+              "etiqueta_cliente": "Etiqueta Cliente",
+              "router": "Router Modelo X",
+              "fecha": "2023-10-01",
+              "hora_inicio": "10:00:00",
+              "hora_final": "12:00:00",
+              "contratista": "Contratista Prueba",
+              "nombre_cliente": "Cliente Prueba",
+              "firma": "Firma del Cliente"
+            }
+      400:
+        description: Datos inválidos o faltantes.
+        examples:
+          application/json: { "error": "Datos inválidos" }
+      401:
+        description: Token no válido o no enviado.
+        examples:
+          application/json: { "error": "Token es requerido" }
+      404:
+        description: Orden no encontrada.
+        examples:
+          application/json: { "error": "Orden no encontrada" }
+      500:
+        description: Error interno del servidor.
+        examples:
+          application/json: { "error": "Error interno del servidor" }
     """
     data = request.json
     try:
@@ -264,8 +775,55 @@ def data_installation_route(id):
 @handle_errors
 def generate_pdf_installation_route(Nro_orden):
     """
-    Ruta para que el contratista genere un PDF de una instalación.
-    :return: Un mensaje de éxito o error.
+    Generar el PDF de la orden de instalación
+    ---
+    tags:
+      - Contratistas
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - in: path
+        name: Nro_orden
+        required: true
+        schema:
+          type: integer
+        description: Número de orden de instalación para generar el PDF
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              datos_pdf:
+                type: object
+                description: Datos necesarios para generar el PDF
+                example:
+                  dato_cliente: "cliente_prueba"
+                  fecha: "2023-10-01"
+                  contratista: "Contratista Prueba"
+                  firma: "Firma del Cliente"
+    responses:
+      200:
+        description: PDF generado exitosamente.
+        examples:
+          application/json: { "message": "PDF de instalación generado exitosamente" }
+      400:
+        description: Datos inválidos o faltantes.
+        examples:
+          application/json: { "error": "Datos inválidos" }
+      401:
+        description: Token no válido o no enviado.
+        examples:
+          application/json: { "error": "Token es requerido" }
+      404:
+        description: Orden no encontrada.
+        examples:
+          application/json: { "error": "Orden no encontrada" }
+      500:
+        description: Error interno del servidor.
+        examples:
+          application/json: { "error": "Error interno del servidor" }
     """
     data = request.json
     try:
