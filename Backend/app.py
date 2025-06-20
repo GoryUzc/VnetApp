@@ -6,13 +6,14 @@ from models.database import init_db
 from config import Config 
 from flask_cors import CORS 
 from flask_socketio import SocketIO
+from flasgger import Swagger
 
 
 
 app = Flask(__name__)
 app.config.from_object(Config) # Configuracion de la base de datos
 socketio = SocketIO(app, cors_allowed_origins="*") # Inicializar SocketIO con la aplicacion Flask
-
+Swagger(app)
 CORS(app) # Habilitar CORS para la aplicacion
  
 init_db(app) # Inicializar la base de datos
@@ -22,7 +23,11 @@ app.register_blueprint(admin_bp)
 app.register_blueprint(clients_bp)
 app.register_blueprint(contrators_bp)
 
+@app.route("/")
+def index():
+    return "¡Backend VnetApp funcionando!"
+
 
 if __name__ == '__main__':
- app.run(host="0.0.0.0", port=5000, debug=True)  # Iniciar la aplicacion en el puerto 5000 y habilitar el modo de depuracion
+    socketio.run(app, host="0.0.0.0", port=5000, debug=True)
 
