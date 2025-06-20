@@ -97,25 +97,25 @@ def create_contrator():
               cuadrilla3:
                 type: string
                 example: "Cuadrilla C"
-                cuadrilla4:
+              cuadrilla4:
                 type: string
                 example: "Cuadrilla D"
-                cuadrilla5:
+              cuadrilla5:
                 type: string
                 example: "Cuadrilla E"
-                cuadrilla6:
+              cuadrilla6:
                 type: string
                 example: "Cuadrilla F"
-                cuadrilla7:
+              cuadrilla7:
                 type: string
                 example: "Cuadrilla G"
-                cuadrilla8:
+              cuadrilla8:
                 type: string
                 example: "Cuadrilla H"
-                cuadrilla9:
+              cuadrilla9:
                 type: string    
                 example: "Cuadrilla I"
-                cuadrilla10:
+              cuadrilla10:
                 type: string
                 example: "Cuadrilla J"
     responses:
@@ -293,8 +293,8 @@ def get_installations():
                   "cliente": "Juan Pérez",
                   "direccion": "Calle Falsa 123",
                   "estado": "Pendiente",
-                  "fecha_programada1": "2024-06-21T09:00:00"
-                  "fecha_programada2": "2024-06-21T11:00:00"
+                  "fecha_programada1": "2024-06-21T09:00:00",
+                  "fecha_programada2": "2024-06-21T11:00:00",
                   "comentario_cliente": "Instalación de servicio de internet"
                 },
                 {
@@ -302,7 +302,7 @@ def get_installations():
                   "cliente": "Ana Gómez",
                   "direccion": "Av. Principal 456",
                   "estado": "Pendiente",
-                  "fecha_programada1": "2024-06-22T14:00:00"
+                  "fecha_programada1": "2024-06-22T14:00:00",
                   "fecha_programada2": "2024-06-22T16:00:00"
                 }
               ]
@@ -344,8 +344,8 @@ def get_assigned_installations():
                   "cliente": "Pedro López",
                   "direccion": "Calle 1, Edif. Azul",
                   "estado": "Asignada",
-                  "fecha_programada1": "2024-06-22T10:00:00"
-                  "fecha_programada2": "2024-06-22T12:00:00"
+                  "fecha_programada1": "2024-06-22T10:00:00",
+                  "fecha_programada2": "2024-06-22T12:00:00",
                   "comentario_cliente": "Instalación de servicio de televisión"
                 },
                 {
@@ -353,8 +353,8 @@ def get_assigned_installations():
                   "cliente": "María Torres",
                   "direccion": "Av. Central 123",
                   "estado": "Asignada",
-                  "fecha_programada1": "2024-06-23T14:00:00"
-                  "fecha_programada2": "2024-06-23T16:00:00"
+                  "fecha_programada1": "2024-06-23T14:00:00",
+                  "fecha_programada2": "2024-06-23T16:00:00",
                   "comentario_cliente": "Instalación de servicio de telefonía"
                 }
               ]
@@ -444,7 +444,7 @@ def init_installation_route(Nro_orden):
         schema:
           type: integer
         description: Número de orden de instalación a iniciar
-        in : path
+      - in : path
         name : contratista
         required: true
         schema:
@@ -457,7 +457,9 @@ def init_installation_route(Nro_orden):
             type: object
             properties:
               hora _inicio:
-                type: timestamp
+                type: string
+                format: timestamp
+                description: Hora de inicio de la instalación en formato ISO 8601
                 example: "2024-06-21T09:00:00"
                 "estado":
                 type: string
@@ -540,10 +542,9 @@ def finish_installation_route(Nro_orden):
                 example: "Instalación finalizada con éxito"
     responses:
       200:
-        description: Instalación finalizada exitosamente.
+        description: Instalación finalizada exitosamente o fallida.
         examples:
           application/json: { "message": "Instalación finalizada exitosamente"}
-          application/json: { "message": "Instalación finalizada fallidamente" }
       400:
         description: Datos inválidos o faltantes.
         examples:
@@ -660,7 +661,7 @@ def order_installation_route():
                 type: string
                 example: "Cliente Prueba"
               firma:
-                type: blob
+                type: string
                 description: Firma del cliente en formato blob
                 example: "Firma del Cliente"
     responses:

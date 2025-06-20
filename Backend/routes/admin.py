@@ -219,7 +219,7 @@ def crearAdmin():
                 example: clave_segura
               telefono:
                 type: string
-                example: "04141234567"
+                example: 04141234567
               sucursal:
                 type: string
                 example: Sucursal Centro
@@ -1193,22 +1193,16 @@ def ver_ordenes():
         description: Lista de órdenes de instalación obtenida exitosamente.
         examples:
           application/json:
-            [
-              {
-                "Nro_orden": 123,
-                "cliente": "Juan Pérez",
-                "contratista": "contratista_prueba",
-                "estado": "En Proceso",
-                "fecha": "2024-06-20T10:00:00"
-              },
-              {
-                "Nro_orden": 124,
-                "cliente": "Ana Gómez",
-                "contratista": "contratista2",
-                "estado": "Finalizada",
-                "fecha": "2024-06-19T09:00:00"
-              }
-            ]
+            - Nro_orden: 123
+              cliente: "Juan Pérez"
+              contratista: "contratista_prueba"
+              estado: "En Proceso"
+              fecha: "2024-06-20T10:00:00"
+            - Nro_orden: 124
+              cliente: "Ana Gómez"
+              contratista: "contratista2"
+              estado: "Finalizada"
+              fecha: "2024-06-19T09:00:00"
       401:
         description: Token no válido o no enviado.
         examples:

@@ -181,10 +181,10 @@ def consulta_cliente_orden(Nro_orden):
               "latitud": 10.123456,
               "longitud": -64.123456,
               "comentario": "Instalación de servicio",
-              "estado": "Asignada"
+              "estado": "Asignada",
               "contratista": "Contratista Ejemplo"
             }
-         400:
+      400:
         description: Se requiere Nro_cuenta o Nro_orden
         examples:
           application/json: { "error": "Se requiere Nro_cuenta o Nro_orden" }
