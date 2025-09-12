@@ -76,10 +76,17 @@ class ProspectService {
         final data = jsonDecode(response.body);
         _logger.i('Detalles del prospecto obtenidos exitosamente');
         return data;
+      } else if (response.statusCode == 204) {
+        _logger.i('No hay contenido para el prospecto solicitado');
+        return {};
+      } else if (response.statusCode == 404) {
+        throw Exception('Prospecto no encontrado');
+      } else if (response.statusCode == 401) {
+        throw Exception('Sesion expirada. Por favor inicie sesion nuevamente');
+      } else if (response.statusCode == 403) {
+        throw Exception('El usuario no tiene permisos para esta funcion');
       } else {
-        throw Exception(
-          'Error al obtener detalles del prospecto: ${response.body}',
-        );
+        throw Exception('Error al obtener detalles: ${response.body}');
       }
     } catch (e, stackTrace) {
       _logger.e(

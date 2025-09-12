@@ -80,7 +80,8 @@ class InitSelectUserScreen extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const LoginUserScreen(),
+                                    builder:
+                                        (context) => const LoginUserScreen(),
                                   ),
                                 );
                               },
@@ -116,8 +117,7 @@ class InitSelectUserScreen extends StatelessWidget {
                                   context,
                                   MaterialPageRoute(
                                     builder:
-                                        (context) =>
-                                            const LoginClientesScreen(),
+                                        (context) => const LoginClienteScreen(),
                                   ),
                                 );
                               },

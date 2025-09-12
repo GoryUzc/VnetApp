@@ -56,7 +56,7 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
 
   // Selecciones
   String? _selectedFranchiseId;
-  String? _selectedRoleId; // 3 contratista, 4 empleado
+  String? _selectedRoleId; 
   String? _selectedContractorId; // para empleados
 
   bool _submitting = false;

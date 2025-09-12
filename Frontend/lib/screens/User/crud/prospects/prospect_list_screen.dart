@@ -1,4 +1,3 @@
-// lib/screens/admin/prospects/prospect_list_screen.dart
 import 'package:flutter/material.dart';
 import 'package:vnet_agenda/services/crud/prospect_service.dart';
 import 'package:vnet_agenda/services/others/franchise_service.dart';

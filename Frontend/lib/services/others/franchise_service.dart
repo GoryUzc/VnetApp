@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:vnet_agenda/services/api_config.dart';
+import 'package:logger/web.dart';
 
 class FranchiseService {
+  final Logger _logger = Logger();
+
   /// Obtiene todas las franquicias disponibles para mostrar en dropdowns
   Future<List<Map<String, dynamic>>> getAllFranchises() async {
     try {
@@ -17,6 +20,7 @@ class FranchiseService {
             (data['franchises'] as List)
                 .map((e) => Map<String, dynamic>.from(e as Map))
                 .toList();
+        _logger.d('Franquicias obtenidas: $dataList');
         return dataList;
       } else if (response.statusCode == 204) {
         // Sin contenido
