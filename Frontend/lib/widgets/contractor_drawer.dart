@@ -1,36 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:vnet_agenda/screens/User/contractor/list_workers_screen.dart';
 import 'package:vnet_agenda/screens/User/crud/meeting/list_meeting_assigned_screen.dart';
-import 'package:vnet_agenda/screens/User/crud/meeting/list_meeting_screen.dart';
 import 'package:vnet_agenda/screens/User/crud/meeting/list_meeting_unassegned_screen.dart';
 import 'package:vnet_agenda/screens/User/crud/order/order_list_screen.dart';
-import 'package:vnet_agenda/screens/User/crud/prospects/prospect_list_screen.dart';
-import 'package:vnet_agenda/screens/User/crud/users/user_list_screen.dart';
-import 'package:vnet_agenda/screens/User/crud/contractors/contractor_list_screen.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
 
-class CustomAdminDrawer extends StatelessWidget {
-  const CustomAdminDrawer({super.key});
+class CustomContractorDrawer extends StatelessWidget {
+  const CustomContractorDrawer({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Drawer(
       child: Column(
         children: [
-          // Header del Drawer
+          // Header del drawer
           _buildHeader(),
 
-          // Lista de navegación
+          // Lista de navegacion
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                // Sección: Gestión de Citas
+                // Seccion: Gestion de citas
                 _buildSectionHeader('📅 Gestión de Citas'),
                 _buildDrawerItem(
                   context,
-                  'Todas las Citas',
+                  'Citas Disponibles',
                   Icons.list,
-                  () => _navigateTo(context, const MeetingListScreen()),
+                  () =>
+                      _navigateTo(context, const MeetingUnassignedListScreen()),
                 ),
                 _buildDrawerItem(
                   context,
@@ -38,35 +36,16 @@ class CustomAdminDrawer extends StatelessWidget {
                   Icons.assignment_turned_in,
                   () => _navigateTo(context, const MeetingAssignedListScreen()),
                 ),
-                _buildDrawerItem(
-                  context,
-                  'Citas sin Asignar',
-                  Icons.assignment_late,
-                  () =>
-                      _navigateTo(context, const MeetingUnassignedListScreen()),
-                ),
 
                 const Divider(),
 
-                // Sección: Gestión de Personas
-                _buildSectionHeader('👥 Gestión de Usuarios'),
+                // Gestion de trabajadores
+                _buildSectionHeader('👷‍♂️ Gestión de Trabajadores'),
                 _buildDrawerItem(
                   context,
-                  'Usuarios del Sistema',
-                  Icons.person,
-                  () => _navigateTo(context, const UserListScreen()),
-                ),
-                _buildDrawerItem(
-                  context,
-                  'Contratistas',
-                  Icons.business,
-                  () => _navigateTo(context, const ContractorListScreen()),
-                ),
-                _buildDrawerItem(
-                  context,
-                  'Prospectos/Clientes',
-                  Icons.people_alt,
-                  () => _navigateTo(context, const ProspectListScreen()),
+                  'Lista de Trabajadores',
+                  Icons.group,
+                  () => _navigateTo(context, const WorkersListScreen()),
                 ),
 
                 const Divider(),
@@ -79,38 +58,11 @@ class CustomAdminDrawer extends StatelessWidget {
                   Icons.pageview,
                   () => _navigateTo(context, const OrderListScreen()),
                 ),
-                const Divider(),
-
-                // Sección: Reportes y Estadísticas
-                _buildSectionHeader('📊 Reportes y Análisis'),
-                _buildDrawerItem(
-                  context,
-                  'Estadísticas Generales',
-                  Icons.analytics,
-                  () => _showComingSoon(context),
-                ),
-
-                const Divider(),
-
-                // Sección: Configuración
-                _buildSectionHeader('⚙️ Configuración'),
-                _buildDrawerItem(
-                  context,
-                  'Configuración del Sistema',
-                  Icons.settings,
-                  () => _showComingSoon(context),
-                ),
-                _buildDrawerItem(
-                  context,
-                  'Ayuda y Soporte',
-                  Icons.help,
-                  () => _showComingSoon(context),
-                ),
               ],
             ),
           ),
 
-          // Footer del Drawer
+          // Footer del drawer
           _buildFooter(),
         ],
       ),
@@ -124,8 +76,7 @@ class CustomAdminDrawer extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.primaryColor,
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: Alignment.bottomRight,
           colors: [
             AppColors.primaryColor,
             AppColors.primaryColor.withOpacity(0.8),
@@ -150,7 +101,7 @@ class CustomAdminDrawer extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           const Text(
-            'VNET FIBRA ÓPTICA',
+            'VNET AGENDA',
             style: TextStyle(
               color: Colors.white,
               fontSize: 18,
@@ -159,7 +110,7 @@ class CustomAdminDrawer extends StatelessWidget {
           ),
           const SizedBox(height: 5),
           Text(
-            'Panel de Administración',
+            'Panel Contratista',
             style: TextStyle(
               color: Colors.white.withOpacity(0.9),
               fontSize: 14,
@@ -175,11 +126,7 @@ class CustomAdminDrawer extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
       child: Text(
         title,
-        style: const TextStyle(
-          fontWeight: FontWeight.bold,
-          color: Colors.grey,
-          fontSize: 14,
-        ),
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
       ),
     );
   }
@@ -223,15 +170,5 @@ class CustomAdminDrawer extends StatelessWidget {
   void _navigateTo(BuildContext context, Widget screen) {
     Navigator.pop(context); // Cerrar el drawer
     Navigator.push(context, MaterialPageRoute(builder: (context) => screen));
-  }
-
-  void _showComingSoon(BuildContext context) {
-    Navigator.pop(context); // Cerrar el drawer
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Funcionalidad en desarrollo - Próximamente'),
-        duration: Duration(seconds: 2),
-      ),
-    );
   }
 }

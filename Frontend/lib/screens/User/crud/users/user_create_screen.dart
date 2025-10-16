@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vnet_agenda/services/crud/contractor_services.dart';
 import 'package:vnet_agenda/services/others/franchise_service.dart';
 import 'package:vnet_agenda/services/others/role_service.dart';
 import 'package:vnet_agenda/services/crud/user_services.dart';
@@ -19,6 +20,7 @@ class _UserCreateScreenState extends State<UserCreateScreen> {
   final RoleService _roleService = RoleService();
   final UserServices _userService = UserServices();
   final ContractorService _contractorService = ContractorService();
+  final ContractorServices _contractorServices = ContractorServices();
 
   // Controllers de usuario
   final TextEditingController _aradialUserIdController =
@@ -78,9 +80,7 @@ class _UserCreateScreenState extends State<UserCreateScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No se pudieron cargar las franquicias'),
-          ),
+          const SnackBar(content: Text('No se pudieron cargar las Ciudades')),
         );
       }
     } finally {
@@ -133,7 +133,7 @@ class _UserCreateScreenState extends State<UserCreateScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedFranchiseId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Debe seleccionar una franquicia')),
+        const SnackBar(content: Text('Debe seleccionar una ciudad')),
       );
       return;
     }
@@ -171,45 +171,44 @@ class _UserCreateScreenState extends State<UserCreateScreen> {
     setState(() => _submitting = true);
 
     try {
-      final payload = <String, dynamic>{
-        'aradial_user_id': _aradialUserIdController.text,
-        'name': _nameController.text,
-        'last_name': _lastNameController.text,
-        'document': _documentController.text,
-        'document_type': _documentTypeController.text,
-        'phone': _phoneController.text,
-        'franchise_id': int.parse(_selectedFranchiseId!),
+      // Crear Contratista si es rol es 3
+      String? contractorId;
+      if (_isContractor) {
+        final contractorPayload = {
+          'legal_name': _legalNameController.text.trim(),
+          'rif': _rifController.text.trim(),
+          'name': _contractorNameController.text.trim(),
+          'phone': _contractorPhoneController.text.trim(),
+          'email': _contractorEmailController.text.trim(),
+          'address': _contractorAddressController.text.trim(),
+          'franchise_id': int.parse(_selectedFranchiseId!),
+        };
+
+        final contractor = await _contractorServices.createContractor(
+          contractorPayload,
+        );
+        contractorId = contractor['id'].toString();
+      }
+
+      // Crear usuario
+      final userPayload = {
+        'aradial_user_id': _aradialUserIdController.text.trim(),
+        'name': _nameController.text.trim(),
+        'last_name': _lastNameController.text.trim(),
+        'document': _documentController.text.trim(),
+        'document_type': _documentTypeController.text.trim(),
+        'phone': _phoneController.text.trim(),
+        'email': _emailController.text.trim(),
+        'password': _passwordController.text.trim(),
         'role_id': int.parse(_selectedRoleId!),
-        'email': _emailController.text,
-        'password': _passwordController.text,
+        'franchise_id': int.parse(_selectedFranchiseId!),
+        if (contractorId != null) 'contractor_id': int.parse(contractorId),
+        if (_isEmployee) 'contractor_id': int.parse(_selectedContractorId!),
       };
 
-      if (_isContractor) {
-        payload.addAll({
-          'legal_name': _legalNameController.text,
-          'rif': _rifController.text,
-          'contractor_name':
-              _contractorNameController.text.isNotEmpty
-                  ? _contractorNameController.text
-                  : _nameController.text,
-          'contractor_phone':
-              _contractorPhoneController.text.isNotEmpty
-                  ? _contractorPhoneController.text
-                  : _phoneController.text,
-          'contractor_email':
-              _contractorEmailController.text.isNotEmpty
-                  ? _contractorEmailController.text
-                  : _emailController.text,
-          'address': _contractorAddressController.text,
-        });
-      }
-
-      if (_isEmployee) {
-        payload['contractor_id'] = int.parse(_selectedContractorId!);
-      }
-
       // Usar el servicio centralizado para registrar
-      await _userService.createUser(payload);
+      await _userService.createUser(userPayload);
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -308,7 +307,7 @@ class _UserCreateScreenState extends State<UserCreateScreen> {
                   },
                 ),
                 const SizedBox(height: 12),
-                _sectionTitle('Franquicia y Rol'),
+                _sectionTitle('Ciudad y Tipo de usuario'),
                 _franchiseDropdown(),
                 const SizedBox(height: 12),
                 _roleDropdown(),
@@ -404,7 +403,7 @@ class _UserCreateScreenState extends State<UserCreateScreen> {
               .toList(),
       onChanged: (v) => setState(() => _selectedFranchiseId = v),
       decoration: const InputDecoration(
-        labelText: 'Franquicia',
+        labelText: 'Ciudad',
         border: OutlineInputBorder(),
       ),
       validator: (v) => v == null || v.isEmpty ? 'Campo requerido' : null,
@@ -438,7 +437,7 @@ class _UserCreateScreenState extends State<UserCreateScreen> {
         }
       },
       decoration: const InputDecoration(
-        labelText: 'Rol',
+        labelText: 'Tipo Usuario',
         border: OutlineInputBorder(),
       ),
       validator: (v) => v == null || v.isEmpty ? 'Campo requerido' : null,

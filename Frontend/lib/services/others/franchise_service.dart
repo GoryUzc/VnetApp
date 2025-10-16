@@ -1,16 +1,19 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:vnet_agenda/services/api_config.dart';
+import 'package:vnet_agenda/services/authentication/auth_service.dart';
 import 'package:logger/web.dart';
 
 class FranchiseService {
   final Logger _logger = Logger();
+  final AuthService _authService = AuthService();
 
   /// Obtiene todas las franquicias disponibles para mostrar en dropdowns
   Future<List<Map<String, dynamic>>> getAllFranchises() async {
     try {
       final uri = Uri.parse(ApiConfig.endpoint('franchises/list'));
-      final response = await http.get(uri);
+      final headers = await _authService.getAuthHeaders();
+      final response = await http.get(uri, headers: headers);
 
       if (response.statusCode == 200) {
         Map<String, dynamic> data =

@@ -5,7 +5,7 @@ import 'package:vnet_agenda/services/api_config.dart';
 import 'package:vnet_agenda/services/authentication/auth_service.dart';
 import 'package:logger/logger.dart';
 
-class ContractorService {
+class ContractorServices {
   final AuthService _authService = AuthService();
   final Logger _logger = Logger();
 
@@ -38,6 +38,38 @@ class ContractorService {
       }
     } catch (e, st) {
       _logger.e('Error en getAllContractors', error: e, stackTrace: st);
+      rethrow;
+    }
+  }
+
+  // Lista de trabajadores asociados a un contratista
+  Future<List<Map<String, dynamic>>> getWorkersByContractor() async {
+    try {
+      final headers = await _authService.getAuthHeaders();
+      final response = await http.get(
+        Uri.parse(ApiConfig.endpoint('contractor/workers')),
+        headers: headers,
+      );
+      _logger.d('GET /contractors/workers -> ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List<dynamic> list =
+            (data is Map<String, dynamic> && data['workers'] is List)
+                ? data['workers'] as List
+                : (data is List ? data : []);
+        final result =
+            list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+        return result;
+      } else if (response.statusCode == 401) {
+        throw Exception('No autorizado');
+      } else if (response.statusCode == 403) {
+        throw Exception('Prohibido');
+      } else {
+        throw Exception('Error al obtener trabajadores: ${response.body}');
+      }
+    } catch (e, st) {
+      _logger.e('Error en getWorkersByContractor', error: e, stackTrace: st);
       rethrow;
     }
   }

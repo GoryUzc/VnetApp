@@ -41,7 +41,6 @@ class _ProspectCreateScreenState extends State<ProspectCreateScreen> {
   Future<void> _loadFranchises() async {
     try {
       final franchises = await _franchiseService.getAllFranchises();
-      print(franchises);
       setState(() {
         _franchises = franchises;
         _franchisesLoaded = true;
@@ -49,7 +48,7 @@ class _ProspectCreateScreenState extends State<ProspectCreateScreen> {
     } catch (e) {
       setState(() => _franchisesLoaded = true);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al cargar franquicias: $e')),
+        SnackBar(content: Text('Error al cargar ciudades: $e')),
       );
     }
   }
@@ -228,7 +227,7 @@ class _ProspectCreateScreenState extends State<ProspectCreateScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _cityController,
-                decoration: _buildInputDecoration('Ciudad'),
+                decoration: _buildInputDecoration('Estado'),
                 maxLength: 100,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -278,7 +277,7 @@ class _ProspectCreateScreenState extends State<ProspectCreateScreen> {
               ),
 
               // Sección de Franquicia
-              _buildSectionTitle('Franquicia'),
+              _buildSectionTitle('Ciudad'),
 
               if (_franchisesLoaded && _franchises.isNotEmpty)
                 DropdownButtonFormField<String>(
@@ -290,7 +289,7 @@ class _ProspectCreateScreenState extends State<ProspectCreateScreen> {
                           child: Text(
                             franchise['branch_office'] ??
                                 franchise['name'] ??
-                                'Franquicia sin nombre',
+                                'Ciudad sin nombre',
                             style: const TextStyle(fontSize: 16),
                           ),
                         );
@@ -299,11 +298,11 @@ class _ProspectCreateScreenState extends State<ProspectCreateScreen> {
                     setState(() => _selectedFranchiseId = value);
                   },
                   decoration: _buildInputDecoration(
-                    'Seleccione una franquicia',
+                    'Seleccione una ciudad',
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'La franquicia es requerida';
+                      return 'La ciudad es requerida';
                     }
                     return null;
                   },
@@ -317,8 +316,8 @@ class _ProspectCreateScreenState extends State<ProspectCreateScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   child: _buildEmptyState(
-                    'Sin franquicias',
-                    'No hay franquicias disponibles para asignar',
+                    'Sin ciudad',
+                    'No hay ciudades disponibles para asignar',
                     Icons.business,
                   ),
                 ),

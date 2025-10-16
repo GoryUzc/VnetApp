@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vnet_agenda/services/authentication/auth_service.dart';
 import 'package:vnet_agenda/services/crud/prospect_service.dart';
 import 'package:vnet_agenda/services/others/franchise_service.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
@@ -17,6 +18,7 @@ class _ProspectEditScreenState extends State<ProspectEditScreen> {
   final _formKey = GlobalKey<FormState>();
   final ProspectService _prospectService = ProspectService();
   final FranchiseService _franchiseService = FranchiseService();
+  final AuthService _authService = AuthService();
 
   final TextEditingController _aradialIdController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
@@ -30,7 +32,9 @@ class _ProspectEditScreenState extends State<ProspectEditScreen> {
   final TextEditingController _planController = TextEditingController();
 
   List<Map<String, dynamic>> _franchises = [];
-  String? _selectedFranchiseId;
+  String? _selectedFranchiseId; //id de franchise del usuario
+  int? _userRoleId; //role del usuario
+  String? _userFrachiseId; //Id de la franchises del user
   bool _isLoading = false;
   bool _franchisesLoaded = false;
   bool _prospectLoaded = false;
@@ -92,6 +96,9 @@ class _ProspectEditScreenState extends State<ProspectEditScreen> {
         _prospectLoaded = true;
         _isLoading = false;
       });
+      final userData = await _authService.getDataUserRoleFranchise();
+      _userRoleId = int.tryParse(userData['role']);
+      _userFrachiseId = userData['franchise'];
     } catch (e, stackTrace) {
       setState(() {
         _isLoading = false;
@@ -421,33 +428,50 @@ class _ProspectEditScreenState extends State<ProspectEditScreen> {
 
               // Sección de Franquicia
               _buildSectionTitle(AppStrings.franchise),
-
               if (_franchisesLoaded && _franchises.isNotEmpty)
-                DropdownButtonFormField<String>(
-                  value: _selectedFranchiseId,
-                  items:
-                      _franchises.map((franchise) {
-                        return DropdownMenuItem(
-                          value: franchise['id'].toString(),
-                          child: Text(
-                            franchise['branch_office'] ??
-                                franchise['name'] ??
-                                AppStrings.untitledFranchise,
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                        );
-                      }).toList(),
-                  onChanged: (value) {
-                    setState(() => _selectedFranchiseId = value);
-                  },
-                  decoration: _buildInputDecoration(AppStrings.selectFranchise),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return AppStrings.fieldRequired;
-                    }
-                    return null;
-                  },
-                ),
+                (_userRoleId == 1)
+                    ? DropdownButtonFormField<String>(
+                      value: _selectedFranchiseId,
+                      items:
+                          _franchises.map((franchise) {
+                            return DropdownMenuItem(
+                              value: franchise['id'].toString(),
+                              child: Text(
+                                franchise['branch_office'] ??
+                                    franchise['name'] ??
+                                    AppStrings.untitledFranchise,
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            );
+                          }).toList(),
+                      onChanged: (value) {
+                        setState(() => _selectedFranchiseId = value);
+                      },
+                      decoration: _buildInputDecoration(
+                        AppStrings.selectFranchise,
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return AppStrings.fieldRequired;
+                        }
+                        return null;
+                      },
+                    )
+                    : TextFormField(
+                      controller: TextEditingController(
+                        text:
+                            _franchises.firstWhere(
+                              (f) => f['id'].toString() == _userFrachiseId,
+                              orElse:
+                                  () => <String, dynamic>{
+                                    'name': 'Franchise no encontrada',
+                                  },
+                            )['name'],
+                      ),
+                      decoration: _buildInputDecoration(AppStrings.franchise),
+                      readOnly: true, //Deshabilitado para roles 2,3, 4
+                    ),
+
               if (!_franchisesLoaded)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),

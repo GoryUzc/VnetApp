@@ -8,7 +8,7 @@ class RegisterServiceUser {
   final AuthService _authService = AuthService();
   final Logger _logger = Logger();
   Future<Map<String, dynamic>> createUser(
-    Map<String, dynamic> RegisterData,
+    Map<String, dynamic> registerData,
   ) async {
     _logger.d('Creando nuevo Usuario');
 
@@ -17,7 +17,7 @@ class RegisterServiceUser {
       final response = await http.post(
         Uri.parse(ApiConfig.endpoint('register')),
         headers: headers,
-        body: jsonEncode(RegisterData),
+        body: jsonEncode(registerData),
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {

@@ -66,9 +66,9 @@ class AuthService {
   }
 
   // Método para obtener el role_id
-  Future<int> getUserRole() async {
+  Future<String> getUserRole() async {
     final roleStr = await _storage.read(key: 'role_id');
-    return roleStr != null ? int.parse(roleStr) : 0;
+    return roleStr ?? '';
   }
 
   Future<int> getUserfranchise() async {
@@ -82,6 +82,11 @@ class AuthService {
     return await _storage.read(key: 'token');
   }
 
+  Future<String?> getUserId() async {
+    final userId = await _storage.read(key: 'user_id');
+    return userId ?? '';
+  }
+
   /// Obtiene los headers de autenticación
   Future<Map<String, String>> getAuthHeaders() async {
     final token = await getToken();
@@ -90,6 +95,14 @@ class AuthService {
       'Accept': 'application/json',
       if (token != null) 'Authorization': 'Bearer $token',
     };
+  }
+
+  String? useId;
+  String? franchiseId;
+  Future<Map<String, dynamic>> getDataUserRoleFranchise() async {
+    final userId = await _storage.read(key: 'role_id');
+    final franchiseId = await _storage.read(key: 'franchise_id');
+    return {'role': userId, 'franchise': franchiseId};
   }
 
   /// Cierra sesión eliminando el token

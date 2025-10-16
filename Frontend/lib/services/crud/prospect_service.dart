@@ -8,7 +8,43 @@ class ProspectService {
   final AuthService _authService = AuthService();
   final Logger _logger = Logger();
 
-  Future<List<dynamic>> getAllProspects() async {
+  String _parseValidationErrors(String responseBody) {
+    try {
+      final Map<String, dynamic> errorData = jsonDecode(responseBody);
+
+      // Laravel devuelve errores de validación en diferentes formatos
+      if (errorData.containsKey('errors')) {
+        // Formato estándar de Laravel: {"errors": {"campo": ["mensaje1", "mensaje2"]}}
+        final Map<String, dynamic> errors = errorData['errors'];
+        final errorMessages = <String>[];
+
+        errors.forEach((field, messages) {
+          if (messages is List) {
+            for (final message in messages) {
+              errorMessages.add('$field: $message');
+            }
+          } else if (messages is String) {
+            errorMessages.add('$field: $messages');
+          }
+        });
+
+        return errorMessages.join(', ');
+      } else if (errorData.containsKey('message')) {
+        // Formato simple: {"message": "Error de validación"}
+        return errorData['message'].toString();
+      } else {
+        // Si no reconocemos el formato, devolver el cuerpo original
+        _logger.w('Formato de error no reconocido: $errorData');
+        return 'Error de validación: ${errorData.toString()}';
+      }
+    } catch (e) {
+      _logger.e('Error parseando errores de validación: $e');
+      // Si no podemos parsear JSON, devolver el texto original
+      return responseBody;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getAllProspects() async {
     _logger.d('Obteniendo lista de prospectos');
 
     try {
@@ -38,23 +74,21 @@ class ProspectService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         _logger.i('Prospects obtenidos exitosamente');
-
+        _logger.d('Datos $data');
         //Manejo de diferentes tipos de respuesta
-        if (data is List) {
-          return data;
-        } else if (data.containsKey('prospects') && data['prospects'] is List) {
-          return data['prospects'];
-        } else if (data.containsKey('data') && data['data'] is List) {
-          return data['data']; // Para respuesta paginada
-        } else {
-          _logger.w('Formato de respuesta inesperado');
-          return [data]; // Tratar como lista de un elemento
-        }
+        final List<dynamic> list =
+            (data is Map<String, dynamic> && data['prospects'] is List)
+                ? data['prospects'] as List
+                : (data is List ? data : []);
+        final result =
+            list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+        _logger.i('Prospectos obtenidos exitosamente: ${result.length}');
+        return result;
       } else {
-        throw Exception('Error al obtener prospects: ${response.body}');
+        throw Exception('Error al obtener Prospectos: ${response.body}');
       }
     } catch (e, stackTrace) {
-      _logger.e('Error en getAllProspects:', error: e, stackTrace: stackTrace);
+      _logger.e('Error en getAllProspect:', error: e, stackTrace: stackTrace);
       rethrow;
     }
   }
@@ -162,16 +196,19 @@ class ProspectService {
         body: jsonEncode(prospectData),
       );
 
-      if (response.statusCode == 201) {
+      // CORREGIDO: Verificar tanto 200 como 201 como respuestas exitosas
+      if (response.statusCode == 200 || response.statusCode == 201) {
         _logger.i(
           'Prospecto actualizado exitosamente (status ${response.statusCode})',
         );
+
         if (response.body.isEmpty) {
           return {
             'message': 'Prospecto actualizado exitosamente',
             'status': response.statusCode,
           };
         }
+
         try {
           final data = jsonDecode(response.body);
           if (data is Map<String, dynamic>) return data;
@@ -196,33 +233,6 @@ class ProspectService {
     } catch (e, stackTrace) {
       _logger.e('Error en updateProspect:', error: e, stackTrace: stackTrace);
       rethrow;
-    }
-  }
-
-  String _parseValidationErrors(String body) {
-    try {
-      final data = jsonDecode(body);
-      Map<String, dynamic>? errorsMap;
-      if (data is Map<String, dynamic>) {
-        if (data['errors'] is Map<String, dynamic>) {
-          errorsMap = Map<String, dynamic>.from(data['errors']);
-        } else {
-          errorsMap = data;
-        }
-      }
-      if (errorsMap == null) return body;
-
-      final messages = <String>[];
-      errorsMap.forEach((key, value) {
-        if (value is List) {
-          messages.add('$key: ${value.join(', ')}');
-        } else if (value != null) {
-          messages.add('$key: $value');
-        }
-      });
-      return messages.isNotEmpty ? messages.join(' | ') : body;
-    } catch (_) {
-      return body;
     }
   }
 

@@ -44,7 +44,7 @@ class _ProspectListScreenState extends State<ProspectListScreen> {
       setState(() {
         _prospects =
             prospects
-                .map((prospect) => prospect as Map<String, dynamic>)
+                .map((prospect) => prospect)
                 .toList();
         _isLoading = false;
       });

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vnet_agenda/services/authentication/auth_service.dart';
 import 'package:vnet_agenda/services/crud/contractor_services.dart';
 import 'package:vnet_agenda/services/others/franchise_service.dart';
 import 'package:vnet_agenda/strings/app_strings.dart';
@@ -14,9 +15,14 @@ class ContractorEditScreen extends StatefulWidget {
 class _ContractorEditScreenState extends State<ContractorEditScreen> {
   final _formKey = GlobalKey<FormState>();
 
+  //Variables para logica
+  String? _userFranchiseId; // Id de la franchise del usuario
+  int? _userRole; // role Id del Usuario
+
   // Servicios
-  final ContractorService _contractorService = ContractorService();
+  final ContractorServices _contractorService = ContractorServices();
   final FranchiseService _franchiseService = FranchiseService();
+  final AuthService _authService = AuthService();
 
   // Controllers
   final TextEditingController _legalNameController = TextEditingController();
@@ -54,6 +60,9 @@ class _ContractorEditScreenState extends State<ContractorEditScreen> {
     try {
       await _loadFranchises();
       await _loadContractor();
+      final userData = await _authService.getDataUserRoleFranchise();
+      _userRole = userData['role'];
+      _userFranchiseId = userData['franchise'].toString();
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -228,7 +237,7 @@ class _ContractorEditScreenState extends State<ContractorEditScreen> {
                           maxLen: 255,
                         ),
                         const SizedBox(height: 12),
-                        _section('Franquicia'),
+                        _section('Ciudad'),
                         _franchiseDropdown(),
                         const SizedBox(height: 20),
                         SizedBox(
@@ -309,36 +318,54 @@ class _ContractorEditScreenState extends State<ContractorEditScreen> {
         child: Center(child: CircularProgressIndicator()),
       );
     }
+    if (_userRole == 1) {
+      final value =
+          _franchises.any((f) => f['id'].toString() == _selectedFranchiseId)
+              ? _selectedFranchiseId
+              : null;
 
-    final value =
-        _franchises.any((f) => f['id'].toString() == _selectedFranchiseId)
-            ? _selectedFranchiseId
-            : null;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: DropdownButtonFormField<String>(
-        value: value,
-        items:
-            _franchises
-                .map(
-                  (f) => DropdownMenuItem<String>(
-                    value: f['id'].toString(),
-                    child: Text(
-                      (f['branch_office'] ?? f['name'] ?? 'Franquicia')
-                          .toString(),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: DropdownButtonFormField<String>(
+          value: value,
+          items:
+              _franchises
+                  .map(
+                    (f) => DropdownMenuItem<String>(
+                      value: f['id'].toString(),
+                      child: Text(
+                        (f['branch_office'] ?? f['name'] ?? 'Franquicia')
+                            .toString(),
+                      ),
                     ),
-                  ),
-                )
-                .toList(),
-        onChanged: (v) => setState(() => _selectedFranchiseId = v),
-        decoration: const InputDecoration(
-          labelText: 'Franquicia',
-          border: OutlineInputBorder(),
+                  )
+                  .toList(),
+          onChanged: (v) => setState(() => _selectedFranchiseId = v),
+          decoration: const InputDecoration(
+            labelText: 'Ciudad',
+            border: OutlineInputBorder(),
+          ),
+          validator: (v) => (v == null || v.isEmpty) ? 'Campo requerido' : null,
         ),
-        validator: (v) => (v == null || v.isEmpty) ? 'Campo requerido' : null,
-      ),
-    );
+      );
+    } else {
+      final franchiseName =
+          _franchises.firstWhere(
+            (f) => f['id'].toString() == _userFranchiseId,
+            orElse: () => <String, dynamic>{'name': 'Ciudad no encontrada'},
+          )['name'];
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: TextFormField(
+          controller: TextEditingController(text: franchiseName.toString()),
+          decoration: const InputDecoration(
+            labelText: 'Ciudad',
+            border: OutlineInputBorder(),
+          ),
+          readOnly: true,
+        ),
+      );
+    }
   }
 
   @override

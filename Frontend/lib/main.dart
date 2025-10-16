@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:vnet_agenda/screens/init_select_user_screen.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  //Inicializar el formato de fechas en español
+  await initializeDateFormatting('es_Es', null);
   runApp(const MyApp());
 }
 

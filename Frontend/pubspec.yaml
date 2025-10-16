@@ -1,5 +1,5 @@
 name: vnet_agenda
-description: "A new Flutter project."
+description: "app hibrida para agendar pedidos de instalacion de fibra optica."
 
 publish_to: 'none' 
 
@@ -19,7 +19,15 @@ dependencies:
   dotenv: ^4.2.0         # Para manejar variables de entorno
   http: ^1.1.0
   logger: ^2.2.0
-
+  flutter_map: ^5.0.0
+  latlong2: ^0.9.1
+  date_time_picker: ^2.1.0
+  url_launcher: ^6.1.11
+  geolocator: ^10.0.0
+  intl: ^0.17.0
+  syncfusion_flutter_signaturepad: ^31.1.19
+  path_provider: ^2.1.1
+  signature: ^5.0.0
 dev_dependencies:
   flutter_lints: ^2.0.0
   

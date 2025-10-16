@@ -16,8 +16,11 @@ class ContractorCreateScreen extends StatefulWidget {
 class _ContractorCreateScreenState extends State<ContractorCreateScreen> {
   final _formKey = GlobalKey<FormState>();
 
+  // Debug
+  // final Logger _logger = Logger();
+
   // Servicios
-  final ContractorService _contractorService = ContractorService();
+  final ContractorServices _contractorService = ContractorServices();
   final FranchiseService _franchiseService = FranchiseService();
   final AuthService _authService = AuthService();
 
@@ -45,8 +48,7 @@ class _ContractorCreateScreenState extends State<ContractorCreateScreen> {
 
   // Variablles
   int? _roleId;
-  int? _userFranchiseId;
-  String? _userFranchiseName;
+  String? _userFranchiseId;
 
   Future<void> _loadFranchises() async {
     setState(() => _loadingFranchises = true);
@@ -56,9 +58,7 @@ class _ContractorCreateScreenState extends State<ContractorCreateScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No se pudieron cargar las franquicias'),
-          ),
+          const SnackBar(content: Text('No se pudieron cargar las ciudades')),
         );
       }
     } finally {
@@ -67,29 +67,9 @@ class _ContractorCreateScreenState extends State<ContractorCreateScreen> {
   }
 
   Future<void> _initUserData() async {
-    _roleId = await roleUser();
-    _userFranchiseId = await franchiseUser();
-    if (_roleId == 2 && _userFranchiseId != null) {
-      setState(() {
-        final userFranchise = _franchises.firstWhere(
-          (f) => f['id'].toString() == _userFranchiseId.toString(),
-          orElse: () => {},
-        );
-        _userFranchiseName =
-            userFranchise['branch_office'] ?? 'Ninguna seleccionada';
-        _selectedFranchiseId = _userFranchiseId.toString();
-      });
-    }
-  }
-
-  Future<int> roleUser() async {
-    dynamic role = await _authService.getUserRole();
-    return role;
-  }
-
-  Future<int> franchiseUser() async {
-    dynamic franchise = await _authService.getUserfranchise();
-    return franchise;
+    final data = await _authService.getDataUserRoleFranchise();
+    _roleId = int.parse(data['role']);
+    _userFranchiseId = data['franchise'].toString();
   }
 
   Future<void> _submit() async {
@@ -97,7 +77,7 @@ class _ContractorCreateScreenState extends State<ContractorCreateScreen> {
 
     if (_selectedFranchiseId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Debe seleccionar una franquicia')),
+        const SnackBar(content: Text('Debe seleccionar una ciudad')),
       );
       return;
     }
@@ -195,19 +175,7 @@ class _ContractorCreateScreenState extends State<ContractorCreateScreen> {
                   maxLen: 255,
                 ),
                 const SizedBox(height: 12),
-                _section('Franquicia'),
-                if (_roleId == 2 && _userFranchiseName != null) ...[
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Text(
-                      'Franquicia asignada: $_userFranchiseName',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
-                      ),
-                    ),
-                  ),
-                ],
+                _section('Ciudad'),
                 _franchiseDropdown(),
                 const SizedBox(height: 20),
                 SizedBox(
@@ -288,30 +256,54 @@ class _ContractorCreateScreenState extends State<ContractorCreateScreen> {
         child: Center(child: CircularProgressIndicator()),
       );
     }
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: DropdownButtonFormField<String>(
-        value: _selectedFranchiseId,
-        items:
-            _franchises
-                .map(
-                  (f) => DropdownMenuItem<String>(
-                    value: f['id'].toString(),
-                    child: Text(f['name'] ?? 'Franquicia'),
-                  ),
-                )
-                .toList(),
-        onChanged:
-            (_roleId == 2)
-                ? null
-                : (v) => setState(() => _selectedFranchiseId = v),
-        decoration: const InputDecoration(
-          labelText: 'Franquicia',
-          border: OutlineInputBorder(),
+    if (_roleId == 1) {
+      final value =
+          _franchises.any((f) => f['id'].toString() == _selectedFranchiseId)
+              ? _selectedFranchiseId
+              : null;
+
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: DropdownButtonFormField<String>(
+          value: value,
+          items:
+              _franchises
+                  .map(
+                    (f) => DropdownMenuItem<String>(
+                      value: f['id'].toString(),
+                      child: Text(
+                        (f['branch_office'] ?? f['name'] ?? 'Franquicia')
+                            .toString(),
+                      ),
+                    ),
+                  )
+                  .toList(),
+          onChanged: (v) => setState(() => _selectedFranchiseId = v),
+          decoration: const InputDecoration(
+            labelText: 'Ciudad',
+            border: OutlineInputBorder(),
+          ),
+          validator: (v) => (v == null || v.isEmpty) ? 'Campo requerido' : null,
         ),
-        validator: (v) => (v == null || v.isEmpty) ? 'Campo requerido' : null,
-      ),
-    );
+      );
+    } else {
+      final franchiseName =
+          _franchises.firstWhere(
+            (f) => f['id'].toString() == _userFranchiseId,
+            orElse: () => <String, dynamic>{'name': 'Ciudad no encontrada'},
+          )['name'];
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: TextFormField(
+          controller: TextEditingController(text: franchiseName.toString()),
+          decoration: const InputDecoration(
+            labelText: 'Ciudad',
+            border: OutlineInputBorder(),
+          ),
+          readOnly: true,
+        ),
+      );
+    }
   }
 
   @override

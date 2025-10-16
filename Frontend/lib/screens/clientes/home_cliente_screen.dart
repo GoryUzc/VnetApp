@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vnet_agenda/screens/clientes/create_meeting_cliente_creen.dart';
 import 'package:vnet_agenda/services/others/cliente_service.dart';
 import 'package:vnet_agenda/strings/app_strings.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
@@ -73,7 +74,7 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        backgroundColor: Color(0xFFCC04FF),
+        backgroundColor: const Color(0xFFCC04FF),
         title: const Text(
           "Perfil de Usuario",
           style: TextStyle(
@@ -139,7 +140,15 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
                     const SizedBox(height: 24.0),
                     ElevatedButton(
                       onPressed: () {
-                        Navigator.pushNamed(context, '/crear_cita');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => CreateMeetingClienteSCreen(
+                                  prospectAradialId: widget.clienteId,
+                                ),
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryColor,
@@ -205,11 +214,11 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8.0),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: Colors.black12,
             blurRadius: 4.0,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -242,7 +251,7 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
           padding: const EdgeInsets.all(12.0),
           child: Text(
             label,
-            style: TextStyle(
+            style: const TextStyle(
               fontWeight: FontWeight.bold,
               color: AppColors.secondaryColor,
             ),

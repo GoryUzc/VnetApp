@@ -50,7 +50,6 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
           builder: (context) => HomeClienteScreen(clienteId: result),
         ),
       );
-      _logger.d('El id del cliente es: $result');
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -77,7 +76,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(20.0),
           child: Form(
             key: _formKey,

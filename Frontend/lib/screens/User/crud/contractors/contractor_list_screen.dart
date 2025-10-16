@@ -15,7 +15,7 @@ class ContractorListScreen extends StatefulWidget {
 }
 
 class _ContractorListScreenState extends State<ContractorListScreen> {
-  final ContractorService _service = ContractorService();
+  final ContractorServices _service = ContractorServices();
   final FranchiseService _franchiseService = FranchiseService();
 
   final Map<int, String> _franchiseNames = {};

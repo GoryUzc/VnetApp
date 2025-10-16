@@ -6,6 +6,30 @@ import 'package:vnet_agenda/services/authentication/auth_service.dart';
 class ContractorService {
   final AuthService _authService = AuthService();
 
+  Future<Map<String, dynamic>> getDetailContractor(String id) async {
+    try {
+      final headers = await _authService.getAuthHeaders();
+      final response = await http.get(
+        Uri.parse(ApiConfig.endpoint('contractors/detail/$id')),
+        headers: headers,
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final contractor =
+            (data is Map<String, dynamic> && data['contractor'] is Map)
+                ? Map<String, dynamic>.from(data['contractor'] as Map)
+                : (data is Map<String, dynamic> ? data : <String, dynamic>{});
+        return contractor;
+      } else {
+        throw Exception(
+          'Error al obrtener detalles de la empresa: ${response.body}',
+        );
+      }
+    } catch (e) {
+      throw Error();
+    }
+  }
+
   /// Obtiene todos los contratistas (requiere autorización)
   Future<List<Map<String, dynamic>>> getAllContractor() async {
     try {

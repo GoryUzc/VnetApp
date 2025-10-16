@@ -4,12 +4,11 @@ import 'package:vnet_agenda/screens/User/crud/meeting/list_meeting_screen.dart';
 import 'package:vnet_agenda/screens/User/crud/meeting/list_meeting_unassegned_screen.dart';
 import 'package:vnet_agenda/screens/User/crud/order/order_list_screen.dart';
 import 'package:vnet_agenda/screens/User/crud/prospects/prospect_list_screen.dart';
-import 'package:vnet_agenda/screens/User/crud/users/user_list_screen.dart';
 import 'package:vnet_agenda/screens/User/crud/contractors/contractor_list_screen.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
 
-class CustomAdminDrawer extends StatelessWidget {
-  const CustomAdminDrawer({super.key});
+class CustomSupervisorDrawer extends StatelessWidget {
+  const CustomSupervisorDrawer({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -48,14 +47,6 @@ class CustomAdminDrawer extends StatelessWidget {
 
                 const Divider(),
 
-                // Sección: Gestión de Personas
-                _buildSectionHeader('👥 Gestión de Usuarios'),
-                _buildDrawerItem(
-                  context,
-                  'Usuarios del Sistema',
-                  Icons.person,
-                  () => _navigateTo(context, const UserListScreen()),
-                ),
                 _buildDrawerItem(
                   context,
                   'Contratistas',
@@ -150,7 +141,7 @@ class CustomAdminDrawer extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           const Text(
-            'VNET FIBRA ÓPTICA',
+            'VNET AGENDA',
             style: TextStyle(
               color: Colors.white,
               fontSize: 18,
@@ -159,7 +150,7 @@ class CustomAdminDrawer extends StatelessWidget {
           ),
           const SizedBox(height: 5),
           Text(
-            'Panel de Administración',
+            'Panel de Supervisor',
             style: TextStyle(
               color: Colors.white.withOpacity(0.9),
               fontSize: 14,
