@@ -255,4 +255,24 @@ class ProspectService {
       rethrow;
     }
   }
+
+  Future<Map<String, dynamic>> consultProspect(String id) async {
+    try {
+      final response = await http.get(
+        Uri.parse(ApiConfig.endpoint('prospect/consult/{$id}')),
+      );
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        return {'message': data['status']};
+      } else if (response.statusCode == 404) {
+        return {'message': data['error']};
+      } else {
+        return {};
+      }
+    } catch (e, stackTrace) {
+      _logger.e('Error en consultProspect:', error: e, stackTrace: stackTrace);
+      rethrow;
+    }
+  }
 }

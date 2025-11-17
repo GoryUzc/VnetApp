@@ -6,7 +6,8 @@ import 'package:vnet_agenda/screens/User/crud/order/order_list_screen.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
 
 class CustomContractorDrawer extends StatelessWidget {
-  const CustomContractorDrawer({super.key});
+  final String userId;
+  const CustomContractorDrawer({super.key, required this.userId});
 
   @override
   Widget build(BuildContext context) {
@@ -27,8 +28,10 @@ class CustomContractorDrawer extends StatelessWidget {
                   context,
                   'Citas Disponibles',
                   Icons.list,
-                  () =>
-                      _navigateTo(context, const MeetingUnassignedListScreen()),
+                  () => _navigateTo(
+                    context,
+                    MeetingUnassignedListScreen(userId: userId),
+                  ),
                 ),
                 _buildDrawerItem(
                   context,

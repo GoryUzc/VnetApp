@@ -28,6 +28,8 @@ dependencies:
   syncfusion_flutter_signaturepad: ^31.1.19
   path_provider: ^2.1.1
   signature: ^5.0.0
+  connectivity_plus: ^4.0.0
+  open_filex: ^4.4.0
 dev_dependencies:
   flutter_lints: ^2.0.0
   

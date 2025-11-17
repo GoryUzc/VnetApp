@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:vnet_agenda/screens/User/crud/order/order_completion_screen.dart';
 import 'package:vnet_agenda/screens/User/crud/order/order_edit_screen.dart';
 import 'package:vnet_agenda/services/crud/order_service.dart';
-import 'package:vnet_agenda/services/crud/prospect_service.dart';
-import 'package:vnet_agenda/services/crud/user_services.dart';
 import 'package:vnet_agenda/strings/app_strings.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
 import 'package:vnet_agenda/widgets/data_table_custom.dart';
@@ -15,121 +14,42 @@ class OrderListScreen extends StatefulWidget {
 }
 
 class _OrderListScreenState extends State<OrderListScreen> {
-  final _formatKey = GlobalKey<FormState>();
-  // Servicios
-  final OrderService _orderServices = OrderService();
-  final UserServices _userServices = UserServices();
-  final ProspectService _prospectService = ProspectService();
+  final OrderService _orderService = OrderService();
 
-  // Variables
-  String? _prospectName = '';
-  String? _userName = '';
-  String? _userId;
-  String? _prospectId;
-  String? _meetingId;
-
-  // Lista de órdenes
   List<Map<String, dynamic>> _orders = [];
-
   bool _isLoading = false;
   bool _hasError = false;
-  String _errorMesage = '';
+  String _errorMessage = '';
 
   @override
   void initState() {
     super.initState();
     _loadOrders();
-    _loadProspect();
-    _loadUsers();
   }
 
-  Future _loadOrders({bool isRefreshing = false}) async {
-    if (isRefreshing) {
-      setState(() {
-        _isLoading = true;
-        _hasError = false;
-        _errorMesage = '';
-      });
+  Future<void> _loadOrders({bool isRefreshing = false}) async {
+    if (!isRefreshing) {
+      setState(() => _isLoading = true);
     }
+
+    setState(() {
+      _hasError = false;
+      _errorMessage = '';
+    });
+
     try {
-      final orders = await _orderServices.getAllOrders();
-      setState(() {
-        _orders = orders;
-        _userId = orders.isNotEmpty ? orders[0]['user_id'] : null;
-        _prospectId =
-            orders.isNotEmpty ? orders[0]['prospect_aradial_id'] : null;
-        _meetingId = orders.isNotEmpty ? orders[0]['id_meeting'] : null;
-      });
+      final orders = await _orderService.getAllOrders();
+      setState(() => _orders = orders);
     } catch (e) {
       setState(() {
         _hasError = true;
-        _errorMesage = 'Error al cargar las ordenes: $e';
+        _errorMessage = 'Error al cargar las órdenes: $e';
       });
     } finally {
-      if (isRefreshing) {
-        setState(() {
-          _isLoading = false;
-        });
+      if (!isRefreshing) {
+        setState(() => _isLoading = false);
       }
     }
-  }
-
-  Future _loadUsers() async {
-    try {
-      final users = await _userServices.getAllUser();
-      setState(() {
-        _userName =
-            users.isNotEmpty
-                ? users.firstWhere(
-                  (user) => user['id'].toString() == _userId,
-                  orElse: () => {'name': 'Desconocido'},
-                )['name']
-                : 'Desconocido';
-      });
-    } catch (e) {
-      setState(() {
-        _hasError = true;
-        _errorMesage = 'Error al cargar los usuarios: $e';
-      });
-    }
-  }
-
-  Future _loadProspect() async {
-    try {
-      final prospects = await _prospectService.getAllProspects();
-      setState(() {
-        _prospectName =
-            prospects.isNotEmpty
-                ? prospects.firstWhere(
-                  (prospect) => prospect['id'].toString() == _prospectId,
-                  orElse: () => {'name': 'Desconocido'},
-                )['name']
-                : 'Desconocido';
-      });
-    } catch (e) {
-      setState(() {
-        _hasError = true;
-        _errorMesage = 'Error al cargar los prospectos: $e';
-      });
-    }
-  }
-
-  void _showErrorSnackbar(dynamic error) {
-    String message;
-
-    if (error.toString().contains('Network')) {
-      message = AppStrings.networkError;
-    } else if (error.toString().contains('401')) {
-      message = AppStrings.unauthorizedError;
-    } else if (error.toString().contains('404')) {
-      message = AppStrings.notFoundError;
-    } else {
-      message = AppStrings.genericError;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
-    );
   }
 
   Future<void> _deleteOrder(String orderId) async {
@@ -154,11 +74,12 @@ class _OrderListScreenState extends State<OrderListScreen> {
             ],
           ),
     );
+
     if (confirmed == true) {
       try {
-        await _orderServices.deleteOrder(orderId);
+        await _orderService.deleteOrder(orderId);
         setState(() {
-          _orders.removeWhere((order) => order['id'] == orderId);
+          _orders.removeWhere((order) => order['id'].toString() == orderId);
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Orden eliminada exitosamente')),
@@ -169,6 +90,24 @@ class _OrderListScreenState extends State<OrderListScreen> {
     }
   }
 
+  void _showErrorSnackbar(dynamic error) {
+    String message;
+
+    if (error.toString().contains('Network')) {
+      message = AppStrings.networkError;
+    } else if (error.toString().contains('401')) {
+      message = AppStrings.unauthorizedError;
+    } else if (error.toString().contains('404')) {
+      message = AppStrings.notFoundError;
+    } else {
+      message = AppStrings.genericError;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -176,7 +115,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.primaryColor,
         title: const Text(
-          'Gestión de Ordenes de instalacion',
+          'Gestión de Órdenes de Instalación',
           style: TextStyle(color: Colors.white),
         ),
         actions: [
@@ -188,16 +127,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
             ),
           IconButton(
             icon: const Icon(Icons.add, color: Colors.white),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder:
-                      (context) =>
-                          const OrderListScreen(), //Cambiar por pantalla para crear
-                ),
-              ).then((_) => _loadUsers());
-            },
+            onPressed: _navigateToCreateOrder,
             tooltip: 'Agregar Orden',
           ),
         ],
@@ -205,6 +135,14 @@ class _OrderListScreenState extends State<OrderListScreen> {
       ),
       body: _buildContent(),
     );
+  }
+
+  void _navigateToCreateOrder() {
+    // TODO: Cambiar por pantalla para crear orden
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const OrderListScreen()),
+    ).then((_) => _loadOrders());
   }
 
   Widget _buildContent() {
@@ -225,24 +163,28 @@ class _OrderListScreenState extends State<OrderListScreen> {
 
   Widget _buildErrorState() {
     return Center(
-      child: ListView(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(Icons.error, size: 60, color: Colors.red),
           const SizedBox(height: 16),
           const Text(
-            'Error al cargar usuarios',
+            'Error al cargar órdenes',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
-          Text(
-            _errorMesage,
-            style: const TextStyle(color: Colors.grey),
-            textAlign: TextAlign.center,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32.0),
+            child: Text(
+              _errorMessage,
+              style: const TextStyle(color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: () => _loadUsers(),
+            onPressed: () => _loadOrders(),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryColor,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -262,10 +204,10 @@ class _OrderListScreenState extends State<OrderListScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.people, size: 80, color: Colors.grey),
+          const Icon(Icons.assignment, size: 80, color: Colors.grey),
           const SizedBox(height: 20),
           const Text(
-            'No hay ordenes registradas',
+            'No hay órdenes registradas',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -281,22 +223,13 @@ class _OrderListScreenState extends State<OrderListScreen> {
           ),
           const SizedBox(height: 30),
           ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder:
-                      (context) =>
-                          const OrderListScreen(), //Cambiar por pantalla para crear
-                ),
-              ).then((_) => _loadUsers());
-            },
+            onPressed: _navigateToCreateOrder,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryColor,
               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
             ),
             child: const Text(
-              'Crear primer usuario',
+              'Crear primera orden',
               style: TextStyle(fontSize: 16, color: Colors.white),
             ),
           ),
@@ -312,49 +245,168 @@ class _OrderListScreenState extends State<OrderListScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            // Contador de órdenes
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Row(
+                  children: [
+                    const Icon(Icons.assignment, color: AppColors.primaryColor),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Total: ${_orders.length} orden(es)',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(height: 16),
+
             Expanded(
               child: DataTableCustom(
                 columns: const [
                   'ID',
-                  'Prospecto',
-                  'Tecnico',
-                  'ID Cita',
-                  'Observaciones',
+                  'Cliente',
+                  'Técnico',
+                  'Fecha Cita',
+                  'Plan',
+                  'Estado',
                   'Acciones',
                 ],
-                rows:
-                    _orders.map((u) {
-                      final id = u['id'] ?? '';
-                      return {
-                        'id': id,
-                        'ID': id?.toString(),
-                        'Prospecto': _prospectName,
-                        'Tecnico': _userName,
-                        'ID Cita': (u['id_meeting'] ?? ''),
-                        'Observaciones': (u['detalles_instalacion'] ?? ''),
-                      };
-                    }).toList(),
-                onEdit: (id) {
-                  // Navegar a la pantalla de edición
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) => OrderEditScreen(
-                            key: _formatKey, // Usar la clave definida
-                            userId: _userId,
-                            prospectId: _prospectId,
-                            meetingId: _meetingId, // Pasar el userId
-                          ),
-                    ),
-                  ).then((_) => _loadOrders());
-                },
+                rows: _orders.map(_buildOrderRow).toList(),
+                onEdit: (id) => _navigateToEditOrder(id),
                 onDelete: (id) => _deleteOrder(id),
+                onView:
+                    (id) => _navigateToViewOrder(
+                      id,
+                    ), // Si necesitas vista de detalles
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // ✅ MÉTODO OPTIMIZADO - Extrae datos directamente de la estructura anidada
+  Map<String, dynamic> _buildOrderRow(Map<String, dynamic> order) {
+    final id = order['id']?.toString() ?? 'N/A';
+
+    // ✅ DATOS DEL PROSPECTO (desde meeting → prospect_aradial)
+    final prospect = order['meeting']?['prospect_aradial'] ?? {};
+    final clientName =
+        '${prospect['name'] ?? ''} ${prospect['last_name'] ?? ''}'.trim();
+    final plan = prospect['plan']?.toString() ?? 'No especificado';
+
+    // ✅ DATOS DEL TÉCNICO (desde user)
+    final user = order['user'] ?? {};
+    final technicianName =
+        '${user['name'] ?? ''} ${user['last_name'] ?? ''}'.trim();
+
+    // ✅ DATOS DE LA CITA (desde meeting)
+    final meeting = order['meeting'] ?? {};
+    final appointmentDate = _formatDateTime(meeting['date_time1']?.toString());
+    final status = meeting['status']?.toString() ?? 'Desconocido';
+
+    return {
+      'id': id,
+      'ID': '#$id',
+      'Cliente': clientName.isNotEmpty ? clientName : 'Cliente no disponible',
+      'Técnico':
+          technicianName.isNotEmpty ? technicianName : 'Técnico no asignado',
+      'Fecha Cita': appointmentDate,
+      'Plan': plan,
+      'Estado': _formatStatus(status),
+      // Datos adicionales para acciones
+      '_user_id': order['user_id']?.toString(),
+      '_prospect_id': order['prospect_aradial_id']?.toString(),
+      '_meeting_id': order['id_meeting']?.toString(),
+      '_full_order': order, // Guardar orden completa por si necesitas más datos
+    };
+  }
+
+  // ✅ FORMATEAR FECHA
+  String _formatDateTime(String? dateTimeString) {
+    if (dateTimeString == null || dateTimeString.isEmpty) {
+      return 'Fecha no disponible';
+    }
+
+    try {
+      final dateTime = DateTime.parse(dateTimeString);
+      return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return 'Fecha inválida';
+    }
+  }
+
+  // ✅ FORMATEAR ESTADO CON EMOJIS Y COLORES
+  String _formatStatus(String status) {
+    switch (status.toLowerCase()) {
+      case 'finalizada':
+        return '✅ Finalizada';
+      case 'pendiente':
+        return '⏳ Pendiente';
+      case 'en_progreso':
+        return '🔄 En progreso';
+      case 'cancelada':
+        return '❌ Cancelada';
+      default:
+        return '❓ $status';
+    }
+  }
+
+  // ✅ NAVEGACIÓN OPTIMIZADA PARA EDITAR
+  void _navigateToEditOrder(String? id) {
+    if (id == null) return;
+
+    // Buscar la orden completa para pasar todos los datos
+    final order = _orders.firstWhere(
+      (order) => order['id'].toString() == id,
+      orElse: () => {},
+    );
+
+    if (order.isEmpty) {
+      _showErrorSnackbar('Orden no encontrada');
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => OrderEditScreen(
+              key: ValueKey('order_edit_$id'),
+              orderId: id,
+              userId: order['user_id']?.toString() ?? '',
+              prospectId: order['prospect_aradial_id']?.toString() ?? '',
+              meetingId: order['id_meeting']?.toString() ?? '',
+            ),
+      ),
+    ).then((_) => _loadOrders());
+  }
+
+  // ✅ NAVEGACIÓN PARA VER DETALLES (si necesitas)
+  void _navigateToViewOrder(String? id) {
+    if (id == null) return;
+
+    final order = _orders.firstWhere(
+      (order) => order['id'].toString() == id,
+      orElse: () => {},
+    );
+
+    if (order.isEmpty) {
+      _showErrorSnackbar('Orden no encontrada');
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => OrderCompletionScreen(orderId: id),
       ),
     );
   }

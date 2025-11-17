@@ -82,7 +82,7 @@ class DataTableCustom extends StatelessWidget {
                               if (onView != null)
                                 IconButton(
                                   icon: const Icon(
-                                    Icons.view_agenda,
+                                    Icons.description,
                                     color: Colors.blueAccent,
                                   ),
                                   onPressed:

@@ -1,14 +1,80 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:logger/web.dart';
 import 'package:vnet_agenda/screens/User/crud/users/user_edit_screen.dart';
 import 'package:vnet_agenda/screens/init_select_user_screen.dart';
 import 'package:vnet_agenda/services/authentication/auth_service.dart';
 import 'package:vnet_agenda/services/crud/user_services.dart';
+import 'package:vnet_agenda/strings/app_strings.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
 import 'package:vnet_agenda/widgets/contractor_drawer.dart';
 
-class HomeContractorScreen extends StatelessWidget {
+class HomeContractorScreen extends StatefulWidget {
   const HomeContractorScreen({super.key});
+
+  @override
+  State<HomeContractorScreen> createState() => _HomeContractorScreenState();
+}
+
+class _HomeContractorScreenState extends State<HomeContractorScreen> {
+  String id = '';
+  final Logger _logger = Logger();
+  final AuthService _authService = AuthService();
+  bool _loading = false;
+  String _errorMessage = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load({bool isRefreshing = false}) async {
+    if (!isRefreshing) {
+      setState(() {
+        _loading = true;
+        _errorMessage = '';
+      });
+    }
+
+    try {
+      final user = await _authService.getUserId() ?? 'No especificado';
+      _logger.d('ID => $user');
+      id = user;
+
+      if (mounted) {
+        setState(() {
+          id;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _loading = false;
+        _errorMessage = e.toString();
+      });
+      _showErrorSnackBar(e);
+    }
+  }
+
+  void _showErrorSnackBar(dynamic error) {
+    String message;
+
+    if (error.toString().contains('Network')) {
+      message = AppStrings.networkError;
+    } else if (error.toString().contains('401')) {
+      message = AppStrings.unauthorizedError;
+    } else if (error.toString().contains('404')) {
+      message = AppStrings.notFoundError;
+    } else {
+      message = AppStrings.genericError;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -152,7 +218,7 @@ class HomeContractorScreen extends StatelessWidget {
         centerTitle: true,
         elevation: 4,
       ),
-      drawer: const CustomContractorDrawer(),
+      drawer: CustomContractorDrawer(userId: id),
       body: _buildWelcomeContent(),
     );
   }

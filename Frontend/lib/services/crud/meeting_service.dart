@@ -134,7 +134,41 @@ class MeetingService {
       }
     } catch (e, stackTrace) {
       _logger.e(
-        'Error en getAllMeetingUnassigned:',
+        'Error en getAllMeetingUser:',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getAllMeetingUserProcess() async {
+    _logger.d('Obteniendo citas del Usuario en proceso');
+    try {
+      final headers = await _authService.getAuthHeaders();
+      final response = await http.get(
+        Uri.parse(ApiConfig.endpoint('/meetings/user/process')),
+        headers: headers,
+      );
+      _logger.d('Codigo de estado : ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        _logger.d('Respuesta lista de citas del usuario en proceso: $data');
+        final List<dynamic> list =
+            (data is Map<String, dynamic> && data['meetings'] is List)
+                ? data['meetings'] as List
+                : (data is List ? data : []);
+        final result =
+            list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+        _logger.i('Citas obtenidas exitosamente: ${result.length}');
+        return result;
+      } else {
+        throw Exception('Error al obtener cita: ${response.body}');
+      }
+    } catch (e, stackTrace) {
+      _logger.e(
+        'Error en getAllMeetingUserProcess:',
         error: e,
         stackTrace: stackTrace,
       );
@@ -254,7 +288,7 @@ class MeetingService {
       );
 
       if (response.statusCode == 200) {
-        throw 'Cita eliminado exitosamente: ${response.body}';
+        _logger.i('Cita eliminado exitosamente: ${response.body}');
       } else {
         throw Exception('Error al eliminar cita: ${response.body}');
       }
@@ -274,15 +308,52 @@ class MeetingService {
         headers: headers,
       );
       if (response.statusCode == 201) {
-        throw 'Cita $idMeeting tomada con exito';
+        _logger.i('Cita $idMeeting tomada con exito');
       } else if (response.statusCode == 409) {
-        throw Exception('Cita Tomada por otro usuario: ${response.body}');
+        _logger.i('Cita Tomada por otro usuario: ${response.body}');
       } else {
         throw Exception('Error al tomar la cita: ${response.body}');
       }
     } catch (e, stackTrace) {
       _logger.e('Error en takeMeeting:', error: e, stackTrace: stackTrace);
       rethrow;
+    }
+  }
+
+  Future<void> initMeeting(String id) async {
+    _logger.d('Iniciando cita de instalacion $id');
+
+    try {
+      final headers = await _authService.getAuthHeaders();
+      final response = await http.put(
+        Uri.parse(ApiConfig.endpoint('/meetings/updated/status/init/$id')),
+        headers: headers,
+      );
+      if (response.statusCode == 201) {
+        _logger.i('Cita $id iniciada con exito');
+      } else {
+        throw Exception('Error al iniciar la cita ${response.body}');
+      }
+    } catch (e, stackTrace) {
+      _logger.d('Error en initMeeting:', error: e, stackTrace: stackTrace);
+    }
+  }
+
+  Future<void> endMeeting(String id) async {
+    _logger.d('Finalizando instalacion $id');
+    try {
+      final headers = await _authService.getAuthHeaders();
+      final response = await http.put(
+        Uri.parse(ApiConfig.endpoint('/meetings/updated/status/end/$id')),
+        headers: headers,
+      );
+      if (response.statusCode == 201) {
+        _logger.i('Cita $id Finalizada con exito');
+      } else {
+        throw Exception('Error al fializar la cita ${response.body}');
+      }
+    } catch (e, stackTrace) {
+      _logger.d('Error en initMeeting:', error: e, stackTrace: stackTrace);
     }
   }
 }

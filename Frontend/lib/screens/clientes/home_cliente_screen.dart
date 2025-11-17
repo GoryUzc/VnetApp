@@ -9,9 +9,13 @@ import 'package:vnet_agenda/theme/app_text_styles.dart';
 
 class HomeClienteScreen extends StatefulWidget {
   final String clienteId;
+  // final String contractId;
 
-  const HomeClienteScreen({Key? key, required this.clienteId})
-    : super(key: key);
+  const HomeClienteScreen({
+    Key? key,
+    required this.clienteId,
+    // required this.contractId,
+  }) : super(key: key);
 
   @override
   _HomeClienteScreenState createState() => _HomeClienteScreenState();
@@ -230,6 +234,7 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
             AppStrings.documentType,
             _clienteData['document_type'],
           ),
+          // _buildTableRow('numero contrato', widget.contractId),
           _buildTableRow(AppStrings.document, _clienteData['document']),
           _buildTableRow(AppStrings.phone, _clienteData['phone']),
           _buildTableRow(AppStrings.email, _clienteData['email']),

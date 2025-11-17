@@ -1,25 +1,21 @@
-import 'dart:typed_data';
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
-import 'package:syncfusion_flutter_signaturepad/signaturepad.dart';
-import 'package:http/http.dart' as http;
-
+import 'package:logger/logger.dart';
+import 'package:vnet_agenda/screens/User/crud/order/order_signature_screen.dart';
 import 'package:vnet_agenda/services/crud/order_service.dart';
-import 'package:vnet_agenda/services/api_config.dart';
-import 'package:vnet_agenda/services/authentication/auth_service.dart';
+import 'package:vnet_agenda/strings/app_strings.dart';
 
 class OrderCreateScreen extends StatefulWidget {
   final String? prospectName; // opcional para mostrar contexto en el encabezado
-  final String?
-  technicianName; // opcional para mostrar contexto en el encabezado
-  final String? meetingId; // opcional para mostrar contexto en el encabezado
+  final String? meetingId;
+  final String? userId; // opcional para mostrar contexto en el encabezado
+  final String? prospectId; // opcional para mostrar contexto en el encabezado
 
   const OrderCreateScreen({
     super.key,
     this.prospectName,
-    this.technicianName,
     this.meetingId,
+    this.prospectId,
+    this.userId,
   });
 
   @override
@@ -29,8 +25,15 @@ class OrderCreateScreen extends StatefulWidget {
 class _OrderCreateScreenState extends State<OrderCreateScreen> {
   final _formKey = GlobalKey<FormState>();
 
+  final Logger _logger = Logger();
+
   // Servicios
   final OrderService _orderService = OrderService();
+
+  // Variables
+  String idMeeting = '';
+  String userId = '';
+  String prospectId = '';
 
   // Controllers de campos
   final TextEditingController _ontPuerto1Controller = TextEditingController();
@@ -63,10 +66,6 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
   final TextEditingController _detallesInstalacionController =
       TextEditingController();
 
-  // Firma
-  final GlobalKey<SfSignaturePadState> _signatureKey = GlobalKey();
-  bool _isSigned = false;
-
   // Estado
   bool _loading = false;
 
@@ -98,53 +97,22 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
     super.dispose();
   }
 
-  Future<Uint8List?> _getSignatureBytes() async {
-    if (!_isSigned) return null;
-    final state = _signatureKey.currentState;
-    if (state == null) return null;
-    final image = await state.toImage();
-    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-    return byteData?.buffer.asUint8List();
-  }
-
-  Future<void> _uploadSignature(String orderId) async {
-    final bytes = await _getSignatureBytes();
-    if (bytes == null) return; // nada que subir
-
-    final token = await AuthService().getToken();
-    final url = ApiConfig.endpoint('/orders/upload-signature/$orderId');
-
-    final request = http.MultipartRequest('POST', Uri.parse(url));
-    request.files.add(
-      http.MultipartFile.fromBytes(
-        'signature',
-        bytes,
-        filename: 'signature_$orderId.png',
-      ),
-    );
-    if (token != null) {
-      request.headers['Authorization'] = 'Bearer $token';
-    }
-    request.headers['Accept'] = 'application/json';
-
-    final streamed = await request.send();
-    final response = await http.Response.fromStream(streamed);
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception(
-        'Error al subir firma: ${response.statusCode} ${response.body}',
-      );
-    }
-  }
-
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+
+    userId = id(widget.userId);
+    idMeeting = id(widget.meetingId);
+    prospectId = id(widget.prospectId);
 
     setState(() => _loading = true);
     try {
       final data = {
+        'user_id': userId,
+        'id_meeting': idMeeting,
+        'prospect_aradial_id': prospectId,
         'ont_puerto_1': int.tryParse(_ontPuerto1Controller.text) ?? 0,
         'conector_sc_pc': int.tryParse(_conectorScPCController.text) ?? 0,
-        'patch_cord_scpc-scapc':
+        'patch_cord_scsp_scapc':
             int.tryParse(_patchCordScScaController.text) ?? 0,
         'roseta': int.tryParse(_rosetaController.text) ?? 0,
         'adapter_scapc': int.tryParse(_adapterScaController.text) ?? 0,
@@ -169,27 +137,21 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
       };
 
       final created = await _orderService.createOrder(data);
-      final orderId = (created['id'] ?? created['order_id'] ?? '').toString();
-      if (orderId.isEmpty) {
-        throw Exception('No se obtuvo el ID de la orden creada');
+      final orderId = created['id']?.toString();
+      if (orderId == null || orderId.isEmpty) {
+        throw Exception('No se recibió el ID de la orden desde el servidor');
       }
-
-      // Subir firma si está presente
-      try {
-        await _uploadSignature(orderId);
-      } catch (e) {
-        // No abortar la creación por fallo de firma, solo informar
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Orden creada, pero la firma falló: $e')),
-        );
-      }
-
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Orden creada correctamente')),
       );
-      Navigator.pop(context, true);
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (_) => SignatureScreen(orderId: orderId, meetingId: idMeeting),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -198,6 +160,12 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  String id(dynamic data) {
+    final idM = data.toString();
+    _logger.d('El ID de la Cita: $idM');
+    return idM.isNotEmpty ? idM : AppStrings.anonymous;
   }
 
   @override
@@ -214,10 +182,11 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                     padding: const EdgeInsets.all(16.0),
                     child: ListView(
                       children: [
+                        _section('Datos de la orden de instalacion: '),
                         _section(
-                          'Datos de la orden: '
+                          'Cliente : '
                           '${widget.prospectName ?? ''} '
-                          '${widget.technicianName != null ? '- ${widget.technicianName}' : ''} '
+                          'Numero de orden: '
                           '${widget.meetingId != null ? '- ${widget.meetingId}' : ''}',
                         ),
                         _textField(
@@ -370,46 +339,11 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                           required: true,
                         ),
 
-                        const SizedBox(height: 12),
-                        _section('Firma del Cliente'),
-                        Container(
-                          height: 220,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            border: Border.all(color: Colors.grey.shade400),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: SfSignaturePad(
-                            key: _signatureKey,
-                            backgroundColor: Colors.white,
-                            onDrawStart: () {
-                              setState(() => _isSigned = true);
-                              return true;
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            ElevatedButton.icon(
-                              onPressed:
-                                  _isSigned
-                                      ? () {
-                                        _signatureKey.currentState?.clear();
-                                        setState(() => _isSigned = false);
-                                      }
-                                      : null,
-                              icon: const Icon(Icons.clear),
-                              label: const Text('Limpiar firma'),
-                            ),
-                          ],
-                        ),
-
                         const SizedBox(height: 20),
                         FilledButton.icon(
                           onPressed: _loading ? null : _submit,
                           icon: const Icon(Icons.save),
-                          label: const Text('Crear Orden'),
+                          label: const Text('Verificacion instalacion'),
                         ),
                       ],
                     ),

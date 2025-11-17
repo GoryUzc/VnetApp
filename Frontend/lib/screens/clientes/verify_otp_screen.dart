@@ -9,10 +9,12 @@ Logger _logger = Logger();
 class VerifyOtpScreen extends StatefulWidget {
   final String document;
   final String email;
+  // final String selectedContractorId;
   const VerifyOtpScreen({
     super.key,
     required this.document,
     required this.email,
+    // required this.selectedContractorId,
   });
 
   @override
@@ -47,7 +49,11 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => HomeClienteScreen(clienteId: result),
+          builder:
+              (context) => HomeClienteScreen(
+                clienteId: result,
+                // contractId: widget.selectedContractorId,
+              ),
         ),
       );
     } catch (e) {

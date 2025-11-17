@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
-import 'package:vnet_agenda/screens/User/crud/meeting/detail_meeting_screen.dart';
+import 'package:vnet_agenda/screens/User/crud/meeting/detail_meeting_take_screen.dart';
 import 'package:vnet_agenda/services/crud/meeting_service.dart';
 import 'package:vnet_agenda/services/crud/prospect_service.dart';
 import 'package:vnet_agenda/services/others/franchise_service.dart';
@@ -48,6 +48,8 @@ class _MeetingUnassignedListScreenState
         _errorMessage = '';
       });
     }
+
+    _logger.d('Id del usuario: ${widget.userId}');
 
     try {
       //  Obtener citas sin asignar
@@ -159,7 +161,7 @@ class _MeetingUnassignedListScreenState
     if (p == null) return AppStrings.anonymous;
     final first = p['name']?.toString() ?? '';
     final last = p['last_name']?.toString() ?? '';
-    final full = (first + ' ' + last).trim();
+    final full = ('$first $last').trim();
     return full.isNotEmpty ? full : AppStrings.anonymous;
   }
 
@@ -312,13 +314,9 @@ class _MeetingUnassignedListScreenState
                               : null;
                       _logger.d('2: $fData');
                       final franchiseName =
-                          (fData! is Map &&
-                                  fData['branch_office'] != null &&
-                                  fData['branch_office'].toString().isNotEmpty)
+                          (fData != null && fData['branch_office'] != null)
                               ? fData['branch_office'].toString()
-                              : (fData is String && fData.isNotEmpty
-                                  ? fData
-                                  : AppStrings.notAvailable);
+                              : AppStrings.notAvailable;
                       _logger.d('3: $franchiseName');
 
                       final plan =
@@ -342,7 +340,7 @@ class _MeetingUnassignedListScreenState
                     context,
                     MaterialPageRoute(
                       builder:
-                          (context) => MeetingDeatilScreen(
+                          (context) => MeetingDeatilTakeScreen(
                             key: GlobalKey(),
                             meetingId: id,
                             userId: widget.userId,

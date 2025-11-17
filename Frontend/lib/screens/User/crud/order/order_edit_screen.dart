@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
+import 'package:vnet_agenda/screens/User/crud/order/order_completion_screen.dart';
+import 'package:vnet_agenda/screens/User/crud/order/order_signature_screen.dart';
 import 'package:vnet_agenda/services/crud/order_service.dart';
 import 'package:vnet_agenda/services/crud/prospect_service.dart';
 import 'package:vnet_agenda/services/crud/user_services.dart';
 
 class OrderEditScreen extends StatefulWidget {
-  final String? orderId;
-  final String? prospectId;
-  final String? userId;
-  final String? meetingId;
+  final String orderId;
+  final String prospectId;
+  final String userId;
+  final String meetingId;
   const OrderEditScreen({
     super.key,
-    this.orderId,
-    this.prospectId,
-    this.userId,
-    this.meetingId,
+    required this.orderId,
+    required this.prospectId,
+    required this.userId,
+    required this.meetingId,
   });
 
   @override
@@ -22,7 +25,7 @@ class OrderEditScreen extends StatefulWidget {
 
 class _OrderEditScreenState extends State<OrderEditScreen> {
   final _formatKey = GlobalKey<FormState>();
-
+  final Logger _logger = Logger();
   //Servicios
   final UserServices _userServices = UserServices();
   final ProspectService _prospectService = ProspectService();
@@ -83,20 +86,25 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
     }
   }
 
+  String _roleId(String? id) {
+    try {
+      return _users
+          .firstWhere((element) => element['id'].toString() == id)['role_id']
+          .toString();
+    } catch (e) {
+      return '';
+    }
+  }
+
   // Estado
   bool _loading = true;
   String? _error = '';
 
   @override
-  void initState() async {
+  void initState() {
     super.initState();
-    if (widget.orderId == null) {
-      // Si no pasan un Id, no intentamos cargar detalles de la orden
-      _loading = false;
-    } else {
-      _initLoad();
+    _initLoad();
     }
-  }
 
   Future<void> _initLoad() async {
     setState(() {
@@ -118,10 +126,10 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
       setState(() {
         _prospects = data;
       });
-        } catch (_) {
+    } catch (_) {
       // Ya se notifica UI si falla general
     } finally {
-      if (mounted) setState(() => _loading = false);
+      // _loading se maneja en _initLoad
     }
   }
 
@@ -131,16 +139,15 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
       setState(() {
         _users = data;
       });
-        } catch (_) {
+    } catch (_) {
       // Ya se notifica UI si falla general
     } finally {
-      if (mounted) setState(() => _loading = false);
+      // _loading se maneja en _initLoad
     }
   }
 
   Future<void> _loadOrders() async {
-    if (widget.orderId == null) return;
-    final u = await _orderService.getOrderDteails(widget.orderId!);
+    final u = await _orderService.getOrderDetails(widget.orderId);
 
     // Setear controllers
     _ontPuerto1Controller.text = (u['ont_puerto_1'] ?? '').toString();
@@ -207,27 +214,31 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
         'router': _routerController.text,
         'detalles_instalacion': _detallesInstalacionController.text,
       };
-      if (widget.orderId == null) {
-        // Crear
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No se puede actualizar: id no provisto'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      } else {
-        // Actualizar
-        await _orderService.updateOrder(widget.orderId!, data);
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Usuario actualizado'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pop(context, true);
-      }
-      if (mounted) Navigator.of(context).pop(true);
+      // Actualizar
+      await _orderService.updateOrder(widget.orderId, data);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Orden actualizada'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      // Navega a la pantalla de firma y espera a que finalice
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SignatureScreen(orderId: widget.orderId, meetingId: widget.meetingId,),
+        ),
+      );
+      if (!mounted) return;
+      // Al finalizar la firma, llevar a pantalla de cierre
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => OrderCompletionScreen(orderId: widget.orderId),
+        ),
+      );
+          // No hacer pop automáticamente aquí para no interferir con el flujo de firma
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -240,20 +251,6 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.orderId == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Editar Orden')),
-        body: const Center(
-          child: Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Text(
-              'ID de la orden no provisto. Vuelva al listado para seleccionar un usuario.',
-            ),
-          ),
-        ),
-      );
-    }
-
     return Scaffold(
       appBar: AppBar(title: const Text('Editar Orden')),
       body:
@@ -401,10 +398,31 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
                           maxLen: 200,
                         ),
                         const SizedBox(height: 20),
-                        FilledButton.icon(
-                          onPressed: _submit,
-                          icon: const Icon(Icons.save),
-                          label: const Text('Guardar Cambios'),
+
+                        // Botones según rol del usuario
+                        Builder(
+                          builder: (context) {
+                            final role = _roleId(widget.userId);
+                            if (role == '3') {
+                              return FilledButton.icon(
+                                onPressed: _submit,
+                                icon: const Icon(Icons.pages),
+                                label: const Text('Verificar orden y firmar'),
+                              );
+                            } else if (role == '4') {
+                              return FilledButton.icon(
+                                onPressed: _submit,
+                                icon: const Icon(Icons.save),
+                                label: const Text('Guardar Cambios'),
+                              );
+                            }
+                            // Rol por defecto: mostrar guardar
+                            return FilledButton.icon(
+                              onPressed: _submit,
+                              icon: const Icon(Icons.save),
+                              label: const Text('Guardar Cambios'),
+                            );
+                          },
                         ),
                       ],
                     ),

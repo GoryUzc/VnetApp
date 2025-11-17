@@ -9,16 +9,17 @@ import 'package:vnet_agenda/services/crud/user_services.dart';
 import 'package:vnet_agenda/strings/app_strings.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
 
-class MeetingDeatilScreen extends StatefulWidget {
+class MeetingDeatilTakeScreen extends StatefulWidget {
   final String? meetingId;
   final String? userId;
-  const MeetingDeatilScreen({super.key, this.meetingId, this.userId});
+  const MeetingDeatilTakeScreen({super.key, this.meetingId, this.userId});
 
   @override
-  State<MeetingDeatilScreen> createState() => _MeetingDetailScreenState();
+  State<MeetingDeatilTakeScreen> createState() =>
+      _MeetingDetailTakeScreenState();
 }
 
-class _MeetingDetailScreenState extends State<MeetingDeatilScreen> {
+class _MeetingDetailTakeScreenState extends State<MeetingDeatilTakeScreen> {
   final _formKey = GlobalKey<FormState>();
 
   int? role;
@@ -89,6 +90,7 @@ class _MeetingDetailScreenState extends State<MeetingDeatilScreen> {
       clientePLan = data['plan']?.toString() ?? '';
       clienteTelefono = data['phone']?.toString() ?? '';
       citaId = id(widget.meetingId);
+      _logger.d('ID CITA: $citaId');
 
       final r = widget.userId ?? '';
       _logger.d('Usuario a consultar: $r');
@@ -106,6 +108,7 @@ class _MeetingDetailScreenState extends State<MeetingDeatilScreen> {
 
   String id(dynamic data) {
     final idM = data.toString();
+    _logger.d('El ID de la Cita: $idM');
     return idM.isNotEmpty ? idM : AppStrings.anonymous;
   }
 
@@ -184,11 +187,8 @@ class _MeetingDetailScreenState extends State<MeetingDeatilScreen> {
     final formattedDate = DateFormat(
       'EEEE, d MMMM y',
       'es_ES',
-    ).format(dateTime as DateTime);
-    final formattedTime = DateFormat(
-      'h:mm a',
-      'es_ES',
-    ).format(dateTime as DateTime);
+    ).format(dateTime);
+    final formattedTime = DateFormat('h:mm a', 'es_ES').format(dateTime);
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -405,9 +405,9 @@ class _MeetingDetailScreenState extends State<MeetingDeatilScreen> {
                           ),
                         if (role == 4)
                           ElevatedButton(
-                            onPressed: () {
-                              // Volver al inicio o a la pantalla anterior
-                              Navigator.of(context).pop(_takeMeeting(citaId));
+                            onPressed: () async {
+                              await _takeMeeting(citaId);
+                              Navigator.of(context).pop();
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryColor,
@@ -436,7 +436,25 @@ class _MeetingDetailScreenState extends State<MeetingDeatilScreen> {
   }
 
   Future<void> _takeMeeting(String id) async {
-    await _meetingService.takeMeeting(id);
-    return;
+    try {
+      await _meetingService.takeMeeting(id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Cita tomada con éxito'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Error al tomar la cita: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

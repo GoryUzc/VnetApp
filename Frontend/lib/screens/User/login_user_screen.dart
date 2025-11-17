@@ -67,7 +67,7 @@ class _LoginUserScreenState extends State<LoginUserScreen> {
       } else if (role == 4) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) =>  HomeWorkerScreen()),
+          MaterialPageRoute(builder: (context) => const HomeWorkerScreen()),
         );
       } else {
         // Para roles desconocidos

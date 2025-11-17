@@ -1,46 +1,62 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
-import 'package:vnet_agenda/services/others/cliente_service.dart';
-import 'package:vnet_agenda/theme/app_colors.dart';
-import 'package:vnet_agenda/strings/app_strings.dart';
+import 'package:logger/logger.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:vnet_agenda/screens/User/crud/order/order_create_screen.dart';
+import 'package:vnet_agenda/services/crud/meeting_service.dart';
+import 'package:vnet_agenda/services/crud/prospect_service.dart';
+import 'package:vnet_agenda/services/crud/user_services.dart';
+import 'package:vnet_agenda/strings/app_strings.dart';
+import 'package:vnet_agenda/theme/app_colors.dart';
 
-class CreatedSuccessfullyScreen extends StatefulWidget {
-  final Map<String, dynamic> citaData;
-  final String clienteId;
+class DetailMeetingInstallScreen extends StatefulWidget {
+  final String? meetingId;
+  final String? userId;
 
-  const CreatedSuccessfullyScreen({
-    Key? key,
-    required this.citaData,
-    required this.clienteId,
-  }) : super(key: key);
+  const DetailMeetingInstallScreen({super.key, this.meetingId, this.userId});
 
   @override
-  _CreatedSuccessfullyScreenState createState() =>
-      _CreatedSuccessfullyScreenState();
+  State<DetailMeetingInstallScreen> createState() =>
+      _DetailMeetingInstallScreenState();
 }
 
-class _CreatedSuccessfullyScreenState extends State<CreatedSuccessfullyScreen> {
-  final ClienteService _clienteService = ClienteService();
+class _DetailMeetingInstallScreenState
+    extends State<DetailMeetingInstallScreen> {
+  final _formaKey = GlobalKey<FormState>();
+  final Logger _logger = Logger();
 
-  
-  Map<String, dynamic> _clienteData = {};
-  bool _isLoading = true;
-  bool _hasError = false;
-  String _errorMessage = '';
-  bool _dateFormatInitialized = false;
+  // Servicios
+  final MeetingService _meetingService = MeetingService();
+  final ProspectService _prospectService = ProspectService();
+  final UserServices _userService = UserServices();
+  // Diccionarios y listas
 
-  // Variables para almacenar datos del cliente
+  Map<String, dynamic> meetingList = {};
+  Map<String, dynamic> prospectList = {};
+
+  // Variables para los datos del cliente
   String clienteNombre = '';
   String clienteDocumento = '';
-  String clienteDireccion = '';
-  String clientePlan = '';
+  String clienteDirecion = '';
+  String clientePLan = '';
+  String clienteTelefono = '';
+  String prospectId = '';
+  DateTime dateTime = DateTime(2000, 1, 1, 8, 00);
+  double latitude = 0.0;
+  double longitude = 0.0;
+  String citaId = '';
+  String user = '';
+  // Estado
+  bool _isLoading = true;
+  bool _hasError = false;
+  String? _errorMessage = '';
+  bool _dateFormatInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    // Inicializar el formato de fechas
+    _initLoadData();
     initializeDateFormatting('es_ES', null).then((_) {
       if (mounted) {
         setState(() {
@@ -48,49 +64,54 @@ class _CreatedSuccessfullyScreenState extends State<CreatedSuccessfullyScreen> {
         });
       }
     });
-    _loadClientData();
   }
 
-  Future<void> _loadClientData({bool isRefreshing = false}) async {
-    if (!isRefreshing) {
-      setState(() {
-        _isLoading = true;
-        _hasError = false;
-        _errorMessage = '';
-      });
-    }
-
+  Future<void> _initLoadData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+      _hasError = false;
+    });
     try {
-      final response = await _clienteService.getClient(widget.clienteId);
-      if (response.containsKey('prospect') && response['prospect'] != null) {
-        setState(() {
-          _clienteData = response['prospect'];
-          _isLoading = false;
-          _hasError = false;
-          // Extraer datos del cliente
-          clienteNombre = _formatName(_clienteData);
-          clienteDocumento = _clienteData['document'];
-          clienteDireccion =
-              _clienteData['address']?.toString() ?? 'No disponible';
-          clientePlan = _clienteData['plan']?.toString() ?? 'No especificado';
-        });
-      } else {
-        setState(() {
-          _isLoading = false;
-          _hasError = true;
-          _errorMessage = 'No se encontraron datos del usuario';
-        });
-      }
+      final meetingData = await _meetingService.getMeetingDetails(
+        widget.meetingId ?? '',
+      );
+      prospectId = meetingData['prospect_aradial_id'].toString();
+      _logger.d('1:$prospectId');
+      dateTime = DateTime.parse(meetingData['date_time1']);
+      latitude = double.parse(meetingData['latitude']);
+      longitude = double.parse(meetingData['longitude']);
+      final prospectData = await _prospectService.getProspectDetails(
+        prospectId,
+      );
+      final data = prospectData['prospect'];
+      clienteNombre = _formatName(data);
+      clienteDocumento = data['document']?.toString() ?? '';
+      clienteDirecion = data['address']?.toString() ?? '';
+      clientePLan = data['plan']?.toString() ?? '';
+      clienteTelefono = data['phone']?.toString() ?? '';
+      citaId = id(widget.meetingId);
+      user = id(widget.userId);
+      _logger.d('ID CITA: $citaId');
+
+      final r = widget.userId ?? '';
+      _logger.d('Usuario a consultar: $r');
+      final idR = await _userService.getUserDetails(r);
+      return;
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _hasError = true;
-        _errorMessage = e.toString().replaceAll('Exception: ', '');
-      });
+      _errorMessage = e.toString();
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  String _formatName(Map<String, dynamic> clienteData) {
+  String id(dynamic data) {
+    final idM = data.toString();
+    _logger.d('El ID de la Cita: $idM');
+    return idM.isNotEmpty ? idM : AppStrings.anonymous;
+  }
+
+  String _formatName(dynamic clienteData) {
     final firstName = clienteData['name']?.toString() ?? '';
     final lastName = clienteData['last_name']?.toString() ?? '';
     final fullname = '$firstName $lastName'.trim();
@@ -117,6 +138,90 @@ class _CreatedSuccessfullyScreenState extends State<CreatedSuccessfullyScreen> {
     }
   }
 
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String title,
+    required String value,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: AppColors.primaryColor, size: 20),
+        const SizedBox(width: 12.0),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[600],
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 4.0),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _starInstallationFlow(BuildContext context) async {
+    final bool? confirmed = await showDialog(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Comenzar con la instalacion'),
+            content: const Text(
+              'Esta accion es irreversible. ¿Desea continuar?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancelar'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text(
+                  'Comenzar',
+                  style: TextStyle(color: Colors.green),
+                ),
+              ),
+            ],
+          ),
+    );
+
+    if (confirmed == true && mounted) {
+      final initInstall = await _meetingService.initMeeting(citaId);
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (_) => OrderCreateScreen(
+                prospectName: clienteNombre,
+                prospectId: prospectId,
+                userId: user,
+                meetingId: citaId,
+              ),
+        ),
+      );
+    }
+  }
+  // METODO PARA LAS NOTIFICACIONES
+  //   void _notifyInstallationStart() {
+  //   // Aquí puedes integrar tu servicio de notificaciones
+  //   print('🚀 Iniciando instalación para: $clienteNombre');
+  // }
+
   @override
   Widget build(BuildContext context) {
     if (!_dateFormatInitialized) {
@@ -125,16 +230,14 @@ class _CreatedSuccessfullyScreenState extends State<CreatedSuccessfullyScreen> {
         body: const Center(child: CircularProgressIndicator()),
       );
     }
-
-    final fechaHora = DateTime.parse(widget.citaData['date_time1']);
     final formattedDate = DateFormat(
       'EEEE, d MMMM y',
       'es_ES',
-    ).format(fechaHora);
-    final formattedTime = DateFormat('h:mm a', 'es_ES').format(fechaHora);
-
-    final latitude = widget.citaData['latitude'] ?? 0.0;
-    final longitude = widget.citaData['longitude'] ?? 0.0;
+    ).format(dateTime);
+    final formattedTime = DateFormat(
+      'h:mm a',
+      'es_ES',
+    ).format(dateTime);
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -161,13 +264,13 @@ class _CreatedSuccessfullyScreenState extends State<CreatedSuccessfullyScreen> {
                     const Icon(Icons.error, size: 60, color: Colors.red),
                     const SizedBox(height: 16),
                     Text(
-                      _errorMessage,
+                      _errorMessage ?? '',
                       style: const TextStyle(fontSize: 16, color: Colors.red),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
                     ElevatedButton(
-                      onPressed: _loadClientData,
+                      onPressed: _initLoadData,
                       child: const Text('Reintentar'),
                     ),
                   ],
@@ -178,7 +281,6 @@ class _CreatedSuccessfullyScreenState extends State<CreatedSuccessfullyScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Icono de éxito
                     Container(
                       width: 100,
                       height: 100,
@@ -194,25 +296,11 @@ class _CreatedSuccessfullyScreenState extends State<CreatedSuccessfullyScreen> {
                     ),
                     const SizedBox(height: 24.0),
 
-                    // Título de confirmación
-                    const Text(
-                      '¡Cita Agendada Exitosamente!',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primaryColor,
-                      ),
-                      textAlign: TextAlign.center,
+                    Text(
+                      'Cita agendada',
+                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                     ),
                     const SizedBox(height: 8.0),
-
-                    Text(
-                      'Los detalles de tu cita han sido registrados',
-                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 32.0),
-
                     // Tarjeta con detalles de la cita
                     Card(
                       elevation: 3.0,
@@ -224,7 +312,7 @@ class _CreatedSuccessfullyScreenState extends State<CreatedSuccessfullyScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Información del cliente
+                            // Informacion del cliente
                             _buildInfoRow(
                               icon: Icons.person,
                               title: 'Cliente',
@@ -241,7 +329,17 @@ class _CreatedSuccessfullyScreenState extends State<CreatedSuccessfullyScreen> {
                               value:
                                   clienteDocumento.isNotEmpty
                                       ? clienteDocumento
-                                      : AppStrings.notAvailable,
+                                      : AppStrings.anonymous,
+                            ),
+                            const SizedBox(height: 16.0),
+
+                            _buildInfoRow(
+                              icon: Icons.phone,
+                              title: 'Telefono',
+                              value:
+                                  clienteTelefono.isNotEmpty
+                                      ? clienteTelefono
+                                      : AppStrings.anonymous,
                             ),
                             const SizedBox(height: 16.0),
 
@@ -249,9 +347,9 @@ class _CreatedSuccessfullyScreenState extends State<CreatedSuccessfullyScreen> {
                               icon: Icons.add_home,
                               title: 'Direccion',
                               value:
-                                  clienteDireccion.isNotEmpty
-                                      ? clienteDireccion
-                                      : AppStrings.notAvailable,
+                                  clienteDirecion.isNotEmpty
+                                      ? clienteDirecion
+                                      : AppStrings.anonymous,
                             ),
                             const SizedBox(height: 16.0),
 
@@ -259,8 +357,8 @@ class _CreatedSuccessfullyScreenState extends State<CreatedSuccessfullyScreen> {
                               icon: Icons.wifi_2_bar_sharp,
                               title: 'Plan de internet',
                               value:
-                                  clientePlan.isNotEmpty
-                                      ? clientePlan
+                                  clientePLan.isNotEmpty
+                                      ? clientePLan
                                       : AppStrings.notAvailable,
                             ),
                             const SizedBox(height: 16.0),
@@ -312,7 +410,6 @@ class _CreatedSuccessfullyScreenState extends State<CreatedSuccessfullyScreen> {
                             ),
                             const SizedBox(height: 16.0),
 
-                            // Botón para abrir en maps
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton.icon(
@@ -339,16 +436,12 @@ class _CreatedSuccessfullyScreenState extends State<CreatedSuccessfullyScreen> {
                       ),
                     ),
                     const SizedBox(height: 32.0),
-
-                    // Botones de acción
                     Column(
                       children: [
                         ElevatedButton(
-                          onPressed: () {
-                            // Volver al inicio o a la pantalla anterior
-                            Navigator.of(
-                              context,
-                            ).popUntil((route) => route.isFirst);
+                          onPressed: () async {
+                            // Iniciar instalacion, relleno de Orden.
+                            await _starInstallationFlow(context);
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryColor,
@@ -361,7 +454,7 @@ class _CreatedSuccessfullyScreenState extends State<CreatedSuccessfullyScreen> {
                             ),
                           ),
                           child: const Text(
-                            'Volver al Inicio',
+                            'Iniciar Instalacion',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -373,43 +466,6 @@ class _CreatedSuccessfullyScreenState extends State<CreatedSuccessfullyScreen> {
                   ],
                 ),
               ),
-    );
-  }
-
-  Widget _buildInfoRow({
-    required IconData icon,
-    required String title,
-    required String value,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, color: AppColors.primaryColor, size: 20),
-        const SizedBox(width: 12.0),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[600],
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 4.0),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
-import 'package:vnet_agenda/screens/User/crud/meeting/detail_meeting_screen.dart';
+import 'package:vnet_agenda/screens/User/crud/meeting/detail_meeting_take_screen.dart';
 import 'package:vnet_agenda/services/authentication/auth_service.dart';
 import 'package:vnet_agenda/services/crud/meeting_service.dart';
 import 'package:vnet_agenda/services/crud/prospect_service.dart';
@@ -143,7 +143,7 @@ class _MeetingListScreenState extends State<MeetingListScreen> {
       final contractorIds =
           _users.values
               .map((u) => u['contractor_id']?.toString())
-              .where((id) => id != null && id!.isNotEmpty)
+              .where((id) => id != null && id.isNotEmpty)
               .cast<String>()
               .toSet();
 
@@ -207,7 +207,7 @@ class _MeetingListScreenState extends State<MeetingListScreen> {
     if (p == null) return AppStrings.anonymous;
     final name = p['name']?.toString() ?? '';
     final lastName = p['last_name']?.toString() ?? '';
-    final fullName = (name + ' ' + lastName).trim();
+    final fullName = ('$name $lastName').trim();
     return fullName.isNotEmpty ? fullName : AppStrings.anonymous;
   }
 
@@ -489,8 +489,10 @@ class _MeetingListScreenState extends State<MeetingListScreen> {
                     context,
                     MaterialPageRoute(
                       builder:
-                          (context) =>
-                              MeetingDeatilScreen(meetingId: id, userId: user),
+                          (context) => MeetingDeatilTakeScreen(
+                            meetingId: id,
+                            userId: user,
+                          ),
                     ),
                   );
                 },

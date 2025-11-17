@@ -6,7 +6,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   //Inicializar el formato de fechas en español
-  await initializeDateFormatting('es_Es', null);
+  await initializeDateFormatting('es_ES', null);
   runApp(const MyApp());
 }
 

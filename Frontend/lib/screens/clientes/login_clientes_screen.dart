@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+// import 'package:vnet_agenda/screens/clientes/select_contract_Screen.dart';
 import 'package:vnet_agenda/screens/clientes/verify_otp_screen.dart';
 import 'package:vnet_agenda/services/authentication/otp_service.dart';
+// import 'package:vnet_agenda/services/consult/client_orchest_service.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
 import 'package:vnet_agenda/strings/app_strings.dart';
 
@@ -13,12 +15,22 @@ class LoginClienteScreen extends StatefulWidget {
 
 class _LoginUserScreenState extends State<LoginClienteScreen> {
   final _formKey = GlobalKey<FormState>();
-  final OtpService _authService = OtpService();
+  // final ClientOrchestService _clientService = ClientOrchestService();
+  final OtpService _otpService = OtpService();
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _documentController = TextEditingController();
 
   bool _isLoading = false;
+  String? _selectedTypeDocument = 'V';
+
+  final List<Map<String, String>> _docTypes = [
+    {'value': 'V', 'label': 'V - Venezolano'},
+    {'value': 'E', 'label': 'E - Extranjero'},
+    {'value': 'J', 'label': 'J - Jurídico'},
+    {'value': 'G', 'label': 'G - Gobierno'},
+    {'value': 'P', 'label': 'P - Pasaporte'},
+  ];
 
   @override
   void dispose() {
@@ -27,35 +39,76 @@ class _LoginUserScreenState extends State<LoginClienteScreen> {
     super.dispose();
   }
 
-  Future<void> _sendOtp() async {
+  Future<void> _processLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
     try {
-      // Obtener los datos completos del login
-      final loginData = await _authService.sendToOtp(
+      // Formato: V25111111, E12345678, etc.
+      // final String document = _documentController.text.trim();
+      await _otpService.sendToOtp(
         _emailController.text.trim(),
         _documentController.text.trim(),
       );
 
+      // PROCESAR LOGIN COMPLETO
+      // final result = await _clientService.processClienteLogin(document);
+
+      // if (result['success'] == true) {
+      //   final clientData = result['client'];
+      //   final clientExists = result['existsInLocal'];
+      //   final contracts = result['contracts'];
+
+      //   // Mostrar mensaje según si era nuevo o existente
+      //   _showStatusMessage(clientExists, clientData['name']);
+
+      // NAVEGAR A SELECCIÓN DE CONTRATO
       Navigator.pushReplacement(
         context,
+        // MaterialPageRoute(
+        //   builder:
+        //       (context) => SelectContractScreen(
+        //         clientData: clientData,
+        //         contracts: contracts,
+        //         document: document,
+        //       ),
         MaterialPageRoute(
           builder:
               (context) => VerifyOtpScreen(
-                email: _emailController.text.trim(),
                 document: _documentController.text.trim(),
+                email: _emailController.text.trim(),
               ),
         ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ),
+      );
     } finally {
       setState(() => _isLoading = false);
     }
+  }
+
+  void _showStatusMessage(bool clientExists, String clientName) {
+    String message =
+        clientExists
+            ? '✅ Bienvenido de nuevo $clientName!'
+            : '👋 ¡Bienvenido $clientName! (Cliente nuevo)';
+
+    Color color = clientExists ? Colors.green : Colors.orange;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   @override
@@ -64,14 +117,7 @@ class _LoginUserScreenState extends State<LoginClienteScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: AppColors.primaryColor,
-        title: const Text(
-          AppStrings.appTitle,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        title: const Text(AppStrings.appTitle),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -87,7 +133,6 @@ class _LoginUserScreenState extends State<LoginClienteScreen> {
                     "assets/images/image001.png",
                     width: 200,
                     height: 200,
-                    fit: BoxFit.contain,
                   ),
                   const SizedBox(height: 20),
                   const Text(
@@ -96,6 +141,7 @@ class _LoginUserScreenState extends State<LoginClienteScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 40),
+
                   TextFormField(
                     controller: _emailController,
                     decoration: InputDecoration(
@@ -119,37 +165,70 @@ class _LoginUserScreenState extends State<LoginClienteScreen> {
                       return null;
                     },
                   ),
+
                   const SizedBox(height: 20),
-                  TextFormField(
-                    controller: _documentController,
+
+                  // SELECTOR TIPO DOCUMENTO
+                  DropdownButtonFormField<String>(
+                    value: _selectedTypeDocument,
                     decoration: InputDecoration(
-                      labelText: 'Documento de identidad', // Cambia el label
+                      labelText: 'Tipo de Documento',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       prefixIcon: const Icon(Icons.badge),
                     ),
-                    keyboardType: TextInputType.text,
-                    textInputAction: TextInputAction.done,
-                    onFieldSubmitted: (_) => _sendOtp(),
+                    items:
+                        _docTypes.map((docType) {
+                          return DropdownMenuItem<String>(
+                            value: docType['value'],
+                            child: Text(docType['label']!),
+                          );
+                        }).toList(),
+                    onChanged:
+                        (value) =>
+                            setState(() => _selectedTypeDocument = value),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // CAMPO DOCUMENTO
+                  TextFormField(
+                    controller: _documentController,
+                    decoration: InputDecoration(
+                      labelText: 'Número de Documento',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      prefixIcon: const Icon(Icons.credit_card),
+                      hintText: 'Ej: 25111111',
+                    ),
+                    keyboardType: TextInputType.number,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'El documento es requerido';
                       }
-                      if (value.length < 6) {
-                        return 'El documento debe tener al menos 6 caracteres';
-                      }
+                      if (value.length < 6) return 'Mínimo 6 dígitos';
                       return null;
                     },
                   ),
+
                   const SizedBox(height: 30),
+
+                  // BOTÓN DE LOGIN
                   _isLoading
-                      ? const CircularProgressIndicator()
+                      ? const Column(
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text('Verificando documento...'),
+                        ],
+                      )
                       : SizedBox(
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
-                          onPressed: _isLoading ? null : _sendOtp,
+                          onPressed: _processLogin,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryColor,
                             shape: RoundedRectangleBorder(
@@ -157,11 +236,8 @@ class _LoginUserScreenState extends State<LoginClienteScreen> {
                             ),
                           ),
                           child: const Text(
-                            AppStrings.login,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            'Continuar',
+                            style: TextStyle(fontSize: 18),
                           ),
                         ),
                       ),

@@ -4,12 +4,20 @@ import 'package:syncfusion_flutter_signaturepad/signaturepad.dart';
 import 'package:http/http.dart' as http;
 import 'package:vnet_agenda/services/api_config.dart';
 import 'package:vnet_agenda/services/authentication/auth_service.dart';
+import 'package:vnet_agenda/screens/User/crud/order/order_completion_screen.dart';
 import 'dart:ui' as ui;
+
+import 'package:vnet_agenda/services/crud/meeting_service.dart';
 
 class SignatureScreen extends StatefulWidget {
   final String orderId;
+  final String meetingId;
 
-  const SignatureScreen({Key? key, required this.orderId}) : super(key: key);
+  const SignatureScreen({
+    Key? key,
+    required this.orderId,
+    required this.meetingId,
+  }) : super(key: key);
 
   @override
   _SignatureScreenState createState() => _SignatureScreenState();
@@ -18,7 +26,9 @@ class SignatureScreen extends StatefulWidget {
 class _SignatureScreenState extends State<SignatureScreen> {
   final GlobalKey<SfSignaturePadState> _signatureKey = GlobalKey();
   bool _isSigned = false;
+  final MeetingService _meetingService = MeetingService();
 
+  // Obtiene los bytes de la firma
   Future<Uint8List?> _getSignatureBytes() async {
     if (!_isSigned) return null;
     final state = _signatureKey.currentState;
@@ -29,6 +39,7 @@ class _SignatureScreenState extends State<SignatureScreen> {
     return byteData?.buffer.asUint8List();
   }
 
+  // Sube la firma al servidor
   Future<void> _uploadSignature() async {
     final bytes = await _getSignatureBytes();
     if (bytes == null) {
@@ -55,25 +66,30 @@ class _SignatureScreenState extends State<SignatureScreen> {
       if (token != null) {
         request.headers['Authorization'] = 'Bearer $token';
       }
-      request.headers['Accept'] = 'application/json';
 
       final streamed = await request.send();
       final response = await http.Response.fromStream(streamed);
-
+      final end = await _meetingService.endMeeting(widget.meetingId);
       if (response.statusCode == 200 || response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('✅ Firma guardada con éxito')),
         );
-        Navigator.pop(context, true);
-      } else {
-        throw Exception(
-          'Error al subir firma: ${response.statusCode} ${response.body}',
+        if (!mounted) return;
+        // Ir a pantalla de cierre de instalación para generar/descargar PDF
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) => OrderCompletionScreen(orderId: widget.orderId),
+          ),
         );
+      } else {
+        throw Exception('Error: ${response.statusCode}');
       }
     } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('❌ Error: $e')));
+      ).showSnackBar(SnackBar(content: Text('❌ Error al guardar firma: $e')));
     }
   }
 
@@ -90,9 +106,7 @@ class _SignatureScreenState extends State<SignatureScreen> {
                 key: _signatureKey,
                 backgroundColor: Colors.white,
                 onDrawStart: () {
-                  setState(() {
-                    _isSigned = true;
-                  });
+                  setState(() => _isSigned = true);
                   return true;
                 },
               ),
@@ -102,24 +116,20 @@ class _SignatureScreenState extends State<SignatureScreen> {
             padding: const EdgeInsets.all(16.0),
             child: Row(
               children: [
-                ElevatedButton.icon(
-                  onPressed:
-                      _isSigned
-                          ? () {
-                            _signatureKey.currentState?.clear();
-                            setState(() {
-                              _isSigned = false;
-                            });
-                          }
-                          : null,
-                  icon: const Icon(Icons.clear),
-                  label: const Text('Limpiar'),
-                ),
+                if (_isSigned)
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      _signatureKey.currentState?.clear();
+                      setState(() => _isSigned = false);
+                    },
+                    icon: const Icon(Icons.clear),
+                    label: const Text('Limpiar'),
+                  ),
                 const Spacer(),
                 ElevatedButton.icon(
                   onPressed: _isSigned ? _uploadSignature : null,
                   icon: const Icon(Icons.save),
-                  label: const Text('Guardar Firma'),
+                  label: const Text('Finalizar instalacion'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                   ),

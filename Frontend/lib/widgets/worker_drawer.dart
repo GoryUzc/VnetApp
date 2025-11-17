@@ -4,8 +4,9 @@ import 'package:vnet_agenda/screens/User/crud/order/order_list_screen.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
 
 class CustomWorkerDrawer extends StatelessWidget {
-  final userId;
-  const CustomWorkerDrawer({super.key, this.userId});
+  final String userId;
+  const CustomWorkerDrawer({super.key, required this.userId});
+
 
   @override
   Widget build(BuildContext context) {
