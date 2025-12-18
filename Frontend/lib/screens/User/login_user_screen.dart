@@ -204,21 +204,21 @@ class _LoginUserScreenState extends State<LoginUserScreen> {
                           ),
                         ),
                       ),
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const RegisterUserScreen(),
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      'Crear cuenta',
-                      style: TextStyle(decoration: TextDecoration.underline),
-                    ),
-                  ),
+                  // const SizedBox(height: 12),
+                  // TextButton(
+                  //   onPressed: () {
+                  //     Navigator.push(
+                  //       context,
+                  //       MaterialPageRoute(
+                  //         builder: (_) => const RegisterUserScreen(),
+                  //       ),
+                  //     );
+                  //   },
+                  //   child: const Text(
+                  //     'Crear cuenta',
+                  //     style: TextStyle(decoration: TextDecoration.underline),
+                  //   ),
+                  // ),
                 ],
               ),
             ),

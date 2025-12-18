@@ -532,27 +532,3 @@ class _ErrorView extends StatelessWidget {
     );
   }
 }
-
-                // 'ont_puerto_1' =>'required|numeric|min:0',
-                // 'conector_sc_pc'=>'required|numeric|min:0',
-                // 'patch_cord_scpc-scapc'=>'required|numeric|min:0',
-                // 'roseta'=>'required|numeric|min:0',
-                // 'adapter_scapc'=>'required|numeric|min:0',
-                // 'ont_4_puertos'=>'required|numeric|min:0',
-                // 'conector_sc_upc'=>'required|numeric|min:0',
-                // 'canaletas'=>'required|numeric|min:0',
-                // 'ramplug'=>'required|numeric|min:0',
-                // 'cable_drop'=>'required|numeric|min:0',
-                // 'hilos'=>'required|numeric|min:0',
-                // 'potencia_recibida_ont'=>'required|string',
-                // 'mac_ont'=>'required|string',
-                // 'serial_ont'=>'required|string',
-                // 'puerto_nap'=>'required|string',
-                // 'ppoe_user'=>'required|string',
-                // 'ppoe_password'=>'required|string',
-                // 'ubicacion_onu'=>'required|string',
-                // 'nro_equipos_conectar'=>'required|string',
-                // 'puerto_olt'=>'required|string',
-                // 'etiqueta_cliente'=>'required|string',
-                // 'router'=>'required|string',
-                // 'detalles_instalacion'=>'required|string',

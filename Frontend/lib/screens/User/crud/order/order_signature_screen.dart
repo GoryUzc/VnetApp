@@ -6,8 +6,9 @@ import 'package:vnet_agenda/services/api_config.dart';
 import 'package:vnet_agenda/services/authentication/auth_service.dart';
 import 'package:vnet_agenda/screens/User/crud/order/order_completion_screen.dart';
 import 'dart:ui' as ui;
-
 import 'package:vnet_agenda/services/crud/meeting_service.dart';
+import 'package:http_parser/http_parser.dart';
+import 'package:image/image.dart' as img;
 
 class SignatureScreen extends StatefulWidget {
   final String orderId;
@@ -27,16 +28,25 @@ class _SignatureScreenState extends State<SignatureScreen> {
   final GlobalKey<SfSignaturePadState> _signatureKey = GlobalKey();
   bool _isSigned = false;
   final MeetingService _meetingService = MeetingService();
+  // final Logger _logger = Logger();
 
-  // Obtiene los bytes de la firma
   Future<Uint8List?> _getSignatureBytes() async {
     if (!_isSigned) return null;
     final state = _signatureKey.currentState;
     if (state == null) return null;
 
-    final image = await state.toImage();
+    final pixelRatio = MediaQuery.of(context).devicePixelRatio;
+    final image = await state.toImage(pixelRatio: pixelRatio * 2); // ui.Image
     final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-    return byteData?.buffer.asUint8List();
+    if (byteData == null) return null;
+
+    // ↓↓↓ comprimir ↓↓↓
+    final originalBytes = byteData.buffer.asUint8List();
+    final decoded = img.decodeImage(originalBytes);
+    if (decoded == null) return originalBytes;
+
+    final resized = img.copyResize(decoded, width: 800); // 800 px max
+    return img.encodePng(resized, level: 4); // 0-9 (4 = buena compresión)
   }
 
   // Sube la firma al servidor
@@ -61,6 +71,7 @@ class _SignatureScreenState extends State<SignatureScreen> {
           'signature',
           bytes,
           filename: 'signature_${widget.orderId}.png',
+          contentType: MediaType('image', 'png'),
         ),
       );
       if (token != null) {
@@ -79,8 +90,7 @@ class _SignatureScreenState extends State<SignatureScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder:
-                (context) => OrderCompletionScreen(orderId: widget.orderId),
+            builder: (_) => OrderCompletionScreen(orderId: widget.orderId),
           ),
         );
       } else {
@@ -101,14 +111,24 @@ class _SignatureScreenState extends State<SignatureScreen> {
         children: [
           Expanded(
             child: Container(
+              width: double.infinity,
+              height: double.infinity,
               color: Colors.grey[200],
-              child: SfSignaturePad(
-                key: _signatureKey,
-                backgroundColor: Colors.white,
-                onDrawStart: () {
-                  setState(() => _isSigned = true);
-                  return true;
-                },
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onVerticalDragUpdate: (_) {},
+                onHorizontalDragUpdate: (_) {},
+                child: SfSignaturePad(
+                  key: _signatureKey,
+                  backgroundColor: Colors.white,
+                  strokeColor: Colors.black,
+                  maximumStrokeWidth: 5.0,
+                  minimumStrokeWidth: 2.0,
+                  onDrawStart: () {
+                    setState(() => _isSigned = true);
+                    return true;
+                  },
+                ),
               ),
             ),
           ),

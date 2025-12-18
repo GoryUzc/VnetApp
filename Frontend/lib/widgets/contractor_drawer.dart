@@ -35,7 +35,7 @@ class CustomContractorDrawer extends StatelessWidget {
                 ),
                 _buildDrawerItem(
                   context,
-                  'Citas Asignadas',
+                  'Citas Asignadas a Contratistas',
                   Icons.assignment_turned_in,
                   () => _navigateTo(context, const MeetingAssignedListScreen()),
                 ),

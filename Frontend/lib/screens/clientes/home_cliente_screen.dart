@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 import 'package:vnet_agenda/screens/clientes/create_meeting_cliente_creen.dart';
 import 'package:vnet_agenda/services/others/cliente_service.dart';
 import 'package:vnet_agenda/strings/app_strings.dart';
@@ -9,12 +10,12 @@ import 'package:vnet_agenda/theme/app_text_styles.dart';
 
 class HomeClienteScreen extends StatefulWidget {
   final String clienteId;
-  // final String contractId;
+  final String contractId;
 
   const HomeClienteScreen({
     Key? key,
     required this.clienteId,
-    // required this.contractId,
+    required this.contractId,
   }) : super(key: key);
 
   @override
@@ -27,6 +28,7 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
   bool _isLoading = true;
   bool _hasError = false;
   String _errorMessage = '';
+  final Logger _logger = Logger();
 
   @override
   void initState() {
@@ -44,6 +46,7 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
     }
 
     try {
+      _logger.d('Id cliente: ${widget.clienteId}');
       final response = await _clienteService.getClient(widget.clienteId);
       if (response.containsKey('prospect') && response['prospect'] != null) {
         setState(() {
@@ -150,6 +153,7 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
                             builder:
                                 (context) => CreateMeetingClienteSCreen(
                                   prospectAradialId: widget.clienteId,
+                                  contractId: widget.contractId,
                                 ),
                           ),
                         );

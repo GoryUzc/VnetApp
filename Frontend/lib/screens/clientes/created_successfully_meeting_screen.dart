@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
+import 'package:vnet_agenda/screens/clientes/available_meetings_screen.dart';
 import 'package:vnet_agenda/services/others/cliente_service.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
 import 'package:vnet_agenda/strings/app_strings.dart';
@@ -17,14 +18,13 @@ class CreatedSuccessfullyScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _CreatedSuccessfullyScreenState createState() =>
+  State<CreatedSuccessfullyScreen> createState() =>
       _CreatedSuccessfullyScreenState();
 }
 
 class _CreatedSuccessfullyScreenState extends State<CreatedSuccessfullyScreen> {
   final ClienteService _clienteService = ClienteService();
 
-  
   Map<String, dynamic> _clienteData = {};
   bool _isLoading = true;
   bool _hasError = false;
@@ -346,9 +346,15 @@ class _CreatedSuccessfullyScreenState extends State<CreatedSuccessfullyScreen> {
                         ElevatedButton(
                           onPressed: () {
                             // Volver al inicio o a la pantalla anterior
-                            Navigator.of(
+                            Navigator.push(
                               context,
-                            ).popUntil((route) => route.isFirst);
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => AvailableMeetingsScreen(
+                                      prospectId: widget.clienteId,
+                                    ),
+                              ),
+                            );
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryColor,

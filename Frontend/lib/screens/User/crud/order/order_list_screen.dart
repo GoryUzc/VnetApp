@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:logger/web.dart';
 import 'package:vnet_agenda/screens/User/crud/order/order_completion_screen.dart';
 import 'package:vnet_agenda/screens/User/crud/order/order_edit_screen.dart';
 import 'package:vnet_agenda/services/crud/order_service.dart';
@@ -15,7 +16,7 @@ class OrderListScreen extends StatefulWidget {
 
 class _OrderListScreenState extends State<OrderListScreen> {
   final OrderService _orderService = OrderService();
-
+  final Logger _logger = Logger();
   List<Map<String, dynamic>> _orders = [];
   bool _isLoading = false;
   bool _hasError = false;
@@ -39,6 +40,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
 
     try {
       final orders = await _orderService.getAllOrders();
+      _logger.d('Ordenes obtenidas: $orders');
       setState(() => _orders = orders);
     } catch (e) {
       setState(() {
@@ -138,7 +140,6 @@ class _OrderListScreenState extends State<OrderListScreen> {
   }
 
   void _navigateToCreateOrder() {
-    // TODO: Cambiar por pantalla para crear orden
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const OrderListScreen()),
@@ -368,6 +369,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
       (order) => order['id'].toString() == id,
       orElse: () => {},
     );
+    _logger.d('Datos Orden: $order');
 
     if (order.isEmpty) {
       _showErrorSnackbar('Orden no encontrada');

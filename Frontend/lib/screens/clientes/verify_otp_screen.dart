@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
-import 'package:vnet_agenda/screens/clientes/home_cliente_screen.dart';
+import 'package:vnet_agenda/screens/clientes/available_meetings_screen.dart';
+import 'package:vnet_agenda/screens/clientes/select_contract_Screen.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
 import 'package:vnet_agenda/services/authentication/otp_service.dart';
 
@@ -9,11 +10,15 @@ Logger _logger = Logger();
 class VerifyOtpScreen extends StatefulWidget {
   final String document;
   final String email;
+  final List<dynamic> contractIds;
+  final String clienteId;
   // final String selectedContractorId;
   const VerifyOtpScreen({
     super.key,
     required this.document,
     required this.email,
+    required this.contractIds,
+    required this.clienteId,
     // required this.selectedContractorId,
   });
 
@@ -25,7 +30,10 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
   final _formKey = GlobalKey<FormState>();
   final OtpService _otpService = OtpService();
   final TextEditingController _otpController = TextEditingController();
+  String _meetingId = '';
+
   bool _isLoading = false;
+  bool _hasMeetingExist = false;
 
   @override
   void dispose() {
@@ -44,18 +52,32 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
         widget.email,
         widget.document,
       );
-      _logger.d('El id del cliente es: $result');
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder:
-              (context) => HomeClienteScreen(
-                clienteId: result,
-                // contractId: widget.selectedContractorId,
-              ),
-        ),
-      );
+      _logger.d('El cliente es: $result');
+      _meetingId = result['meeting'].toString() ?? '';
+      _hasMeetingExist = result['hasMeeting'] ?? false;
+      _logger.d('_hasMeetingExist: $_hasMeetingExist');
+      if (_hasMeetingExist) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) =>
+                    AvailableMeetingsScreen(prospectId: widget.clienteId),
+          ),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) => SelectContractScreen(
+                  clientDataId: widget.clienteId,
+                  contracts: widget.contractIds,
+                  document: widget.document,
+                ),
+          ),
+        );
+      }
     } catch (e) {
       ScaffoldMessenger.of(
         context,

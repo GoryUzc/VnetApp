@@ -247,7 +247,7 @@ class _MeetingAssignedListScreenState extends State<MeetingAssignedListScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.primaryColor,
         title: const Text(
-          'Citas Asignadas',
+          'Citas Asignadas a Contratistas',
           style: TextStyle(color: Colors.white),
         ),
         actions: [
@@ -366,116 +366,120 @@ class _MeetingAssignedListScreenState extends State<MeetingAssignedListScreen> {
       onRefresh: () => _load(isRefreshing: true),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Expanded(
-              child: DataTableCustom(
-                columns: const [
-                  'Cliente',
-                  'Fecha y Hora',
-                  'Técnico',
-                  'Empresa',
-                  'plan',
-                  'Sucursal',
-                  'Dirección',
-                  'Acciones',
-                ],
-                rows:
-                    _meetings.map((meeting) {
-                      final id = meeting['id'];
-                      final prospectId =
-                          meeting['prospect_aradial_id']?.toString();
-                      final pData =
-                          prospectId != null ? _prospects[prospectId] : null;
-                      final clientName = _formatName(pData);
-                      final dateTime =
-                          meeting['date_time1'] ?? 'Fecha no disponible';
-                      final userId = meeting['user_id']?.toString();
-                      _logger.d(' 1 Id user: $userId');
-                      final uData = userId != null ? _users[userId] : null;
-                      final user = _users[userId];
-                      _logger.d('2: $user');
-                      final technician = _formatName(uData);
-                      _logger.d('3: $technician');
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              SizedBox(
+                child: DataTableCustom(
+                  columns: const [
+                    'Cliente',
+                    'Fecha y Hora',
+                    'Técnico',
+                    'Empresa',
+                    'plan',
+                    'Sucursal',
+                    'Dirección',
+                    'Acciones',
+                  ],
+                  rows:
+                      _meetings.map((meeting) {
+                        final id = meeting['id'];
+                        final prospectId =
+                            meeting['prospect_aradial_id']?.toString();
+                        final pData =
+                            prospectId != null ? _prospects[prospectId] : null;
+                        final clientName = _formatName(pData);
+                        final dateTime =
+                            meeting['date_time1'] ?? 'Fecha no disponible';
+                        final userId = meeting['user_id']?.toString();
+                        _logger.d(' 1 Id user: $userId');
+                        final uData = userId != null ? _users[userId] : null;
+                        final user = _users[userId];
+                        _logger.d('2: $user');
+                        final technician = _formatName(uData);
+                        _logger.d('3: $technician');
 
-                      final contractorId =
-                          uData != null
-                              ? uData['contractor_id']?.toString()
-                              : null;
-                      final cData =
-                          contractorId != null
-                              ? _contractors[contractorId]
-                              : null;
-                      final company =
-                          (cData != null &&
-                                  cData['legal_name'] != null &&
-                                  cData['legal_name'].toString().isNotEmpty)
-                              ? cData['legal_name'].toString()
-                              : AppStrings.notAvailable;
+                        final contractorId =
+                            uData != null
+                                ? uData['contractor_id']?.toString()
+                                : null;
+                        final cData =
+                            contractorId != null
+                                ? _contractors[contractorId]
+                                : null;
+                        final company =
+                            (cData != null &&
+                                    cData['legal_name'] != null &&
+                                    cData['legal_name'].toString().isNotEmpty)
+                                ? cData['legal_name'].toString()
+                                : AppStrings.notAvailable;
 
-                      final franchiseId = meeting['franchise_id']?.toString();
-                      _logger.d('1: $franchiseId');
-                      final fData =
-                          franchiseId != null ? _franchises[franchiseId] : null;
-                      _logger.d('2: $fData');
-                      final franchiseName =
-                          (fData != null && fData['branch_office'] != null)
-                              ? fData['branch_office'].toString()
-                              : AppStrings.notAvailable;
-                      _logger.d('3: $franchiseName');
+                        final franchiseId = meeting['franchise_id']?.toString();
+                        _logger.d('1: $franchiseId');
+                        final fData =
+                            franchiseId != null
+                                ? _franchises[franchiseId]
+                                : null;
+                        _logger.d('2: $fData');
+                        final franchiseName =
+                            (fData != null && fData['branch_office'] != null)
+                                ? fData['branch_office'].toString()
+                                : AppStrings.notAvailable;
+                        _logger.d('3: $franchiseName');
 
-                      final address =
-                          (pData != null &&
-                                  pData['address'] != null &&
-                                  pData['address'].toString().isNotEmpty)
-                              ? pData['address'].toString()
-                              : (meeting['address'] ??
-                                      meeting['installation_address'] ??
-                                      AppStrings.notAvailable)
-                                  .toString();
-                      final plan =
-                          (pData != null &&
-                                  pData['plan'] != null &&
-                                  pData['plan'].toString().isNotEmpty)
-                              ? pData['plan'].toString()
-                              : AppStrings.notAvailable;
+                        final address =
+                            (pData != null &&
+                                    pData['address'] != null &&
+                                    pData['address'].toString().isNotEmpty)
+                                ? pData['address'].toString()
+                                : (meeting['address'] ??
+                                        meeting['installation_address'] ??
+                                        AppStrings.notAvailable)
+                                    .toString();
+                        final plan =
+                            (pData != null &&
+                                    pData['plan'] != null &&
+                                    pData['plan'].toString().isNotEmpty)
+                                ? pData['plan'].toString()
+                                : AppStrings.notAvailable;
 
-                      return {
-                        'id': id,
-                        'Cliente': clientName.toString(),
-                        'Fecha y Hora': _formatDateTime(dateTime.toString()),
-                        'Técnico': technician.toString(),
-                        'Empresa': company.toString(),
-                        'plan': plan.toString(),
-                        'Sucursal': franchiseName.toString(),
-                        'Dirección': address.toString(),
-                      };
-                    }).toList(),
-                onView: (id) {
-                  // Buscar la cita seleccionada por su id
-                  final meeting = _meetings.firstWhere(
-                    (m) => m['id'].toString() == id,
-                    orElse: () => {},
-                  );
-                  // Extraer el user_id de la cita
-                  final userId = meeting['user_id']?.toString();
+                        return {
+                          'id': id,
+                          'Cliente': clientName.toString(),
+                          'Fecha y Hora': _formatDateTime(dateTime.toString()),
+                          'Técnico': technician.toString(),
+                          'Empresa': company.toString(),
+                          'plan': plan.toString(),
+                          'Sucursal': franchiseName.toString(),
+                          'Dirección': address.toString(),
+                        };
+                      }).toList(),
+                  onView: (id) {
+                    // Buscar la cita seleccionada por su id
+                    final meeting = _meetings.firstWhere(
+                      (m) => m['id'].toString() == id,
+                      orElse: () => {},
+                    );
+                    // Extraer el user_id de la cita
+                    final userId = meeting['user_id']?.toString();
 
-                  // Navegar a la pantalla de detalles pasando meetingId y userId
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) => MeetingDeatilTakeScreen(
-                            key: GlobalObjectKey(id),
-                            meetingId: id,
-                            userId: userId,
-                          ),
-                    ),
-                  );
-                },
+                    // Navegar a la pantalla de detalles pasando meetingId y userId
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => MeetingDeatilTakeScreen(
+                              key: GlobalObjectKey(id),
+                              meetingId: id,
+                              userId: userId,
+                            ),
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

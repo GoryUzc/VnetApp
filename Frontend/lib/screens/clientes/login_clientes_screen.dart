@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-// import 'package:vnet_agenda/screens/clientes/select_contract_Screen.dart';
+import 'package:logger/logger.dart';
 import 'package:vnet_agenda/screens/clientes/verify_otp_screen.dart';
 import 'package:vnet_agenda/services/authentication/otp_service.dart';
-// import 'package:vnet_agenda/services/consult/client_orchest_service.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
 import 'package:vnet_agenda/strings/app_strings.dart';
 
@@ -15,14 +14,14 @@ class LoginClienteScreen extends StatefulWidget {
 
 class _LoginUserScreenState extends State<LoginClienteScreen> {
   final _formKey = GlobalKey<FormState>();
-  // final ClientOrchestService _clientService = ClientOrchestService();
   final OtpService _otpService = OtpService();
-
-  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _documentController = TextEditingController();
+  final Logger _logger = Logger();
 
   bool _isLoading = false;
-  String? _selectedTypeDocument = 'V';
+  String? _selectedTypeDocument;
+  String _email = '';
+  String _clienteId = '';
 
   final List<Map<String, String>> _docTypes = [
     {'value': 'V', 'label': 'V - Venezolano'},
@@ -34,71 +33,12 @@ class _LoginUserScreenState extends State<LoginClienteScreen> {
 
   @override
   void dispose() {
-    _emailController.dispose();
     _documentController.dispose();
     super.dispose();
   }
 
-  Future<void> _processLogin() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _isLoading = true);
-
-    try {
-      // Formato: V25111111, E12345678, etc.
-      // final String document = _documentController.text.trim();
-      await _otpService.sendToOtp(
-        _emailController.text.trim(),
-        _documentController.text.trim(),
-      );
-
-      // PROCESAR LOGIN COMPLETO
-      // final result = await _clientService.processClienteLogin(document);
-
-      // if (result['success'] == true) {
-      //   final clientData = result['client'];
-      //   final clientExists = result['existsInLocal'];
-      //   final contracts = result['contracts'];
-
-      //   // Mostrar mensaje según si era nuevo o existente
-      //   _showStatusMessage(clientExists, clientData['name']);
-
-      // NAVEGAR A SELECCIÓN DE CONTRATO
-      Navigator.pushReplacement(
-        context,
-        // MaterialPageRoute(
-        //   builder:
-        //       (context) => SelectContractScreen(
-        //         clientData: clientData,
-        //         contracts: contracts,
-        //         document: document,
-        //       ),
-        MaterialPageRoute(
-          builder:
-              (context) => VerifyOtpScreen(
-                document: _documentController.text.trim(),
-                email: _emailController.text.trim(),
-              ),
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 4),
-        ),
-      );
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  void _showStatusMessage(bool clientExists, String clientName) {
-    String message =
-        clientExists
-            ? '✅ Bienvenido de nuevo $clientName!'
-            : '👋 ¡Bienvenido $clientName! (Cliente nuevo)';
+  void showStatusMessage(bool clientExists, String clientId) {
+    String message = clientExists ? '✅ Bienvenido!' : '👋 ¡Bienvenido!';
 
     Color color = clientExists ? Colors.green : Colors.orange;
 
@@ -109,6 +49,90 @@ class _LoginUserScreenState extends State<LoginClienteScreen> {
         duration: const Duration(seconds: 3),
       ),
     );
+  }
+
+  Future<void> _processLogin() async {
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Por favor complete todos los campos correctamente'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final String document = _documentController.text.trim();
+      final result = await _otpService.getConsultClient(
+        document,
+        _selectedTypeDocument ?? 'V',
+      );
+
+      _logger.d('📥 Resultado completo: $result');
+
+      if (result['status'] == 'success') {
+        final int clientId = result['prospect'] ?? 0;
+        final bool clientExists = result['existInAradial'] == true;
+        final String emailProspect = result['email'] ?? '';
+        // ✅ USAR contract_ids EN LUGAR DE contracts
+        final List<dynamic> contractIds = result['contract_ids'] ?? [];
+
+        // ✅ EXTRAER EMAIL Y NOMBRE
+        _email = emailProspect;
+        _clienteId = clientId.toString();
+
+        _logger.d('   - Email: $_email');
+        _logger.d('   - Email: $_clienteId');
+        _logger.d('   - Existe en Aradial: $clientExists');
+        _logger.d('   - Contract IDs: $contractIds');
+
+        // Mostrar mensaje según si era nuevo o existente
+        showStatusMessage(clientExists, _clienteId);
+
+        final sendOtp = await _otpService.sendToOtp(_email, document);
+
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) => VerifyOtpScreen(
+                  document: document,
+                  email: _email,
+                  contractIds: contractIds, // ✅ Ahora usamos contract_ids
+                  clienteId: _clienteId,
+                ),
+          ),
+        );
+      } else {
+        // ✅ MANEJO DE ERRORES
+        final errorMessage = result['message'] ?? 'Error desconocido';
+        _logger.e('❌ Error en la API: $errorMessage');
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $errorMessage'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e, st) {
+      _logger.e('💥 Error en _processLogin: $e', error: e, stackTrace: st);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error de conexión: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
@@ -140,31 +164,6 @@ class _LoginUserScreenState extends State<LoginClienteScreen> {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 40),
-
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: InputDecoration(
-                      labelText: AppStrings.email,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      prefixIcon: const Icon(Icons.email),
-                    ),
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.next,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return AppStrings.emailRequired;
-                      }
-                      if (!RegExp(
-                        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                      ).hasMatch(value)) {
-                        return AppStrings.invalidEmail;
-                      }
-                      return null;
-                    },
-                  ),
 
                   const SizedBox(height: 20),
 
@@ -188,6 +187,12 @@ class _LoginUserScreenState extends State<LoginClienteScreen> {
                     onChanged:
                         (value) =>
                             setState(() => _selectedTypeDocument = value),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Seleccione un tipo de documento';
+                      }
+                      return null;
+                    },
                   ),
 
                   const SizedBox(height: 20),
@@ -208,7 +213,7 @@ class _LoginUserScreenState extends State<LoginClienteScreen> {
                       if (value == null || value.isEmpty) {
                         return 'El documento es requerido';
                       }
-                      if (value.length < 6) return 'Mínimo 6 dígitos';
+                      if (value.length < 8) return 'Mínimo 8 dígitos';
                       return null;
                     },
                   ),

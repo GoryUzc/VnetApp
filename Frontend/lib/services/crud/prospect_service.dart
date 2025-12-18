@@ -235,6 +235,24 @@ class ProspectService {
       rethrow;
     }
   }
+Future<void> changeProspect(String id) async {
+    _logger.d('Conexion establecida para el prospect: $id');
+
+    try {
+      final headers = await _authService.getAuthHeaders();
+      final response = await http.put(
+        Uri.parse(ApiConfig.endpoint('/prospects/changestatus/$id')),
+        headers: headers,
+      );
+      if (response.statusCode == 201) {
+        _logger.i('Conexion establecida con exito');
+      } else {
+        throw Exception('Error al conectar la cita ${response.body}');
+      }
+    } catch (e, stackTrace) {
+      _logger.d('Error en initMeeting:', error: e, stackTrace: stackTrace);
+    }
+  }
 
   Future<void> deleteProspect(String id) async {
     _logger.d('Eliminando prospecto: $id');

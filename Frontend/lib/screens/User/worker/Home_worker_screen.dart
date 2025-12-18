@@ -3,12 +3,10 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:vnet_agenda/screens/User/crud/meeting/detail_meeting_install_screen.dart';
-// import 'package:vnet_agenda/screens/User/crud/order/order_edit_screen.dart';
 import 'package:vnet_agenda/screens/User/crud/users/user_edit_screen.dart';
 import 'package:vnet_agenda/screens/init_select_user_screen.dart';
 import 'package:vnet_agenda/services/authentication/auth_service.dart';
 import 'package:vnet_agenda/services/crud/meeting_service.dart';
-// import 'package:vnet_agenda/services/crud/order_service.dart';
 import 'package:vnet_agenda/services/crud/prospect_service.dart';
 import 'package:vnet_agenda/services/crud/user_services.dart';
 import 'package:vnet_agenda/strings/app_strings.dart';
@@ -161,90 +159,83 @@ class _HomeWorkerScreenState extends State<HomeWorkerScreen> {
     return RefreshIndicator(
       semanticsLabel: 'Mis Citas de Instalacion',
       onRefresh: () => _load(isRefreshing: true),
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Expanded(
-              child: DataTableCustom(
-                columns: const [
-                  'Cliente',
-                  'plan',
-                  'Fecha y Hora',
-                  'Telefono',
-                  'Dirección',
-                  'Acciones',
-                ],
-                rows:
-                    _meetings.map((meeting) {
-                      final id = meeting['id'];
-                      final prospectId =
-                          meeting['prospect_aradial_id']?.toString();
-                      final pData =
-                          prospectId != null ? _prospects[prospectId] : null;
-                      final name = _formatProspectName(pData);
-                      final plan =
-                          (pData != null &&
-                                  pData['plan'] != null &&
-                                  pData['plan'].toString().isNotEmpty)
-                              ? pData['plan'].toString()
-                              : AppStrings.notAvailable;
-                      final address =
-                          (pData != null &&
-                                  pData['address'] != null &&
-                                  pData['address'].toString().isNotEmpty)
-                              ? pData['address'].toString()
-                              : AppStrings.notAvailable;
-                      final dateTime =
-                          meeting['date_time1'] ??
-                          meeting['appointment_date'] ??
-                          meeting['dateTime1'] ??
-                          'Fecha y Hora no disponible';
-                      final phone =
-                          (pData != null &&
-                                  pData['phone'] != null &&
-                                  pData['phone'].toString().isNotEmpty)
-                              ? pData['phone'].toString()
-                              : (meeting['phone'] ??
-                                      meeting['phone'] ??
-                                      AppStrings.notAvailable)
-                                  .toString();
-                      return {
-                        'id': id,
-                        'Cliente': name,
-                        'Plan': plan,
-                        'Dirección': address,
-                        'Fecha y Hora': _formatDateTime(dateTime.toString()),
-                        'telefono': phone,
-                      };
-                    }).toList(),
-                title: 'Mis citas Instalacion',
-                // onView para la vista detalles y comenzar intalacion
-                onView: (id) {
-                  // final meeting = _meetings.firstWhere(
-                  //   (m) => m[id].toString() == id,
-                  //   orElse: () => {},
-                  // );
-
-                  // _logger.d('cita detalles: $meeting');
-
-                  // final userId = meeting['user_id']?.toString();
-
-                  // Navegar a la pantalla detalles de la cita
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) => DetailMeetingInstallScreen(
-                            meetingId: id.toString() ?? '',
-                            userId: idUser,
-                          ),
-                    ),
-                  );
-                },
-              ),
-            ),
+        child: DataTableCustom(
+          columns: const [
+            'Cliente',
+            'plan',
+            'Fecha y Hora',
+            'Telefono',
+            'Dirección',
+            'Acciones',
           ],
+          rows:
+              _meetings.map((meeting) {
+                final id = meeting['id'];
+                final prospectId = meeting['prospect_aradial_id']?.toString();
+                final pData =
+                    prospectId != null ? _prospects[prospectId] : null;
+                final name = _formatProspectName(pData);
+                final plan =
+                    (pData != null &&
+                            pData['plan'] != null &&
+                            pData['plan'].toString().isNotEmpty)
+                        ? pData['plan'].toString()
+                        : AppStrings.notAvailable;
+                final address =
+                    (pData != null &&
+                            pData['address'] != null &&
+                            pData['address'].toString().isNotEmpty)
+                        ? pData['address'].toString()
+                        : AppStrings.notAvailable;
+                final dateTime =
+                    meeting['date_time1'] ??
+                    meeting['appointment_date'] ??
+                    meeting['dateTime1'] ??
+                    'Fecha y Hora no disponible';
+                final phone =
+                    (pData != null &&
+                            pData['phone'] != null &&
+                            pData['phone'].toString().isNotEmpty)
+                        ? pData['phone'].toString()
+                        : (meeting['phone'] ??
+                                meeting['phone'] ??
+                                AppStrings.notAvailable)
+                            .toString();
+                return {
+                  'id': id,
+                  'Cliente': name,
+                  'Plan': plan,
+                  'Dirección': address,
+                  'Fecha y Hora': _formatDateTime(dateTime.toString()),
+                  'telefono': phone,
+                };
+              }).toList(),
+          title: 'Mis citas Instalacion',
+          // onView para la vista detalles y comenzar intalacion
+          onView: (id) {
+            // final meeting = _meetings.firstWhere(
+            //   (m) => m[id].toString() == id,
+            //   orElse: () => {},
+            // );
+
+            // _logger.d('cita detalles: $meeting');
+
+            // final userId = meeting['user_id']?.toString();
+
+            // Navegar a la pantalla detalles de la cita
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => DetailMeetingInstallScreen(
+                      meetingId: id.toString() ?? '',
+                      userId: idUser,
+                    ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -469,19 +460,43 @@ class _HomeWorkerScreenState extends State<HomeWorkerScreen> {
         elevation: 4,
       ),
       drawer: CustomWorkerDrawer(userId: idUser),
-      body:
-          _loading
-              ? const Center(child: CircularProgressIndicator())
-              : Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Sección: Mis citas Instalación
-                  Expanded(child: _buildContent()),
-                  // const Divider(height: 1),
-                  // // Sección: Citas en proceso
-                  // Expanded(child: _builTabletInProcess()),
-                ],
+      body: _buildWelcomeContent(),
+    );
+  }
+
+  Widget _buildWelcomeContent() {
+    return SingleChildScrollView(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.dashboard,
+              size: 80,
+              color: AppColors.primaryColor,
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              "Bienvenido al Sistema VNET",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
               ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              "Gestión y Automatización de Instalaciones de Fibra Óptica",
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+              textAlign: TextAlign.center,
+            ),
+
+            const SizedBox(height: 40),
+            _buildContent(),
+          ],
+        ),
+      ),
     );
   }
 }

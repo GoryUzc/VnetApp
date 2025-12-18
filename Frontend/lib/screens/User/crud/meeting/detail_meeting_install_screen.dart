@@ -3,6 +3,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:vnet_agenda/screens/User/crud/meeting/pre_install_meeting_check_screen.dart';
 import 'package:vnet_agenda/screens/User/crud/order/order_create_screen.dart';
 import 'package:vnet_agenda/services/crud/meeting_service.dart';
 import 'package:vnet_agenda/services/crud/prospect_service.dart';
@@ -206,7 +207,7 @@ class _DetailMeetingInstallScreenState
         context,
         MaterialPageRoute(
           builder:
-              (_) => OrderCreateScreen(
+              (_) => PreInstallMeetingCheckScreen(
                 prospectName: clienteNombre,
                 prospectId: prospectId,
                 userId: user,
@@ -234,10 +235,7 @@ class _DetailMeetingInstallScreenState
       'EEEE, d MMMM y',
       'es_ES',
     ).format(dateTime);
-    final formattedTime = DateFormat(
-      'h:mm a',
-      'es_ES',
-    ).format(dateTime);
+    final formattedTime = DateFormat('h:mm a', 'es_ES').format(dateTime);
 
     return Scaffold(
       backgroundColor: Colors.grey[50],

@@ -8,7 +8,35 @@ import 'package:vnet_agenda/services/api_config.dart';
 class OtpService {
   final Logger _logger = Logger();
   final _storage = const FlutterSecureStorage();
-  
+
+  Future<Map<String, dynamic>> getConsultClient(
+    String document,
+    String typeDocument,
+  ) async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+          ApiConfig.endpoint('/prospect/consult/$document/$typeDocument'),
+        ),
+        headers: {'Content-type': 'application/json'},
+      );
+      _logger.d(
+        'GET /prospect/consult/$document/$typeDocument -> ${response.statusCode}',
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        _logger.d('Respuesta getConsultClient: $data');
+        return data;
+      } else {
+        throw Exception('Error al obtener contratistas: ${response.body}');
+      }
+    } catch (e, st) {
+      _logger.e('Error en getAllContractors', error: e, stackTrace: st);
+      rethrow;
+    }
+  }
+
   Future<void> sendToOtp(String email, String document) async {
     _logger.d('Enviando OTP a: $email con documento: $document');
     _logger.d('Obteniendo endpoint: ${ApiConfig.endpoint('send-otp')}');
@@ -38,7 +66,29 @@ class OtpService {
     }
   }
 
-  Future<String> verifyOtp(String otp, String email, String document) async {
+  Future<Map<String,dynamic>?> _fetchActiveMeeting(String prospectId) async {
+    try {
+      final uri = Uri.parse(
+        ApiConfig.endpoint('/meetings/prospect/consult/$prospectId'));
+      final resp = await http.get(uri, headers: await getOtpHeaders());
+
+      _logger.d('GET meetings/prospects/consult/$prospectId -> ${resp.statusCode}');
+
+      if (resp.statusCode == 200) {
+        final data = jsonDecode(resp.body);
+        _logger.d('Respuesta fetchActiveMeeting: $data');
+        return data;
+      } else {
+        _logger.e('Error al obtener la reunión activa: ${resp.body}');
+        return null;
+      }
+      } catch (e, st) {
+        _logger.e('Error en fetchActiveMeeting', error: e, stackTrace: st);
+        return null;
+      }
+  }
+
+  Future<Map<String, dynamic>> verifyOtp(String otp, String email, String document) async {
     _logger.d(
       'Verificando OTP para: $email con documento: $document y OTP: $otp',
     );
@@ -60,7 +110,7 @@ class OtpService {
       }
 
       final data = jsonDecode(response.body);
-      
+
       if (response.statusCode == 200) {
         _logger.d('Estructura completa de la respuesta: $data');
 
@@ -68,26 +118,35 @@ class OtpService {
         if (data['token'] == null) {
           throw Exception('La respuesta no contiene token');
         }
-        
+
         if (data['prospect'] == null) {
           throw Exception('La respuesta no contiene datos del prospecto');
         }
 
         // Guarda datos
         await _storage.write(key: 'token', value: data['token'].toString());
-        
+
         // Guardar el ID del prospecto como string
         final prospectId = data['prospect']['id']?.toString();
         if (prospectId != null) {
           await _storage.write(key: 'prospect', value: prospectId);
           _logger.d('ID del prospecto guardado: $prospectId');
-          return prospectId; // Devuelve solo el ID como String
+
+          final meetingData = await _fetchActiveMeeting(prospectId);
+
+  return {
+    'prospectId': prospectId,
+    'hasMeeting': meetingData?['exists'] ?? false,
+    'meeting':    meetingData?['meeting'],
+  };
+ // Devuelve solo el ID como String
         } else {
           throw Exception('El prospecto no tiene ID válido');
         }
       } else {
         // Manejar errores del servidor
-        final errorMsg = data['error'] ?? data['message'] ?? 'Error de autenticación';
+        final errorMsg =
+            data['error'] ?? data['message'] ?? 'Error de autenticación';
         throw Exception(errorMsg);
       }
     } catch (e, stackTrace) {

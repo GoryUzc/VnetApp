@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:vnet_agenda/screens/clientes/verify_otp_screen.dart';
+import 'package:vnet_agenda/screens/clientes/home_cliente_screen.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
 
 class SelectContractScreen extends StatefulWidget {
-  final Map<String, dynamic> clientData;
-  final List<Map<String, dynamic>> contracts;
+  final String clientDataId;
+  final List<dynamic> contracts;
   final String document;
 
   const SelectContractScreen({
     super.key,
-    required this.clientData,
+    required this.clientDataId,
     required this.contracts,
     required this.document,
   });
@@ -40,26 +40,12 @@ class _SelectContractScreenState extends State<SelectContractScreen> {
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.clientData['full_name'] ?? 'Cliente',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text('Documento: ${widget.document}'),
-                    Text('Email: ${widget.clientData['email']}'),
-                    Text('Contratos disponibles: ${widget.contracts.length}'),
-                  ],
+                  children: [Text('Documento: ${widget.document}')],
                 ),
               ),
             ),
 
             const SizedBox(height: 20),
-
-            // TÍTULO DE SELECCIÓN
             const Text(
               'Seleccione el contrato para la instalación:',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -71,13 +57,22 @@ class _SelectContractScreenState extends State<SelectContractScreen> {
             Expanded(
               child:
                   widget.contracts.isEmpty
-                      ? const Center(child: Text('No hay contratos disponibles'))
+                      ? const Center(
+                        child: Text('No hay contratos disponibles'),
+                      )
                       : ListView.builder(
                         itemCount: widget.contracts.length,
                         itemBuilder: (context, index) {
-                          final contract = widget.contracts[index];
+                          final item = widget.contracts[index];
+
+                          // Soportar ambos formatos: String (id) o Map (objeto contrato)
+                          final String contractIdStr =
+                              item is String
+                                  ? item
+                                  : (item?['contract_id']?.toString() ?? '');
+
                           final isSelected =
-                              _selectedContractId == contract['contract_id'];
+                              _selectedContractId == contractIdStr;
 
                           return Card(
                             margin: const EdgeInsets.only(bottom: 12),
@@ -88,21 +83,7 @@ class _SelectContractScreenState extends State<SelectContractScreen> {
                                 color: isSelected ? Colors.blue : Colors.grey,
                               ),
                               title: Text(
-                                'Contrato: ${contract['contract_id']}',
-                              ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Dirección: ${contract['address']}'),
-                                  Text(
-                                    'Sucursal: ${contract['branch_office']}',
-                                  ),
-                                  if (contract['services'] != null &&
-                                      contract['services'].isNotEmpty)
-                                    Text(
-                                      'Servicio: ${contract['services'][0]['package_name']}',
-                                    ),
-                                ],
+                                'Contrato: ${contractIdStr.isNotEmpty ? contractIdStr : 'Sin ID'}',
                               ),
                               trailing:
                                   isSelected
@@ -113,7 +94,7 @@ class _SelectContractScreenState extends State<SelectContractScreen> {
                                       : null,
                               onTap: () {
                                 setState(() {
-                                  _selectedContractId = contract['contract_id'];
+                                  _selectedContractId = contractIdStr;
                                 });
                               },
                             ),
@@ -129,17 +110,14 @@ class _SelectContractScreenState extends State<SelectContractScreen> {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: _selectedContractId != null ? _continueToOtp : null,
+                onPressed: _selectedContractId != null ? _continueToHome : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryColor,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Continuar con OTP',
-                  style: TextStyle(fontSize: 18),
-                ),
+                child: const Text('Continuar', style: TextStyle(fontSize: 18)),
               ),
             ),
           ],
@@ -148,16 +126,14 @@ class _SelectContractScreenState extends State<SelectContractScreen> {
     );
   }
 
-  void _continueToOtp() {
-    // Navegar a verificación OTP con el contrato seleccionado
+  void _continueToHome() {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder:
-            (context) => VerifyOtpScreen(
-              email: widget.clientData['email'],
-              // selectedContractorId: _selectedContractId ?? '',
-              document: widget.document,
+            (context) => HomeClienteScreen(
+              clienteId: widget.clientDataId,
+              contractId: _selectedContractId!,
             ),
       ),
     );

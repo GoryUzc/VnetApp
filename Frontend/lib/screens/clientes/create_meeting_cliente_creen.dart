@@ -15,9 +15,13 @@ import 'package:intl/intl.dart';
 
 class CreateMeetingClienteSCreen extends StatefulWidget {
   final String prospectAradialId;
+  final String contractId;
 
-  const CreateMeetingClienteSCreen({Key? key, required this.prospectAradialId})
-    : super(key: key);
+  const CreateMeetingClienteSCreen({
+    Key? key,
+    required this.prospectAradialId,
+    required this.contractId,
+  }) : super(key: key);
 
   @override
   _CrearCitaScreenState createState() => _CrearCitaScreenState();
@@ -223,6 +227,7 @@ class _CrearCitaScreenState extends State<CreateMeetingClienteSCreen> {
         'franchise_id': _selectedFranchiseId, // ✅ CORREGIDO: nombre de variable
         'latitude': _selectedLocation!.latitude,
         'longitude': _selectedLocation!.longitude,
+        'nro_contract': widget.contractId,
       };
 
       final response = await _clienteService.createMeetingProspect(citaData);

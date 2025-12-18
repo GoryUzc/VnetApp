@@ -28,7 +28,6 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _documentController = TextEditingController();
-  final TextEditingController _documentTypeController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -59,9 +58,18 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
   // Selecciones
   String? _selectedFranchiseId;
   String? _selectedRoleId;
-  String? _selectedContractorId; // para empleados
+  String? _selectedContractorId;
+  String? _selectedTypeDocument; // para empleados
 
   bool _submitting = false;
+
+  final List<Map<String, String>> _docTypes = [
+    {'value': 'V', 'label': 'V - Venezolano'},
+    {'value': 'E', 'label': 'E - Extranjero'},
+    {'value': 'J', 'label': 'J - Jurídico'},
+    {'value': 'G', 'label': 'G - Gobierno'},
+    {'value': 'P', 'label': 'P - Pasaporte'},
+  ];
 
   @override
   void initState() {
@@ -201,7 +209,7 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
         'name': _nameController.text.trim(),
         'last_name': _lastNameController.text.trim(),
         'document': _documentController.text.trim(),
-        'document_type': _documentTypeController.text.trim(),
+        'document_type': _selectedTypeDocument ?? 'V',
         'phone': _phoneController.text.trim(),
         'email': _emailController.text.trim(),
         'password': _passwordController.text.trim(),
@@ -267,12 +275,32 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
                   maxLen: 50,
                   required: true,
                 ),
-                _textField(
-                  _documentTypeController,
-                  'Tipo de Documento',
-                  maxLen: 20,
-                  required: true,
+                DropdownButtonFormField<String>(
+                  value: _selectedTypeDocument,
+                  decoration: InputDecoration(
+                    labelText: 'Tipo de Documento',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    prefixIcon: const Icon(Icons.badge),
+                  ),
+                  items:
+                      _docTypes.map((docType) {
+                        return DropdownMenuItem<String>(
+                          value: docType['value'],
+                          child: Text(docType['label']!),
+                        );
+                      }).toList(),
+                  onChanged:
+                      (value) => setState(() => _selectedTypeDocument = value),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Seleccione un tipo de documento';
+                    }
+                    return null;
+                  },
                 ),
+                const SizedBox(height: 20),
                 _textField(
                   _phoneController,
                   'Teléfono',
@@ -539,7 +567,6 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
     _nameController.dispose();
     _lastNameController.dispose();
     _documentController.dispose();
-    _documentTypeController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
     _passwordController.dispose();

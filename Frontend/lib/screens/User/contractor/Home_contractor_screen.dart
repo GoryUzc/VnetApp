@@ -1,14 +1,18 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:intl/intl.dart';
 import 'package:logger/web.dart';
+import 'package:vnet_agenda/screens/User/crud/meeting/detail_meeting_install_screen.dart';
 import 'package:vnet_agenda/screens/User/crud/users/user_edit_screen.dart';
 import 'package:vnet_agenda/screens/init_select_user_screen.dart';
 import 'package:vnet_agenda/services/authentication/auth_service.dart';
+import 'package:vnet_agenda/services/crud/meeting_service.dart';
+import 'package:vnet_agenda/services/crud/prospect_service.dart';
 import 'package:vnet_agenda/services/crud/user_services.dart';
 import 'package:vnet_agenda/strings/app_strings.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
 import 'package:vnet_agenda/widgets/contractor_drawer.dart';
+import 'package:vnet_agenda/widgets/data_table_custom.dart';
 
 class HomeContractorScreen extends StatefulWidget {
   const HomeContractorScreen({super.key});
@@ -18,11 +22,18 @@ class HomeContractorScreen extends StatefulWidget {
 }
 
 class _HomeContractorScreenState extends State<HomeContractorScreen> {
-  String id = '';
   final Logger _logger = Logger();
   final AuthService _authService = AuthService();
+  final MeetingService _meetingService = MeetingService();
+  final ProspectService _prospectService = ProspectService();
+  final Map<String, Map<String, dynamic>> _prospects = {};
+  List<Map<String, dynamic>> _meetings = [];
+  String _idUser = '';
+  String idProspect = '';
+  String idOrder = '';
   bool _loading = false;
   String _errorMessage = '';
+  bool _hasError = false;
 
   @override
   void initState() {
@@ -35,17 +46,48 @@ class _HomeContractorScreenState extends State<HomeContractorScreen> {
       setState(() {
         _loading = true;
         _errorMessage = '';
+        _hasError = false;
       });
     }
 
     try {
       final user = await _authService.getUserId() ?? 'No especificado';
       _logger.d('ID => $user');
-      id = user;
+      _idUser = user;
+      final data = await _meetingService.getAllMeetingUser();
+      _meetings = data;
+
+      final prospectIds =
+          _meetings
+              .map((m) => m['prospect_aradial_id']?.toString())
+              .where((id) => id != null && id.isNotEmpty)
+              .cast<String>()
+              .toSet();
+
+      final futures = <Future<void>>[];
+      for (final pid in prospectIds) {
+        futures.add(
+          _prospectService
+              .getProspectDetails(pid)
+              .then((pData) {
+                final map = Map<String, dynamic>.from(pData);
+                _prospects[pid] = map['prospect'];
+              })
+              .catchError((e) {
+                _logger.w('No se pudo cargar prospecto $pid: $e');
+                _prospects[pid] = {};
+                _logger.d('Los prospects $_prospects');
+              }),
+        );
+      }
+      if (futures.isNotEmpty) {
+        await Future.wait(futures);
+      }
 
       if (mounted) {
         setState(() {
-          id;
+          _idUser;
+          _meetings = data;
           _loading = false;
         });
       }
@@ -76,6 +118,180 @@ class _HomeContractorScreenState extends State<HomeContractorScreen> {
     );
   }
 
+  String _formatDateTime(String dateTimeString) {
+    try {
+      final dateTime = DateTime.parse(dateTimeString);
+      return DateFormat('dd/MM/yyyy HH:mm').format(dateTime);
+    } catch (e) {
+      return dateTimeString;
+    }
+  }
+
+  String _formatProspectName(Map<String, dynamic>? p) {
+    if (p == null) return AppStrings.anonymous;
+    final first = p['name']?.toString() ?? '';
+    final last = p['last_name']?.toString() ?? '';
+    final full = ('$first $last').trim();
+    return full.isNotEmpty ? full : AppStrings.anonymous;
+  }
+
+  Widget _buildTable() {
+    return RefreshIndicator(
+      semanticsLabel: 'Mis Citas de Instalacion',
+      onRefresh: () => _load(isRefreshing: true),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: DataTableCustom(
+          columns: const [
+            'Cliente',
+            'plan',
+            'Fecha y Hora',
+            'Telefono',
+            'Dirección',
+            'Acciones',
+          ],
+          rows:
+              _meetings.map((meeting) {
+                final id = meeting['id'];
+                final prospectId = meeting['prospect_aradial_id']?.toString();
+                final pData =
+                    prospectId != null ? _prospects[prospectId] : null;
+                final name = _formatProspectName(pData);
+                final plan =
+                    (pData != null &&
+                            pData['plan'] != null &&
+                            pData['plan'].toString().isNotEmpty)
+                        ? pData['plan'].toString()
+                        : AppStrings.notAvailable;
+                final address =
+                    (pData != null &&
+                            pData['address'] != null &&
+                            pData['address'].toString().isNotEmpty)
+                        ? pData['address'].toString()
+                        : AppStrings.notAvailable;
+                final dateTime =
+                    meeting['date_time1'] ??
+                    meeting['appointment_date'] ??
+                    meeting['dateTime1'] ??
+                    'Fecha y Hora no disponible';
+                final phone =
+                    (pData != null &&
+                            pData['phone'] != null &&
+                            pData['phone'].toString().isNotEmpty)
+                        ? pData['phone'].toString()
+                        : (meeting['phone'] ??
+                                meeting['phone'] ??
+                                AppStrings.notAvailable)
+                            .toString();
+                return {
+                  'id': id,
+                  'Cliente': name,
+                  'Plan': plan,
+                  'Dirección': address,
+                  'Fecha y Hora': _formatDateTime(dateTime.toString()),
+                  'telefono': phone,
+                };
+              }).toList(),
+          title: 'Mis citas Instalacion',
+          // onView para la vista detalles y comenzar intalacion
+          onView: (id) {
+            // final meeting = _meetings.firstWhere(
+            //   (m) => m[id].toString() == id,
+            //   orElse: () => {},
+            // );
+
+            // _logger.d('cita detalles: $meeting');
+
+            // final userId = meeting['user_id']?.toString();
+
+            // Navegar a la pantalla detalles de la cita
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => DetailMeetingInstallScreen(
+                      meetingId: id.toString() ?? '',
+                      userId: _idUser,
+                    ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_hasError) {
+      return _buildErrorState();
+    }
+
+    if (_meetings.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    return _buildTable();
+  }
+
+  Widget _buildEmptyState() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.assignment_turned_in, size: 80, color: Colors.green),
+          SizedBox(height: 20),
+          Text(
+            'Tome una cita de instalacion',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.green,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: ListView(
+        children: [
+          const Icon(Icons.error, size: 60, color: Colors.red),
+          const SizedBox(height: 16),
+          const Text(
+            'Error al cargar citas de instalacion',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _errorMessage,
+            style: const TextStyle(color: Colors.grey),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () => _load(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryColor,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            child: const Text(
+              AppStrings.retry,
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -92,6 +308,11 @@ class _HomeContractorScreenState extends State<HomeContractorScreen> {
         ),
 
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: () => _load(isRefreshing: true),
+            tooltip: 'Recargar',
+          ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.account_circle, color: Colors.white),
             tooltip: 'Mi cuenta',
@@ -218,34 +439,43 @@ class _HomeContractorScreenState extends State<HomeContractorScreen> {
         centerTitle: true,
         elevation: 4,
       ),
-      drawer: CustomContractorDrawer(userId: id),
+      drawer: CustomContractorDrawer(userId: _idUser),
       body: _buildWelcomeContent(),
     );
   }
 
   Widget _buildWelcomeContent() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.dashboard, size: 80, color: AppColors.primaryColor),
-          const SizedBox(height: 20),
-          const Text(
-            "Bienvenido al Sistema VNET",
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
+    return SingleChildScrollView(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.dashboard,
+              size: 80,
+              color: AppColors.primaryColor,
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 10),
-          Text(
-            "Gestión y Automatización de Instalaciones de Fibra Óptica",
-            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-            textAlign: TextAlign.center,
-          ),
-        ],
+            const SizedBox(height: 20),
+            const Text(
+              "Bienvenido al Sistema VNET",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              "Gestión y Automatización de Instalaciones de Fibra Óptica",
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+              textAlign: TextAlign.center,
+            ),
+
+            const SizedBox(height: 40),
+            _buildContent(),
+          ],
+        ),
       ),
     );
   }
