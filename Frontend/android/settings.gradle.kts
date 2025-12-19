@@ -23,3 +23,4 @@ plugins {
 }
 
 include(":app")
+rootProject.name = "vnet_agenda"

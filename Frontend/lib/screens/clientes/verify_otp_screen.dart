@@ -11,7 +11,7 @@ class VerifyOtpScreen extends StatefulWidget {
   final String document;
   final String email;
   final List<dynamic> contractIds;
-  final String clienteId;
+  final dynamic clienteId;
   // final String selectedContractorId;
   const VerifyOtpScreen({
     super.key,
@@ -45,24 +45,23 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
-
     try {
       final result = await _otpService.verifyOtp(
         _otpController.text.trim(),
         widget.email,
         widget.document,
       );
+      final String idP = result['prospectId'];
       _logger.d('El cliente es: $result');
-      _meetingId = result['meeting'].toString() ?? '';
+      _logger.d('El cliente Id 1: $idP');
+      _meetingId = result['meeting']?.toString() ?? '';
       _hasMeetingExist = result['hasMeeting'] ?? false;
       _logger.d('_hasMeetingExist: $_hasMeetingExist');
       if (_hasMeetingExist) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder:
-                (context) =>
-                    AvailableMeetingsScreen(prospectId: widget.clienteId),
+            builder: (context) => AvailableMeetingsScreen(prospectId: idP),
           ),
         );
       } else {
@@ -71,7 +70,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
           MaterialPageRoute(
             builder:
                 (context) => SelectContractScreen(
-                  clientDataId: widget.clienteId,
+                  clientDataId: idP,
                   contracts: widget.contractIds,
                   document: widget.document,
                 ),

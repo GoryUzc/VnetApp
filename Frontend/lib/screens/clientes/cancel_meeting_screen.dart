@@ -35,7 +35,7 @@ class _CancelMeetingScreenState extends State<CancelMeetingScreen> {
 
   String get _status {
     if (_selectedReason == 1) return 'Perdida';
-    return 'Cancelada';
+    return 'cancelada';
   }
 
   @override

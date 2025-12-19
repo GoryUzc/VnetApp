@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 import 'package:vnet_agenda/screens/clientes/home_cliente_screen.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
 
@@ -17,6 +18,8 @@ class SelectContractScreen extends StatefulWidget {
   @override
   State<SelectContractScreen> createState() => _SelectContractScreenState();
 }
+
+Logger _logger = Logger();
 
 class _SelectContractScreenState extends State<SelectContractScreen> {
   String? _selectedContractId;
@@ -127,6 +130,7 @@ class _SelectContractScreenState extends State<SelectContractScreen> {
   }
 
   void _continueToHome() {
+    _logger.d('ID del cliente que va a home ${widget.clientDataId}');
     Navigator.push(
       context,
       MaterialPageRoute(

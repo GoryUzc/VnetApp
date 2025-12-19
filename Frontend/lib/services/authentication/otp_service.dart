@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
@@ -14,12 +15,14 @@ class OtpService {
     String typeDocument,
   ) async {
     try {
-      final response = await http.get(
-        Uri.parse(
-          ApiConfig.endpoint('/prospect/consult/$document/$typeDocument'),
-        ),
-        headers: {'Content-type': 'application/json'},
-      );
+      final response = await http
+          .get(
+            Uri.parse(
+              ApiConfig.endpoint('/prospect/consult/$document/$typeDocument'),
+            ),
+            headers: {'Content-type': 'application/json'},
+          )
+          .timeout(const Duration(seconds: 15));
       _logger.d(
         'GET /prospect/consult/$document/$typeDocument -> ${response.statusCode}',
       );
@@ -29,10 +32,26 @@ class OtpService {
         _logger.d('Respuesta getConsultClient: $data');
         return data;
       } else {
-        throw Exception('Error al obtener contratistas: ${response.body}');
+        throw Exception('Error al obtener prospecto: ${response.body}');
       }
+    } on TimeoutException catch (e, st) {
+      _logger.e('Timeout en getConsultClient (15s)', error: e, stackTrace: st);
+      throw Exception(
+        'Tiempo de espera agotado al consultar el prospecto. Verifica tu conexión o el servidor.',
+      );
+    } on SocketException catch (e, st) {
+      _logger.e(
+        'Conexión rechazada en getConsultClient',
+        error: e,
+        stackTrace: st,
+      );
+      throw Exception(
+        'No se pudo conectar al servidor (' +
+            ApiConfig.baseUrl +
+            '). Verifica IP/puerto y firewall.',
+      );
     } catch (e, st) {
-      _logger.e('Error en getAllContractors', error: e, stackTrace: st);
+      _logger.e('Error en getConsultClient', error: e, stackTrace: st);
       rethrow;
     }
   }
@@ -42,11 +61,13 @@ class OtpService {
     _logger.d('Obteniendo endpoint: ${ApiConfig.endpoint('send-otp')}');
 
     try {
-      final response = await http.post(
-        Uri.parse(ApiConfig.endpoint('prospect/send-otp')),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'document': document}),
-      );
+      final response = await http
+          .post(
+            Uri.parse(ApiConfig.endpoint('prospect/send-otp')),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'email': email, 'document': document}),
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (response.body.isEmpty) {
         throw Exception(
@@ -66,13 +87,18 @@ class OtpService {
     }
   }
 
-  Future<Map<String,dynamic>?> _fetchActiveMeeting(String prospectId) async {
+  Future<Map<String, dynamic>?> _fetchActiveMeeting(String prospectId) async {
     try {
       final uri = Uri.parse(
-        ApiConfig.endpoint('/meetings/prospect/consult/$prospectId'));
-      final resp = await http.get(uri, headers: await getOtpHeaders());
+        ApiConfig.endpoint('/meetings/prospect/consult/$prospectId'),
+      );
+      final resp = await http
+          .get(uri, headers: await getOtpHeaders())
+          .timeout(const Duration(seconds: 15));
 
-      _logger.d('GET meetings/prospects/consult/$prospectId -> ${resp.statusCode}');
+      _logger.d(
+        'GET meetings/prospects/consult/$prospectId -> ${resp.statusCode}',
+      );
 
       if (resp.statusCode == 200) {
         final data = jsonDecode(resp.body);
@@ -82,23 +108,33 @@ class OtpService {
         _logger.e('Error al obtener la reunión activa: ${resp.body}');
         return null;
       }
-      } catch (e, st) {
-        _logger.e('Error en fetchActiveMeeting', error: e, stackTrace: st);
-        return null;
-      }
+    } catch (e, st) {
+      _logger.e('Error en fetchActiveMeeting', error: e, stackTrace: st);
+      return null;
+    }
   }
 
-  Future<Map<String, dynamic>> verifyOtp(String otp, String email, String document) async {
+  Future<Map<String, dynamic>> verifyOtp(
+    String otp,
+    String email,
+    String document,
+  ) async {
     _logger.d(
       'Verificando OTP para: $email con documento: $document y OTP: $otp',
     );
 
     try {
-      final response = await http.post(
-        Uri.parse(ApiConfig.endpoint('prospect/verify-email')),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'document': document, 'otp': otp}),
-      );
+      final response = await http
+          .post(
+            Uri.parse(ApiConfig.endpoint('prospect/verify-email')),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'email': email,
+              'document': document,
+              'otp': otp,
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
 
       _logger.d('Código de estado: ${response.statusCode}');
       _logger.d('Respuesta cruda: ${response.body}');
@@ -134,12 +170,12 @@ class OtpService {
 
           final meetingData = await _fetchActiveMeeting(prospectId);
 
-  return {
-    'prospectId': prospectId,
-    'hasMeeting': meetingData?['exists'] ?? false,
-    'meeting':    meetingData?['meeting'],
-  };
- // Devuelve solo el ID como String
+          return {
+            'prospectId': prospectId,
+            'hasMeeting': meetingData?['exists'] ?? false,
+            'meeting': meetingData?['meeting'],
+          };
+          // Devuelve solo el ID como String
         } else {
           throw Exception('El prospecto no tiene ID válido');
         }

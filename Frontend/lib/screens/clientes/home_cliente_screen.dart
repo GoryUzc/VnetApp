@@ -46,7 +46,7 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
     }
 
     try {
-      _logger.d('Id cliente: ${widget.clienteId}');
+      _logger.d('ID A CONSULTAR ${widget.clienteId}');
       final response = await _clienteService.getClient(widget.clienteId);
       if (response.containsKey('prospect') && response['prospect'] != null) {
         setState(() {

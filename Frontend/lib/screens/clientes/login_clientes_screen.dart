@@ -20,8 +20,6 @@ class _LoginUserScreenState extends State<LoginClienteScreen> {
 
   bool _isLoading = false;
   String? _selectedTypeDocument;
-  String _email = '';
-  String _clienteId = '';
 
   final List<Map<String, String>> _docTypes = [
     {'value': 'V', 'label': 'V - Venezolano'},
@@ -74,25 +72,21 @@ class _LoginUserScreenState extends State<LoginClienteScreen> {
       _logger.d('📥 Resultado completo: $result');
 
       if (result['status'] == 'success') {
-        final int clientId = result['prospect'] ?? 0;
+        final String clientId = result['prospect'].toString();
         final bool clientExists = result['existInAradial'] == true;
         final String emailProspect = result['email'] ?? '';
-        // ✅ USAR contract_ids EN LUGAR DE contracts
+
         final List<dynamic> contractIds = result['contract_ids'] ?? [];
 
-        // ✅ EXTRAER EMAIL Y NOMBRE
-        _email = emailProspect;
-        _clienteId = clientId.toString();
-
-        _logger.d('   - Email: $_email');
-        _logger.d('   - Email: $_clienteId');
+        _logger.d('   - Email: $emailProspect');
+        _logger.d('   - Email: $clientId');
         _logger.d('   - Existe en Aradial: $clientExists');
         _logger.d('   - Contract IDs: $contractIds');
 
         // Mostrar mensaje según si era nuevo o existente
-        showStatusMessage(clientExists, _clienteId);
+        showStatusMessage(clientExists, clientId);
 
-        final sendOtp = await _otpService.sendToOtp(_email, document);
+        final sendOtp = await _otpService.sendToOtp(emailProspect, document);
 
         await Navigator.push(
           context,
@@ -100,9 +94,9 @@ class _LoginUserScreenState extends State<LoginClienteScreen> {
             builder:
                 (context) => VerifyOtpScreen(
                   document: document,
-                  email: _email,
-                  contractIds: contractIds, // ✅ Ahora usamos contract_ids
-                  clienteId: _clienteId,
+                  email: emailProspect,
+                  contractIds: contractIds,
+                  clienteId: clientId,
                 ),
           ),
         );
