@@ -31,6 +31,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
   final OtpService _otpService = OtpService();
   final TextEditingController _otpController = TextEditingController();
   String _meetingId = '';
+  String idProspect = '';
 
   bool _isLoading = false;
   bool _hasMeetingExist = false;
@@ -51,9 +52,9 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
         widget.email,
         widget.document,
       );
-      final String idP = result['prospectId'];
+      idProspect = result['prospectId'];
       _logger.d('El cliente es: $result');
-      _logger.d('El cliente Id 1: $idP');
+      _logger.d('El cliente Id 1: $idProspect');
       _meetingId = result['meeting']?.toString() ?? '';
       _hasMeetingExist = result['hasMeeting'] ?? false;
       _logger.d('_hasMeetingExist: $_hasMeetingExist');
@@ -61,7 +62,8 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => AvailableMeetingsScreen(prospectId: idP),
+            builder:
+                (context) => AvailableMeetingsScreen(idProspect: idProspect),
           ),
         );
       } else {
@@ -70,7 +72,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
           MaterialPageRoute(
             builder:
                 (context) => SelectContractScreen(
-                  clientDataId: idP,
+                  clientDataId: idProspect,
                   contracts: widget.contractIds,
                   document: widget.document,
                 ),

@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vnet_agenda/screens/User/crud/meeting/pre_install_meeting_check_screen.dart';
-import 'package:vnet_agenda/screens/User/crud/order/order_create_screen.dart';
 import 'package:vnet_agenda/services/crud/meeting_service.dart';
 import 'package:vnet_agenda/services/crud/prospect_service.dart';
 import 'package:vnet_agenda/services/crud/user_services.dart';

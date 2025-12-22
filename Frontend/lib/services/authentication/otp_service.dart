@@ -46,9 +46,7 @@ class OtpService {
         stackTrace: st,
       );
       throw Exception(
-        'No se pudo conectar al servidor (' +
-            ApiConfig.baseUrl +
-            '). Verifica IP/puerto y firewall.',
+        'No se pudo conectar al servidor (${ApiConfig.baseUrl}). Verifica IP/puerto y firewall.',
       );
     } catch (e, st) {
       _logger.e('Error en getConsultClient', error: e, stackTrace: st);

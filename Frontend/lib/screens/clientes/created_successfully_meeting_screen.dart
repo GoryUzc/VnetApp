@@ -351,7 +351,7 @@ class _CreatedSuccessfullyScreenState extends State<CreatedSuccessfullyScreen> {
                               MaterialPageRoute(
                                 builder:
                                     (context) => AvailableMeetingsScreen(
-                                      prospectId: widget.clienteId,
+                                      idProspect: widget.clienteId,
                                     ),
                               ),
                             );

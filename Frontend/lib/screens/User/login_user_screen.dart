@@ -6,7 +6,6 @@ import 'package:vnet_agenda/screens/User/admin/home_admin_screen.dart';
 import 'package:vnet_agenda/screens/User/supervisor/home_supervisor_screen.dart';
 import 'package:vnet_agenda/screens/User/contractor/home_contractor_screen.dart';
 import 'package:vnet_agenda/screens/User/worker/home_worker_screen.dart';
-import 'package:vnet_agenda/screens/register_user_screen.dart';
 
 class LoginUserScreen extends StatefulWidget {
   const LoginUserScreen({super.key});

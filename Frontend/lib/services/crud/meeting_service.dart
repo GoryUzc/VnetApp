@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:vnet_agenda/services/authentication/auth_service.dart';
@@ -249,30 +250,29 @@ class MeetingService {
 
     try {
       final headers = await _otpService.getOtpHeaders();
-      final response = await http.get(
-        Uri.parse(ApiConfig.endpoint('/meetings/prospect/contract/$id')),
-        headers: headers,
-      );
+      final response = await http
+          .get(
+            Uri.parse(ApiConfig.endpoint('/meetings/prospect/contract/$id')),
+            headers: headers,
+          )
+          .timeout(const Duration(seconds: 120)); // ← timeout para móvil
 
       _logger.d('Código de estado: ${response.statusCode}');
       _logger.d('Cuerpo de respuesta: ${response.body}');
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final meeting =
-            (data is Map<String, dynamic> && data['meeting'] is Map)
-                ? Map<String, dynamic>.from(data['meeting'] as Map)
-                : (data is Map<String, dynamic> ? data : <String, dynamic>{});
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+
         _logger.i('Detalles de la cita obtenidos exitosamente');
-        return meeting;
+        return data;
       } else {
-        throw Exception(
-          'Error al obtener detalles de la cita: ${response.body}',
-        );
+        throw Exception('Error ${response.statusCode}: ${response.body}');
       }
+    } on TimeoutException catch (_) {
+      throw Exception('El servidor no responde. Intente más tarde.');
     } catch (e, stackTrace) {
       _logger.e(
-        'Error en getMeetingDetails:',
+        'Error en getMeetingContractProspect:',
         error: e,
         stackTrace: stackTrace,
       );
