@@ -11,6 +11,7 @@ import 'package:vnet_agenda/services/crud/prospect_service.dart';
 import 'package:vnet_agenda/services/crud/user_services.dart';
 import 'package:vnet_agenda/strings/app_strings.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
+import 'package:vnet_agenda/widgets/adaptive_data_view.dart';
 import 'package:vnet_agenda/widgets/data_table_custom.dart';
 import 'package:vnet_agenda/widgets/worker_drawer.dart';
 
@@ -29,13 +30,16 @@ class _HomeWorkerScreenState extends State<HomeWorkerScreen> {
   final Logger _logger = Logger();
   final Map<String, Map<String, dynamic>> _prospects = {};
   List<Map<String, dynamic>> _meetings = [];
-  List<Map<String, dynamic>> _meetingsInProcess = [];
   String idUser = '';
   String idProspect = '';
   String idOrder = '';
   bool _loading = false;
   String _errorMessage = '';
   bool _hasError = false;
+  int _currentPage = 1;
+  bool _isLoadingMore = true;
+  bool _hasMore = true;
+  final int _itemsPerPage = 10;
 
   @override
   void initState() {
@@ -43,23 +47,36 @@ class _HomeWorkerScreenState extends State<HomeWorkerScreen> {
     _load();
   }
 
-  Future<void> _load({bool isRefreshing = false}) async {
-    if (!isRefreshing) {
+  Future<void> _load({bool isRefreshing = false, bool loadMore = false}) async {
+    if (!isRefreshing && !loadMore) {
       setState(() {
         _loading = true;
         _errorMessage = '';
         _hasError = false;
+        _currentPage = 1;
+        _hasMore = true;
       });
     }
+
+    if (loadMore) {
+      setState(() => _isLoadingMore = true);
+      _currentPage++;
+    }
+
     try {
       final user = await _authService.getUserId();
       idUser = user ?? 'No especificado';
       _logger.d('ID => $idUser');
       final data1 = await _meetingService.getAllMeetingUser();
-      _meetings = data1;
-
-      final data2 = await _meetingService.getAllMeetingUserProcess();
-      _meetingsInProcess = data2;
+      if (loadMore) {
+        setState(() {
+          _meetings.addAll(data1);
+          _hasMore = data1.length == _itemsPerPage;
+          _loading = false;
+        });
+      } else {
+        setState(() => _meetings = data1);
+      }
       // idProspect se determinará por fila al construir tablas
       final prospectIds =
           _meetings
@@ -96,7 +113,6 @@ class _HomeWorkerScreenState extends State<HomeWorkerScreen> {
       if (mounted) {
         setState(() {
           _meetings = data1;
-          _meetingsInProcess = data2;
           _loading = false;
         });
       }
@@ -106,6 +122,17 @@ class _HomeWorkerScreenState extends State<HomeWorkerScreen> {
         _errorMessage = e.toString();
       });
       _showErrorSnackBar(e);
+    } finally {
+      setState(() {
+        _loading = false;
+        _isLoadingMore = false;
+      });
+    }
+  }
+
+  void _loadMoreMeetings() {
+    if (!_isLoadingMore && _hasMore) {
+      _load(loadMore: true);
     }
   }
 
@@ -156,87 +183,107 @@ class _HomeWorkerScreenState extends State<HomeWorkerScreen> {
   }
 
   Widget _buildTable() {
+    // Preparar los datos en formato para AdaptiveDataView
+    final formattedRows =
+        _meetings.map((meeting) {
+          final id = meeting['id']?.toString() ?? '';
+          final prospectId = meeting['prospect_aradial_id']?.toString();
+          final pData = prospectId != null ? _prospects[prospectId] : null;
+          final name = _formatProspectName(pData);
+          final plan =
+              (pData != null &&
+                      pData['plan'] != null &&
+                      pData['plan'].toString().isNotEmpty)
+                  ? pData['plan'].toString()
+                  : AppStrings.notAvailable;
+          final address =
+              (pData != null &&
+                      pData['address'] != null &&
+                      pData['address'].toString().isNotEmpty)
+                  ? pData['address'].toString()
+                  : AppStrings.notAvailable;
+          final dateTime =
+              meeting['date_time1'] ??
+              meeting['appointment_date'] ??
+              meeting['dateTime1'] ??
+              'Fecha y Hora no disponible';
+          final phone =
+              (pData != null &&
+                      pData['phone'] != null &&
+                      pData['phone'].toString().isNotEmpty)
+                  ? pData['phone'].toString()
+                  : (meeting['phone'] ??
+                          meeting['phone'] ??
+                          AppStrings.notAvailable)
+                      .toString();
+
+          return {
+            'id': id,
+            'Cliente': name,
+            'plan': plan,
+            'Fecha y Hora': _formatDateTime(dateTime.toString()),
+            'Telefono': phone,
+            'Dirección': address,
+          };
+        }).toList();
+
+    // void _placeholderEdit(String id) {
+    //   // Puedes dejar esto vacío o mostrar un mensaje
+    //   _logger.d('Editar no disponible para cita $id');
+    // }
+
+    // void _placeholderDelete(String id) {
+    //   // Puedes dejar esto vacío o mostrar un mensaje
+    //   _logger.d('Eliminar no disponible para cita $id');
+    // }
+
     return RefreshIndicator(
       semanticsLabel: 'Mis Citas de Instalacion',
       onRefresh: () => _load(isRefreshing: true),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: DataTableCustom(
-          columns: const [
-            'Cliente',
-            'plan',
-            'Fecha y Hora',
-            'Telefono',
-            'Dirección',
-            'Acciones',
-          ],
-          rows:
-              _meetings.map((meeting) {
-                final id = meeting['id'];
-                final prospectId = meeting['prospect_aradial_id']?.toString();
-                final pData =
-                    prospectId != null ? _prospects[prospectId] : null;
-                final name = _formatProspectName(pData);
-                final plan =
-                    (pData != null &&
-                            pData['plan'] != null &&
-                            pData['plan'].toString().isNotEmpty)
-                        ? pData['plan'].toString()
-                        : AppStrings.notAvailable;
-                final address =
-                    (pData != null &&
-                            pData['address'] != null &&
-                            pData['address'].toString().isNotEmpty)
-                        ? pData['address'].toString()
-                        : AppStrings.notAvailable;
-                final dateTime =
-                    meeting['date_time1'] ??
-                    meeting['appointment_date'] ??
-                    meeting['dateTime1'] ??
-                    'Fecha y Hora no disponible';
-                final phone =
-                    (pData != null &&
-                            pData['phone'] != null &&
-                            pData['phone'].toString().isNotEmpty)
-                        ? pData['phone'].toString()
-                        : (meeting['phone'] ??
-                                meeting['phone'] ??
-                                AppStrings.notAvailable)
-                            .toString();
-                return {
-                  'id': id,
-                  'Cliente': name,
-                  'Plan': plan,
-                  'Dirección': address,
-                  'Fecha y Hora': _formatDateTime(dateTime.toString()),
-                  'telefono': phone,
-                };
-              }).toList(),
-          title: 'Mis citas Instalacion',
-          // onView para la vista detalles y comenzar intalacion
-          onView: (id) {
-            // final meeting = _meetings.firstWhere(
-            //   (m) => m[id].toString() == id,
-            //   orElse: () => {},
-            // );
+      child: AdaptiveDataView(
+        // PARÁMETROS REQUERIDOS
+        columns: const [
+          'Cliente',
+          'plan',
+          'Fecha y Hora',
+          'Telefono',
+          'Dirección',
+          'Acciones',
+        ],
+        rows: formattedRows,
+        title: 'Mis citas Instalacion',
 
-            // _logger.d('cita detalles: $meeting');
+        // ACCIONES (tu solo usas onView, pero AdaptiveDataView requiere los 3)
+        onView: (id) {
+          // Tu lógica existente para ver detalles
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) =>
+                      DetailMeetingInstallScreen(meetingId: id, userId: idUser),
+            ),
+          );
+        },
 
-            // final userId = meeting['user_id']?.toString();
+        onEdit: null,
 
-            // Navegar a la pantalla detalles de la cita
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder:
-                    (context) => DetailMeetingInstallScreen(
-                      meetingId: id.toString() ?? '',
-                      userId: idUser,
-                    ),
-              ),
-            );
-          },
-        ),
+        onDelete: null,
+
+        // INFINITE SCROLL
+        onLoadMore: _loadMoreMeetings,
+        isLoadingMore: _isLoadingMore,
+        hasMore: _hasMore,
+
+        // COLUMN LABELS (mejora la visualización)
+        columnLabels: const {
+          'Cliente': 'Cliente',
+          'plan': 'Plan Contratado',
+          'Fecha y Hora': 'Fecha y Hora',
+          'Telefono': 'Teléfono',
+          'Dirección': 'Dirección',
+          'Acciones': 'Acciones',
+        },
       ),
     );
   }
@@ -328,95 +375,91 @@ class _HomeWorkerScreenState extends State<HomeWorkerScreen> {
         ),
         actions: [
           // Botón para recargar manualmente
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
-            onPressed: () => _load(isRefreshing: true),
-            tooltip: 'Recargar',
-          ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.account_circle, color: Colors.white),
-            tooltip: 'Mi cuenta',
-            onSelected: (value) async {
-              const storage = FlutterSecureStorage();
-              final userId = await storage.read(key: 'user_id');
-              if (userId == null || userId.isEmpty) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('No se pudo obtener el usuario'),
-                    ),
-                  );
-                }
-                return;
-              }
+          // IconButton(
+          //   icon: const Icon(Icons.refresh, color: Colors.white),
+          //   onPressed: () => _load(isRefreshing: true),
+          //   tooltip: 'Recargar',
+          // ),
+          // PopupMenuButton<String>(
+          //   icon: const Icon(Icons.account_circle, color: Colors.white),
+          //   tooltip: 'Mi cuenta',
+          //   onSelected: (value) async {
+          //     const storage = FlutterSecureStorage();
+          //     final userId = await storage.read(key: 'user_id');
+          //     if (userId == null || userId.isEmpty) {
+          //       if (context.mounted) {
+          //         ScaffoldMessenger.of(context).showSnackBar(
+          //           const SnackBar(
+          //             content: Text('No se pudo obtener el usuario'),
+          //           ),
+          //         );
+          //       }
+          //       return;
+          //     }
 
-              if (value == 'edit') {
-                if (context.mounted) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => UserEditScreen(userId: userId),
-                    ),
-                  );
-                }
-              } else if (value == 'delete') {
-                if (context.mounted) {
-                  final confirmed = await showDialog<bool>(
-                    context: context,
-                    builder:
-                        (ctx) => AlertDialog(
-                          title: const Text('Eliminar mi cuenta'),
-                          content: const Text(
-                            'Esta acción es irreversible. ¿Desea continuar?',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx, false),
-                              child: const Text('Cancelar'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx, true),
-                              child: const Text(
-                                'Eliminar',
-                                style: TextStyle(color: Colors.red),
-                              ),
-                            ),
-                          ],
-                        ),
-                  );
+          //     if (value == 'edit') {
+          //       if (context.mounted) {
+          //         Navigator.push(
+          //           context,
+          //           MaterialPageRoute(
+          //             builder: (_) => UserEditScreen(userId: userId),
+          //           ),
+          //         );
+          //       }
+          //       // } else if (value == 'delete') {
+          //       //   if (context.mounted) {
+          //       //     final confirmed = await showDialog<bool>(
+          //       //       context: context,
+          //       //       builder:
+          //       //           (ctx) => AlertDialog(
+          //       //             title: const Text('Eliminar mi cuenta'),
+          //       //             content: const Text(
+          //       //               'Esta acción es irreversible. ¿Desea continuar?',
+          //       //             ),
+          //       //             actions: [
+          //       //               TextButton(
+          //       //                 onPressed: () => Navigator.pop(ctx, false),
+          //       //                 child: const Text('Cancelar'),
+          //       //               ),
+          //       //               TextButton(
+          //       //                 onPressed: () => Navigator.pop(ctx, true),
+          //       //                 child: const Text(
+          //       //                   'Eliminar',
+          //       //                   style: TextStyle(color: Colors.red),
+          //       //                 ),
+          //       //               ),
+          //       //             ],
+          //       //           ),
+          //       //     );
 
-                  if (confirmed == true) {
-                    try {
-                      await UserServices().deleteUser(userId);
-                      await AuthService().logout();
-                      if (context.mounted) {
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                            builder: (_) => const InitSelectUserScreen(),
-                          ),
-                          (route) => false,
-                        );
-                      }
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(SnackBar(content: Text('Error: $e')));
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            itemBuilder:
-                (ctx) => const [
-                  PopupMenuItem(value: 'edit', child: Text('Editar mi perfil')),
-                  PopupMenuItem(
-                    value: 'delete',
-                    child: Text('Eliminar mi cuenta'),
-                  ),
-                ],
-          ),
+          //       //     if (confirmed == true) {
+          //       //       try {
+          //       //         await UserServices().deleteUser(userId);
+          //       //         await AuthService().logout();
+          //       //         if (context.mounted) {
+          //       //           Navigator.of(context).pushAndRemoveUntil(
+          //       //             MaterialPageRoute(
+          //       //               builder: (_) => const InitSelectUserScreen(),
+          //       //             ),
+          //       //             (route) => false,
+          //       //           );
+          //       //         }
+          //       //       } catch (e) {
+          //       //         if (context.mounted) {
+          //       //           ScaffoldMessenger.of(
+          //       //             context,
+          //       //           ).showSnackBar(SnackBar(content: Text('Error: $e')));
+          //       //         }
+          //       //       }
+          //       //     }
+          //       // }
+          //     }
+          //   },
+          //   itemBuilder:
+          //       (ctx) => const [
+          //         PopupMenuItem(value: 'edit', child: Text('Editar mi perfil')),
+          //       ],
+          // ),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white),
             tooltip: 'Cerrar sesión',
@@ -460,43 +503,7 @@ class _HomeWorkerScreenState extends State<HomeWorkerScreen> {
         elevation: 4,
       ),
       drawer: CustomWorkerDrawer(userId: idUser),
-      body: _buildWelcomeContent(),
-    );
-  }
-
-  Widget _buildWelcomeContent() {
-    return SingleChildScrollView(
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.dashboard,
-              size: 80,
-              color: AppColors.primaryColor,
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              "Bienvenido al Sistema VNET",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              "Gestión y Automatización de Instalaciones de Fibra Óptica",
-              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-              textAlign: TextAlign.center,
-            ),
-
-            const SizedBox(height: 40),
-            _buildContent(),
-          ],
-        ),
-      ),
+      body: _buildContent(),
     );
   }
 }

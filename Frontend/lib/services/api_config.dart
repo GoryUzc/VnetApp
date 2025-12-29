@@ -4,8 +4,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 class ApiConfig {
   static String get baseUrl {
     if (kIsWeb) {
-      // return 'http://10.245.51.11:8010/api/v1'; // ← Para web en misma red WiFi
-      return 'http://localhost:8000/api/v1'; // ← Para web en localhost
+      return 'http://10.245.51.11:8010/api/v1'; // ← Para web en misma red WiFi
+      // return 'http://localhost:8000/api/v1'; // ← Para web en localhost
     } else if (Platform.isAndroid) {
       // Para DISPOSITIVO FÍSICO en misma red WiFi:
       // return 'http://192.168.137.1:8000/api/v1'; // ← IP de tu hotspot

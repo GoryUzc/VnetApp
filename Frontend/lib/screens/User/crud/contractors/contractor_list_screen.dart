@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:vnet_agenda/services/crud/contractor_services.dart';
 import 'package:vnet_agenda/services/others/franchise_service.dart';
-import 'package:vnet_agenda/widgets/data_table_custom.dart';
+import 'package:vnet_agenda/widgets/adaptive_data_view.dart';
 import 'package:vnet_agenda/screens/User/crud/contractors/contractor_create_screen.dart';
 import 'package:vnet_agenda/screens/User/crud/contractors/contractor_edit_screen.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
@@ -24,6 +24,12 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
   bool _hasError = false;
   String _errorMessage = '';
 
+  int _currentPage = 1;
+  bool _isLoadingMore = false;
+  bool _hasMore = false;
+  final int _itemsPerPage = 10;
+  List<Map<String, dynamic>> _displayedContractors = [];
+
   @override
   void initState() {
     super.initState();
@@ -31,28 +37,61 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
     _loadFranchises();
   }
 
-  Future<void> _load({bool isRefreshing = false}) async {
-    if (!isRefreshing) {
+  Future<void> _load({bool isRefreshing = false, bool loadMore = false}) async {
+    if (!isRefreshing && !loadMore) {
       setState(() {
         _isLoading = true;
         _hasError = false;
         _errorMessage = '';
+        _currentPage = 1;
+        _displayedContractors = [];
       });
+    }
+
+    if (loadMore) {
+      setState(() => _isLoadingMore = true);
+      await Future.delayed(const Duration(milliseconds: 500)); // Simula carga
     }
 
     try {
       final data = await _service.getAllContractors();
-      setState(() {
+
+      if (!loadMore) {
         _contractors = data;
+        final endIndex = (_currentPage * _itemsPerPage).clamp(
+          0,
+          _contractors.length,
+        );
+        _displayedContractors = _contractors.sublist(0, endIndex);
+        _hasMore = endIndex < _contractors.length;
+      } else {
+        _currentPage++;
+        final endIndex = (_currentPage * _itemsPerPage).clamp(
+          0,
+          _contractors.length,
+        );
+        _displayedContractors = _contractors.sublist(0, endIndex);
+        _hasMore = endIndex < _contractors.length;
+      }
+
+      setState(() {
         _isLoading = false;
+        _isLoadingMore = false;
       });
     } catch (e) {
       setState(() {
         _isLoading = false;
+        _isLoadingMore = false;
         _hasError = true;
         _errorMessage = e.toString();
       });
       _showErrorSnackBar(e);
+    }
+  }
+
+  void _loadMoreContractors() {
+    if (!_isLoadingMore && _hasMore) {
+      _load(loadMore: true);
     }
   }
 
@@ -70,7 +109,9 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
           }
           if (key != null) {
             _franchiseNames[key] =
-                (f['branch_office'] ?? f['name'] ?? AppStrings.untitledFranchise)
+                (f['branch_office'] ??
+                        f['name'] ??
+                        AppStrings.untitledFranchise)
                     .toString();
           }
         }
@@ -101,39 +142,143 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
   Future<void> _delete(String id, String legalName) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(AppStrings.confirmDeleteTitle),
-        content: Text(AppStrings.confirmDeleteMessage(legalName)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text(AppStrings.cancel),
+      builder:
+          (context) => AlertDialog(
+            title: const Text(AppStrings.confirmDeleteTitle),
+            content: Text(AppStrings.confirmDeleteMessage(legalName)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text(AppStrings.cancel),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text(
+                  AppStrings.delete,
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              AppStrings.delete,
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
-      ),
     );
 
     if (confirmed == true) {
       try {
         await _service.deleteContractor(id);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Contratista eliminado'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        _load();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Contratista eliminado'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          _load();
+        } // Recargar lista
       } catch (e) {
         _showErrorSnackBar(e);
       }
     }
+  }
+
+  void _editContractor(String id) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ContractorEditScreen(contractorId: id),
+      ),
+    ).then((_) => _load());
+  }
+
+  void _viewContractor(String id) {
+    final contractor = _displayedContractors.firstWhere(
+      (c) => c['id'].toString() == id,
+      orElse: () => {},
+    );
+
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Detalles del Contratista'),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildDetailRow('ID', contractor['id']?.toString()),
+                  _buildDetailRow(
+                    'Razón Social',
+                    contractor['legal_name']?.toString(),
+                  ),
+                  _buildDetailRow('RIF', contractor['rif']?.toString()),
+                  _buildDetailRow('Correo', contractor['email']?.toString()),
+                  _buildDetailRow('Teléfono', contractor['phone']?.toString()),
+                  _buildDetailRow(
+                    'Dirección',
+                    contractor['address']?.toString(),
+                  ),
+                  _buildDetailRow('Franquicia', _getFranchiseName(contractor)),
+                  _buildDetailRow(
+                    'Usuarios',
+                    (contractor['users'] is List
+                            ? contractor['users'].length
+                            : 0)
+                        .toString(),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cerrar'),
+              ),
+            ],
+          ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String? value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('$label: ', style: const TextStyle(fontWeight: FontWeight.bold)),
+          Expanded(
+            child: Text(
+              value ?? AppStrings.notAvailable,
+              style: const TextStyle(color: Colors.grey),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getFranchiseName(Map<String, dynamic> c) {
+    final dynamic fobj = c['franchise'];
+    if (fobj is Map) {
+      final dynamic name = fobj['branch_office'] ?? fobj['name'];
+      if (name != null && name.toString().isNotEmpty) {
+        return name.toString();
+      }
+    }
+
+    final dynamic fidDyn = c['franchise_id'];
+    int? fid;
+    if (fidDyn is int) {
+      fid = fidDyn;
+    } else if (fidDyn is String) {
+      fid = int.tryParse(fidDyn);
+    }
+    if (fid != null) {
+      final lookup = _franchiseNames[fid];
+      if (lookup != null && lookup.isNotEmpty) {
+        return lookup;
+      }
+    }
+    return AppStrings.notAvailable;
   }
 
   @override
@@ -147,7 +292,7 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
           style: TextStyle(color: Colors.white),
         ),
         actions: [
-          if (!_isLoading && _contractors.isNotEmpty)
+          if (!_isLoading && _displayedContractors.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.refresh, color: Colors.white),
               onPressed: () => _load(isRefreshing: true),
@@ -173,15 +318,27 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
   }
 
   Widget _buildContent() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+    if (_isLoading && _displayedContractors.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text(
+              'Cargando contratistas...',
+              style: TextStyle(color: Colors.grey),
+            ),
+          ],
+        ),
+      );
     }
 
     if (_hasError) {
       return _buildErrorState();
     }
 
-    if (_contractors.isEmpty) {
+    if (_displayedContractors.isEmpty) {
       return _buildEmptyState();
     }
 
@@ -191,6 +348,8 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
   Widget _buildErrorState() {
     return Center(
       child: ListView(
+        shrinkWrap: true,
+        padding: const EdgeInsets.all(20),
         children: [
           const Icon(Icons.error, size: 60, color: Colors.red),
           const SizedBox(height: 16),
@@ -269,85 +428,72 @@ class _ContractorListScreenState extends State<ContractorListScreen> {
   }
 
   Widget _buildTable() {
+    // Preparamos los datos para AdaptiveDataView
+    final formattedRows =
+        _displayedContractors.map((c) {
+          final id = c['id']?.toString() ?? '';
+          final users = (c['users'] is List) ? c['users'] as List : const [];
+
+          return {
+            'id': id,
+            'ID': id,
+            'Razón Social':
+                (c['legal_name'] ?? AppStrings.notAvailable).toString(),
+            'RIF': (c['rif'] ?? AppStrings.notAvailable).toString(),
+            'Correo': (c['email'] ?? AppStrings.notAvailable).toString(),
+            'Teléfono': (c['phone'] ?? AppStrings.notAvailable).toString(),
+            'Franquicia': _getFranchiseName(c),
+            'Usuarios': users.length.toString(),
+            'Dirección': (c['address'] ?? '').toString(),
+          };
+        }).toList();
+
     return RefreshIndicator(
       onRefresh: () => _load(isRefreshing: true),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            const SizedBox(height: 16),
-            Expanded(
-              child: DataTableCustom(
-                columns: const [
-                  'ID',
-                  'Razón Social',
-                  'RIF',
-                  'Correo',
-                  'Teléfono',
-                  'Franquicia',
-                  'Usuarios',
-                  'Acciones',
-                ],
-                rows: _contractors.map((c) {
-                  final id = c['id'];
-                  final users = (c['users'] is List) ? c['users'] as List : const [];
-                  return {
-                    'id': id,
-                    'ID': id?.toString() ?? '',
-                    'Razón Social': (c['legal_name'] ?? AppStrings.notAvailable).toString(),
-                    'RIF': (c['rif'] ?? AppStrings.notAvailable).toString(),
-                    'Correo': (c['email'] ?? AppStrings.notAvailable).toString(),
-                    'Teléfono': (c['phone'] ?? AppStrings.notAvailable).toString(),
-                    'Franquicia': _getFranchiseName(c),
-                    'Usuarios': users.length.toString(),
-                  };
-                }).toList(),
-                onEdit: (id) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ContractorEditScreen(contractorId: id),
-                    ),
-                  ).then((_) => _load());
-                },
-                onDelete: (id) {
-                  final c = _contractors.firstWhere(
-                    (p) => p['id'].toString() == id,
-                    orElse: () => {},
-                  );
-                  final legalName = (c['legal_name'] ?? '').toString();
-                  _delete(id, legalName.isNotEmpty ? legalName : 'contratista');
-                },
-              ),
-            ),
-          ],
-        ),
+      child: AdaptiveDataView(
+        // CONFIGURACIÓN DE COLUMNAS
+        columns: const [
+          'ID',
+          'Razón Social',
+          'RIF',
+          'Correo',
+          'Teléfono',
+          'Franquicia',
+          'Usuarios',
+          'Acciones',
+        ],
+        rows: formattedRows,
+        title: 'Lista de Contratistas',
+
+        // ACCIONES CRUD COMPLETAS
+        onView: _viewContractor,
+        onEdit: _editContractor,
+        onDelete: (id) {
+          final contractor = _displayedContractors.firstWhere(
+            (c) => c['id'].toString() == id,
+            orElse: () => {},
+          );
+          final legalName = (contractor['legal_name'] ?? '').toString();
+          _delete(id, legalName.isNotEmpty ? legalName : 'contratista');
+        },
+
+        // INFINITE SCROLL
+        onLoadMore: _loadMoreContractors,
+        isLoadingMore: _isLoadingMore,
+        hasMore: _hasMore,
+
+        // LABELS MEJORADOS
+        columnLabels: const {
+          'ID': 'ID',
+          'Razón Social': 'Razón Social',
+          'RIF': 'RIF',
+          'Correo': 'Correo Electrónico',
+          'Teléfono': 'Teléfono',
+          'Franquicia': 'Franquicia',
+          'Usuarios': 'N° Usuarios',
+          'Acciones': 'Acciones',
+        },
       ),
     );
-  }
-
-  String _getFranchiseName(Map<String, dynamic> c) {
-    final dynamic fobj = c['franchise'];
-    if (fobj is Map) {
-      final dynamic name = fobj['branch_office'] ?? fobj['name'];
-      if (name != null && name.toString().isNotEmpty) {
-        return name.toString();
-      }
-    }
-
-    final dynamic fidDyn = c['franchise_id'];
-    int? fid;
-    if (fidDyn is int) {
-      fid = fidDyn;
-    } else if (fidDyn is String) {
-      fid = int.tryParse(fidDyn);
-    }
-    if (fid != null) {
-      final lookup = _franchiseNames[fid];
-      if (lookup != null && lookup.isNotEmpty) {
-        return lookup;
-      }
-    }
-    return AppStrings.notAvailable;
   }
 }

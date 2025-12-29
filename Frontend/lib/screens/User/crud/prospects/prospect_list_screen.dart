@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:vnet_agenda/services/crud/prospect_service.dart';
 import 'package:vnet_agenda/services/others/franchise_service.dart';
-import 'package:vnet_agenda/widgets/data_table_custom.dart';
+import 'package:vnet_agenda/widgets/adaptive_data_view.dart'; // ← CAMBIO IMPORT
 import 'package:vnet_agenda/screens/User/crud/prospects/prospect_edit_screen.dart';
 import 'package:vnet_agenda/screens/User/crud/prospects/prospect_create_screen.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
@@ -17,11 +17,19 @@ class ProspectListScreen extends StatefulWidget {
 class _ProspectListScreenState extends State<ProspectListScreen> {
   final ProspectService _prospectService = ProspectService();
   final FranchiseService _franchiseService = FranchiseService();
+
   final Map<int, String> _franchiseNames = {};
   List<Map<String, dynamic>> _prospects = [];
   bool _isLoading = false;
   bool _hasError = false;
   String _errorMessage = '';
+
+  // Variables para infinite scroll
+  int _currentPage = 1;
+  bool _isLoadingMore = false;
+  bool _hasMore = false;
+  final int _itemsPerPage = 10;
+  List<Map<String, dynamic>> _displayedProspects = [];
 
   @override
   void initState() {
@@ -30,31 +38,68 @@ class _ProspectListScreenState extends State<ProspectListScreen> {
     _loadFranchises();
   }
 
-  Future<void> _loadProspects({bool isRefreshing = false}) async {
-    if (!isRefreshing) {
+  Future<void> _loadProspects({
+    bool isRefreshing = false,
+    bool loadMore = false,
+  }) async {
+    if (!isRefreshing && !loadMore) {
       setState(() {
         _isLoading = true;
         _hasError = false;
         _errorMessage = '';
+        _currentPage = 1;
+        _displayedProspects = [];
       });
+    }
+
+    if (loadMore) {
+      setState(() => _isLoadingMore = true);
+      await Future.delayed(const Duration(milliseconds: 500)); // Simula carga
     }
 
     try {
       final prospects = await _prospectService.getAllProspects();
+      final validProspects =
+          prospects.whereType<Map<String, dynamic>>().toList();
+
       setState(() {
-        _prospects =
-            prospects
-                .map((prospect) => prospect)
-                .toList();
+        _prospects = validProspects;
+
+        // Simular paginación para infinite scroll
+        if (!loadMore) {
+          final endIndex = (_currentPage * _itemsPerPage).clamp(
+            0,
+            _prospects.length,
+          );
+          _displayedProspects = _prospects.sublist(0, endIndex);
+          _hasMore = endIndex < _prospects.length;
+        } else {
+          _currentPage++;
+          final endIndex = (_currentPage * _itemsPerPage).clamp(
+            0,
+            _prospects.length,
+          );
+          _displayedProspects = _prospects.sublist(0, endIndex);
+          _hasMore = endIndex < _prospects.length;
+        }
+
         _isLoading = false;
+        _isLoadingMore = false;
       });
     } catch (e) {
       setState(() {
         _isLoading = false;
+        _isLoadingMore = false;
         _hasError = true;
         _errorMessage = e.toString();
       });
       _showErrorSnackBar(e);
+    }
+  }
+
+  void _loadMoreProspects() {
+    if (!_isLoadingMore && _hasMore) {
+      _loadProspects(loadMore: true);
     }
   }
 
@@ -80,7 +125,7 @@ class _ProspectListScreenState extends State<ProspectListScreen> {
         }
       });
     } catch (_) {
-      // Silenciar errores para no bloquear la UI
+      // Silenciar errores
     }
   }
 
@@ -134,11 +179,124 @@ class _ProspectListScreenState extends State<ProspectListScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        _loadProspects();
+        _loadProspects(); // Recargar lista
       } catch (e) {
         _showErrorSnackBar(e);
       }
     }
+  }
+
+  void _editProspect(String id) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProspectEditScreen(prospectId: id),
+      ),
+    ).then((_) => _loadProspects());
+  }
+
+  void _viewProspect(String id) {
+    final prospect = _displayedProspects.firstWhere(
+      (p) => p['id'].toString() == id,
+      orElse: () => {},
+    );
+
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Detalles del Prospecto'),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildDetailRow('ID', prospect['id']?.toString()),
+                  _buildDetailRow('Nombre', _formatName(prospect)),
+                  _buildDetailRow(
+                    'Documento',
+                    prospect['document']?.toString(),
+                  ),
+                  _buildDetailRow('Correo', prospect['email']?.toString()),
+                  _buildDetailRow('Teléfono', prospect['phone']?.toString()),
+                  _buildDetailRow('Franquicia', _getFranchiseName(prospect)),
+                  _buildDetailRow('Plan', prospect['plan']?.toString()),
+                  _buildDetailRow(
+                    'Estado Red',
+                    prospect['status_red']?.toString(),
+                  ),
+                  if (prospect['address'] != null)
+                    _buildDetailRow(
+                      'Dirección',
+                      prospect['address']?.toString(),
+                    ),
+                  if (prospect['observations'] != null)
+                    _buildDetailRow(
+                      'Observaciones',
+                      prospect['observations']?.toString(),
+                    ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cerrar'),
+              ),
+            ],
+          ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String? value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('$label: ', style: const TextStyle(fontWeight: FontWeight.bold)),
+          Expanded(
+            child: Text(
+              value ?? AppStrings.notAvailable,
+              style: const TextStyle(color: Colors.grey),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getFranchiseName(Map<String, dynamic> prospect) {
+    final dynamic fobj = prospect['franchise'];
+    if (fobj is Map) {
+      final dynamic name = fobj['branch_office'] ?? fobj['name'];
+      if (name != null && name.toString().isNotEmpty) {
+        return name.toString();
+      }
+    }
+
+    final dynamic fidDyn =
+        prospect['franchise_id'] ?? prospect['franchises_id'];
+    int? fid;
+    if (fidDyn is int) {
+      fid = fidDyn;
+    } else if (fidDyn is String) {
+      fid = int.tryParse(fidDyn);
+    }
+    if (fid != null) {
+      final lookup = _franchiseNames[fid];
+      if (lookup != null && lookup.isNotEmpty) {
+        return lookup;
+      }
+    }
+    return AppStrings.notAvailable;
+  }
+
+  String _formatName(Map<String, dynamic> prospect) {
+    final firstName = prospect['name'] ?? '';
+    final lastName = prospect['last_name'] ?? '';
+    final fullName = '$firstName $lastName'.trim();
+    return fullName.isNotEmpty ? fullName : AppStrings.anonymous;
   }
 
   @override
@@ -152,7 +310,7 @@ class _ProspectListScreenState extends State<ProspectListScreen> {
           style: TextStyle(color: Colors.white),
         ),
         actions: [
-          if (!_isLoading && _prospects.isNotEmpty)
+          if (!_isLoading && _displayedProspects.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.refresh, color: Colors.white),
               onPressed: () => _loadProspects(isRefreshing: true),
@@ -178,24 +336,38 @@ class _ProspectListScreenState extends State<ProspectListScreen> {
   }
 
   Widget _buildContent() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+    if (_isLoading && _displayedProspects.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text(
+              'Cargando prospectos...',
+              style: TextStyle(color: Colors.grey),
+            ),
+          ],
+        ),
+      );
     }
 
     if (_hasError) {
       return _buildErrorState();
     }
 
-    if (_prospects.isEmpty) {
+    if (_displayedProspects.isEmpty) {
       return _buildEmptyState();
     }
 
-    return _buildProspectList();
+    return _buildAdaptiveDataView();
   }
 
   Widget _buildErrorState() {
     return Center(
       child: ListView(
+        shrinkWrap: true,
+        padding: const EdgeInsets.all(20),
         children: [
           const Icon(Icons.error, size: 60, color: Colors.red),
           const SizedBox(height: 16),
@@ -273,115 +445,72 @@ class _ProspectListScreenState extends State<ProspectListScreen> {
     );
   }
 
-  Widget _buildProspectList() {
-    return RefreshIndicator(
-      onRefresh: () => _loadProspects(isRefreshing: true),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // Barra de búsqueda (opcional)
-            // _buildSearchBar(),
-            const SizedBox(height: 16),
-            Expanded(
-              child: DataTableCustom(
-                columns: const [
-                  'ID',
-                  'Nombre',
-                  'Documento',
-                  'Correo',
-                  'Teléfono',
-                  'Franquicia',
-                  'Plan',
-                  'Estado',
-                  'Acciones',
-                ],
-                rows:
-                    _prospects.map((prospect) {
-                      return {
-                        'id': prospect['id'],
-                        'ID': prospect['id'].toString(),
-                        'Nombre': _formatName(prospect),
-                        'Documento':
-                            prospect['document']?.toString() ??
-                            AppStrings.notAvailable,
-                        'Correo': prospect['email'] ?? AppStrings.notAvailable,
-                        'Teléfono':
-                            prospect['phone'] ?? AppStrings.notAvailable,
-                        'Franquicia': _getFranchiseName(prospect),
-                        'Plan': prospect['plan'] ?? AppStrings.notAvailable,
-                        'Estado':
-                            prospect['status_red']?.toString() ??
-                            AppStrings.notAvailable,
-                      };
-                    }).toList(),
-                onEdit: (id) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ProspectEditScreen(prospectId: id),
-                    ),
-                  ).then((_) => _loadProspects());
-                },
-                onDelete: (id) {
-                  final prospect = _prospects.firstWhere(
-                    (p) => p['id'].toString() == id,
-                    orElse: () => {},
-                  );
-                  final name = _formatName(prospect);
-                  _deleteProspect(id, name);
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
+  Widget _buildAdaptiveDataView() {
+    // Preparamos los datos para AdaptiveDataView
+    final formattedRows =
+        _displayedProspects.map((prospect) {
+          return {
+            'id': prospect['id']?.toString() ?? '',
+            'ID': prospect['id']?.toString() ?? '',
+            'Nombre': _formatName(prospect),
+            'Documento':
+                (prospect['document'] ?? AppStrings.notAvailable).toString(),
+            'Correo': (prospect['email'] ?? AppStrings.notAvailable).toString(),
+            'Teléfono':
+                (prospect['phone'] ?? AppStrings.notAvailable).toString(),
+            'Franquicia': _getFranchiseName(prospect),
+            'Plan': (prospect['plan'] ?? AppStrings.notAvailable).toString(),
+            'Estado':
+                (prospect['status_red'] ?? AppStrings.notAvailable).toString(),
+            'Acciones': '', // Columna vacía para acciones
+          };
+        }).toList();
+
+    return AdaptiveDataView(
+      // CONFIGURACIÓN DE COLUMNAS
+      columns: const [
+        'ID',
+        'Nombre',
+        'Documento',
+        'Correo',
+        'Teléfono',
+        'Franquicia',
+        'Plan',
+        'Estado',
+        'Acciones',
+      ],
+      rows: formattedRows,
+      title: 'Lista de Prospectos',
+
+      // ACCIONES CRUD
+      onView: _viewProspect,
+      onEdit: _editProspect,
+      onDelete: (id) {
+        final prospect = _displayedProspects.firstWhere(
+          (p) => p['id'].toString() == id,
+          orElse: () => {},
+        );
+        final name = _formatName(prospect);
+        _deleteProspect(id, name.isNotEmpty ? name : 'prospecto');
+      },
+
+      // INFINITE SCROLL
+      onLoadMore: _loadMoreProspects,
+      isLoadingMore: _isLoadingMore,
+      hasMore: _hasMore,
+
+      // LABELS MEJORADOS
+      columnLabels: const {
+        'ID': 'ID',
+        'Nombre': 'Nombre Completo',
+        'Documento': 'Documento de Identidad',
+        'Correo': 'Correo Electrónico',
+        'Teléfono': 'Teléfono',
+        'Franquicia': 'Franquicia',
+        'Plan': 'Plan Contratado',
+        'Estado': 'Estado de Red',
+        'Acciones': 'Acciones',
+      },
     );
   }
-
-  String _getFranchiseName(Map<String, dynamic> prospect) {
-    final dynamic fobj = prospect['franchise'];
-    if (fobj is Map) {
-      final dynamic name = fobj['branch_office'] ?? fobj['name'];
-      if (name != null && name.toString().isNotEmpty) {
-        return name.toString();
-      }
-    }
-
-    final dynamic fidDyn =
-        prospect['franchise_id'] ?? prospect['franchises_id'];
-    int? fid;
-    if (fidDyn is int) {
-      fid = fidDyn;
-    } else if (fidDyn is String) {
-      fid = int.tryParse(fidDyn);
-    }
-    if (fid != null) {
-      final lookup = _franchiseNames[fid];
-      if (lookup != null && lookup.isNotEmpty) {
-        return lookup;
-      }
-    }
-    return AppStrings.notAvailable;
-  }
-
-  String _formatName(Map<String, dynamic> prospect) {
-    final firstName = prospect['name'] ?? '';
-    final lastName = prospect['last_name'] ?? '';
-    final fullName = '$firstName $lastName'.trim();
-    return fullName.isNotEmpty ? fullName : AppStrings.anonymous;
-  }
-
-  //Widget _buildSearchBar() {
-  //  return TextField(
-  //    decoration: InputDecoration(
-  //      hintText: AppStrings.searchProspects,
-  //      prefixIcon: const Icon(Icons.search),
-  //      border: OutlineInputBorder(
-  //        borderRadius: BorderRadius.circular(8),
-  //      ),
-  //    ),
-  //  onSubmitted: (value) => _filterProspects(value),
-  //  );
-  //}
 }

@@ -167,7 +167,7 @@ class _AvailableMeetingsScreenState extends State<AvailableMeetingsScreen> {
                 color: AppColors.primaryColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(Icons.receipt_long, color: AppColors.primaryColor),
+              child: const Icon(Icons.receipt_long, color: AppColors.primaryColor),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -221,7 +221,7 @@ class _AvailableMeetingsScreenState extends State<AvailableMeetingsScreen> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.event_note, color: AppColors.primaryColor),
+                  const Icon(Icons.event_note, color: AppColors.primaryColor),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(

@@ -381,9 +381,9 @@ class _MeetingDetailTakeScreenState extends State<MeetingDeatilTakeScreen> {
                       children: [
                         if (role == 3)
                           ElevatedButton(
-                            onPressed: () {
-                              // Volver al inicio o a la pantalla anterior
-                              Navigator.of(context).pop(_takeMeeting(citaId));
+                            onPressed: () async {
+                              await _takeMeeting(citaId);
+                              Navigator.of(context).pop();
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryColor,

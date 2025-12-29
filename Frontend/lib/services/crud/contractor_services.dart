@@ -17,8 +17,10 @@ class ContractorServices {
         Uri.parse(ApiConfig.endpoint('contractors/list')),
         headers: headers,
       );
+      final data = jsonDecode(response.body);
 
       _logger.d('GET /contractors/list -> ${response.statusCode}');
+      _logger.d('GET /contractors/list -> $data');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

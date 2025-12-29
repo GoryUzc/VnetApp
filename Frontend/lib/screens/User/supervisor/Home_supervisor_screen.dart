@@ -231,7 +231,7 @@ class _HomeSupervisorScreenState extends State<HomeSupervisorScreen> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.receipt_long, color: AppColors.primaryColor),
+                  const Icon(Icons.receipt_long, color: AppColors.primaryColor),
                   const SizedBox(width: 8),
                   Text(
                     'Contrato ${meeting['nro_contract'] ?? '-'}',
@@ -392,9 +392,9 @@ class _HomeSupervisorScreenState extends State<HomeSupervisorScreen> {
           color: AppColors.primaryColor,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Row(
+        child: const Row(
           mainAxisAlignment: MainAxisAlignment.end,
-          children: const [
+          children: [
             Icon(Icons.tune, color: Colors.white),
             SizedBox(width: 8),
             Text(
@@ -434,7 +434,7 @@ class _HomeSupervisorScreenState extends State<HomeSupervisorScreen> {
                   color: AppColors.primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(Icons.receipt, color: AppColors.primaryColor),
+                child: const Icon(Icons.receipt, color: AppColors.primaryColor),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -593,7 +593,7 @@ class _HomeSupervisorScreenState extends State<HomeSupervisorScreen> {
           icon: const Icon(Icons.account_circle, color: Colors.white),
           tooltip: 'Mi cuenta',
           onSelected: (value) async {
-            final storage = FlutterSecureStorage();
+            const storage = FlutterSecureStorage();
             final userId = await storage.read(key: 'user_id');
             if (userId == null || userId.isEmpty) {
               if (mounted) {
