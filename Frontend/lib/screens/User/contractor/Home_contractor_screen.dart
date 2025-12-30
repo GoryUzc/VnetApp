@@ -185,7 +185,7 @@ class _HomeContractorScreenState extends State<HomeContractorScreen> {
 
   Widget _buildTable() {
     // Preparamos los datos para AdaptiveDataView
-    final String title = 'Citas de instalacion';
+    const String title = 'Citas de instalacion';
     final formattedRows =
         _displayedMeetings.map((meeting) {
           final id = meeting['id']?.toString() ?? '';

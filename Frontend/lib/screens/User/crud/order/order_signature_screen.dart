@@ -1,14 +1,13 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:syncfusion_flutter_signaturepad/signaturepad.dart';
+import 'package:http_parser/http_parser.dart';
+import 'package:signature/signature.dart';
 import 'package:http/http.dart' as http;
 import 'package:vnet_agenda/services/api_config.dart';
 import 'package:vnet_agenda/services/authentication/auth_service.dart';
 import 'package:vnet_agenda/screens/User/crud/order/order_completion_screen.dart';
-import 'dart:ui' as ui;
+import 'package:logger/logger.dart';
 import 'package:vnet_agenda/services/crud/meeting_service.dart';
-import 'package:http_parser/http_parser.dart';
-import 'package:image/image.dart' as img;
 
 class SignatureScreen extends StatefulWidget {
   final String orderId;
@@ -21,44 +20,110 @@ class SignatureScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _SignatureScreenState createState() => _SignatureScreenState();
+  SignatureScreenState createState() => SignatureScreenState();
 }
 
-class _SignatureScreenState extends State<SignatureScreen> {
-  final GlobalKey<SfSignaturePadState> _signatureKey = GlobalKey();
-  bool _isSigned = false;
-  final MeetingService _meetingService = MeetingService();
-  // final Logger _logger = Logger();
+class SignatureScreenState extends State<SignatureScreen> {
+  late final SignatureController _sigController;
+  MeetingService _meetingService = MeetingService();
+  final Logger _logger = Logger();
+  String meetingId = '';
 
-  Future<Uint8List?> _getSignatureBytes() async {
-    if (!_isSigned) return null;
-    final state = _signatureKey.currentState;
-    if (state == null) return null;
-
-    final pixelRatio = MediaQuery.of(context).devicePixelRatio;
-    final image = await state.toImage(pixelRatio: pixelRatio * 2); // ui.Image
-    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-    if (byteData == null) return null;
-
-    // ↓↓↓ comprimir ↓↓↓
-    final originalBytes = byteData.buffer.asUint8List();
-    final decoded = img.decodeImage(originalBytes);
-    if (decoded == null) return originalBytes;
-
-    final resized = img.copyResize(decoded, width: 800); // 800 px max
-    return img.encodePng(resized, level: 4); // 0-9 (4 = buena compresión)
+  @override
+  void initState() {
+    super.initState();
+    _sigController = SignatureController(
+      penStrokeWidth: 8.0,
+      penColor: Colors.black,
+      exportPenColor: Colors.black,
+      onDrawStart: () => _logger.d('✍️ Inicio de firma'),
+      onDrawEnd: () => _logger.d('✅ Trazo finalizado'),
+    );
   }
 
-  // Sube la firma al servidor
-  Future<void> _uploadSignature() async {
-    final bytes = await _getSignatureBytes();
+  @override
+  void dispose() {
+    _sigController.dispose();
+    super.dispose();
+  }
+
+  Future<Uint8List?> _exportSignaturePng() async {
+    if (_sigController.isEmpty) {
+      _logger.w('⚠️ Firma vacía');
+      return null;
+    }
+    final bytes = await _sigController.toPngBytes();
+    if (bytes == null || bytes.isEmpty) {
+      _logger.e('❌ No se pudo exportar la firma a PNG');
+      return null;
+    }
+    _logger.d('🖼️ PNG exportado: ${bytes.length} bytes');
+    return bytes;
+  }
+
+  Future<void> _confirmAndUpload() async {
+    final bytes = await _exportSignaturePng();
     if (bytes == null) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Primero firma el documento')),
+        const SnackBar(
+          content: Text('La firma está vacía. Por favor, dibuja tu firma.'),
+        ),
       );
       return;
     }
 
+    // Vista previa antes de enviar
+    if (!mounted) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Vista previa de la firma'),
+          content: SizedBox(
+            width: 320,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 300,
+                  height: 180,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.blueGrey, width: 1),
+                    color: Colors.white,
+                  ),
+                  child: Image.memory(bytes, fit: BoxFit.contain),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Tamaño: ${bytes.length} bytes',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Enviar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+
+    await _uploadToBackend(bytes);
+    await _meetingService.endMeeting(widget.meetingId);
+  }
+
+  Future<void> _uploadToBackend(Uint8List bytes) async {
     try {
       final token = await AuthService().getToken();
       final url = ApiConfig.endpoint(
@@ -78,15 +143,14 @@ class _SignatureScreenState extends State<SignatureScreen> {
         request.headers['Authorization'] = 'Bearer $token';
       }
 
+      _logger.d('📤 Subiendo firma al backend...');
       final streamed = await request.send();
       final response = await http.Response.fromStream(streamed);
-      final end = await _meetingService.endMeeting(widget.meetingId);
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ Firma guardada con éxito')),
-        );
+      _logger.d('📥 Respuesta backend: ${response.statusCode}');
+
+      if (streamed.statusCode == 200 || streamed.statusCode == 201) {
         if (!mounted) return;
-        // Ir a pantalla de cierre de instalación para generar/descargar PDF
+        // Ir a la vista del PDF
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -94,12 +158,20 @@ class _SignatureScreenState extends State<SignatureScreen> {
           ),
         );
       } else {
-        throw Exception('Error: ${response.statusCode}');
+        _logger.e('❌ Error subiendo firma: ${response.body}');
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error subiendo firma (${response.statusCode}).'),
+          ),
+        );
       }
     } catch (e) {
+      _logger.e('❌ Excepción en subida: $e');
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('❌ Error al guardar firma: $e')));
+      ).showSnackBar(SnackBar(content: Text('Error de conexión: $e')));
     }
   }
 
@@ -111,47 +183,56 @@ class _SignatureScreenState extends State<SignatureScreen> {
         children: [
           Expanded(
             child: Container(
-              width: double.infinity,
-              height: double.infinity,
-              color: Colors.grey[200],
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onVerticalDragUpdate: (_) {},
-                onHorizontalDragUpdate: (_) {},
-                child: SfSignaturePad(
-                  key: _signatureKey,
-                  backgroundColor: Colors.white,
-                  strokeColor: Colors.black,
-                  maximumStrokeWidth: 5.0,
-                  minimumStrokeWidth: 2.0,
-                  onDrawStart: () {
-                    setState(() => _isSigned = true);
-                    return true;
-                  },
-                ),
+              color: const Color(0xFFE3F2FD), // azul claro para delimitar
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Capa inferior informativa
+                  Container(
+                    color: Colors.red.withOpacity(0.05),
+                    child: const Center(
+                      child: Text(
+                        'ÁREA DE FIRMA',
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Área de firma
+                  Container(
+                    color: Colors.white,
+                    child: Signature(
+                      controller: _sigController,
+                      width: double.infinity,
+                      height: double.infinity,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                if (_isSigned)
-                  ElevatedButton.icon(
+                Expanded(
+                  child: OutlinedButton.icon(
                     onPressed: () {
-                      _signatureKey.currentState?.clear();
-                      setState(() => _isSigned = false);
+                      _sigController.clear();
                     },
-                    icon: const Icon(Icons.clear),
+                    icon: const Icon(Icons.cleaning_services_outlined),
                     label: const Text('Limpiar'),
                   ),
-                const Spacer(),
-                ElevatedButton.icon(
-                  onPressed: _isSigned ? _uploadSignature : null,
-                  icon: const Icon(Icons.save),
-                  label: const Text('Finalizar instalacion'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _confirmAndUpload,
+                    icon: const Icon(Icons.check),
+                    label: const Text('Guardar y continuar'),
                   ),
                 ),
               ],

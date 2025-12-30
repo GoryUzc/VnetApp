@@ -312,7 +312,7 @@ class _MeetingUnassignedListScreenState
                   ).then((_) => _load()); // Recargar después de volver
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-                child: const Text('Asignar Técnico'),
+                child: const Text('Tomar Instalación'),
               ),
             ],
           ),

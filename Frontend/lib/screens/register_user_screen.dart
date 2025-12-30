@@ -4,6 +4,7 @@ import 'package:vnet_agenda/services/others/register_service_user.dart';
 import 'package:vnet_agenda/services/others/franchise_service.dart';
 import 'package:vnet_agenda/services/others/role_service.dart';
 import 'package:vnet_agenda/services/others/contractor_service.dart';
+import 'package:vnet_agenda/services/authentication/auth_service.dart'; 
 
 class RegisterUserScreen extends StatefulWidget {
   const RegisterUserScreen({super.key});
@@ -21,6 +22,8 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
   final RegisterServiceUser _registerService = RegisterServiceUser();
   final ContractorService _contractorService = ContractorService();
   final ContractorServices _contractorServices = ContractorServices();
+  final AuthService _authService =
+      AuthService(); // Agregar instancia de AuthService
 
   // Controllers de usuario
   final TextEditingController _aradialUserIdController =
@@ -63,6 +66,9 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
 
   bool _submitting = false;
 
+  // Agregar variable para el rol del usuario actual
+  String? _currentUserRoleId;
+
   final List<Map<String, String>> _docTypes = [
     {'value': 'V', 'label': 'V - Venezolano'},
     {'value': 'E', 'label': 'E - Extranjero'},
@@ -76,6 +82,23 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
     super.initState();
     _loadFranchises();
     _loadRoles();
+    _loadCurrentUserRole(); 
+  }
+
+  // Agregar método para cargar el rol del usuario actual
+  Future<void> _loadCurrentUserRole() async {
+    try {
+      // Asumir que AuthService tiene un método getUserRoleId() que devuelve el ID del rol como String
+      _currentUserRoleId = await _authService.getUserRole();
+      setState(() {});
+    } catch (e) {
+      // Manejar error si es necesario
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al cargar rol del usuario: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _loadFranchises() async {
@@ -450,10 +473,25 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
         ),
       );
     }
+    // Filtrar roles basado en el rol del usuario actual
+    List<Map<String, dynamic>> filteredRoles = _roles;
+    if (_currentUserRoleId == '1') {
+      // Mostrar todos los roles
+      filteredRoles = _roles;
+    } else if (_currentUserRoleId == '2') {
+      // Mostrar solo "Cuadrilla" y "Contratista"
+      filteredRoles =
+          _roles.where((r) {
+            final name = (r['name'] ?? '').toString().toLowerCase();
+            return name.contains('cuadrilla') || name.contains('contratista');
+          }).toList();
+    }
+    // Para otros roles, mostrar todos o ninguno, según lógica adicional si es necesario
+
     return DropdownButtonFormField<String>(
       value: _selectedRoleId,
       items:
-          _roles.map((r) {
+          filteredRoles.map((r) {
             final id = r['id']?.toString() ?? '';
             final name = (r['name'] ?? r['role_name'] ?? 'Rol').toString();
             return DropdownMenuItem(value: id, child: Text(name));

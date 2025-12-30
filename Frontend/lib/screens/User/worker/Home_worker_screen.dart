@@ -305,13 +305,13 @@ class _HomeWorkerScreenState extends State<HomeWorkerScreen> {
   }
 
   Widget _buildEmptyState() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.assignment_turned_in, size: 80, color: Colors.green),
-          SizedBox(height: 20),
-          Text(
+          const Icon(Icons.assignment_turned_in, size: 80, color: Colors.green),
+          const SizedBox(height: 20),
+          const Text(
             'Tome una cita de instalacion',
             style: TextStyle(
               fontSize: 18,
@@ -319,6 +319,17 @@ class _HomeWorkerScreenState extends State<HomeWorkerScreen> {
               color: Colors.green,
             ),
             textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () => _load(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryColor,
+            ),
+            child: const Text(
+              'Recargar',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
