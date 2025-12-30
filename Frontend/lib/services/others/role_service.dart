@@ -1,8 +1,13 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:logger/logger.dart';
 import 'package:vnet_agenda/services/api_config.dart';
 
 class RoleService {
+
+  
+final Logger _logger = Logger();
+
   /// Obtiene todas loss roles disponibles para mostrar en dropdowns
   Future<List<Map<String, dynamic>>> getAllRole() async {
     try {
@@ -33,7 +38,7 @@ class RoleService {
         }
       }
     } catch (e) {
-      print('Error al obtener roles: $e');
+      _logger.e('Error al obtener roles: $e');
       return [];
     }
   }

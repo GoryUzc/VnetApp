@@ -40,7 +40,7 @@ class FranchiseService {
         }
       }
     } catch (e) {
-      print('Error al obtener franquicias: $e');
+      _logger.e('Error al obtener franquicias: $e');
       return [];
     }
   }

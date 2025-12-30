@@ -1,11 +1,13 @@
+// ignore_for_file: unused_field
+
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:vnet_agenda/screens/clientes/available_meetings_screen.dart';
-import 'package:vnet_agenda/screens/clientes/select_contract_Screen.dart';
+import 'package:vnet_agenda/screens/clientes/select_contract_screen.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
 import 'package:vnet_agenda/services/authentication/otp_service.dart';
 
-Logger _logger = Logger();
+
 
 class VerifyOtpScreen extends StatefulWidget {
   final String document;
@@ -27,6 +29,7 @@ class VerifyOtpScreen extends StatefulWidget {
 }
 
 class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
+  final Logger _logger = Logger();
   final _formKey = GlobalKey<FormState>();
   final OtpService _otpService = OtpService();
   final TextEditingController _otpController = TextEditingController();
@@ -58,33 +61,40 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
       _meetingId = result['meeting']?.toString() ?? '';
       _hasMeetingExist = result['hasMeeting'] ?? false;
       _logger.d('_hasMeetingExist: $_hasMeetingExist');
+
+      if (!mounted) return;
+
       if (_hasMeetingExist) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder:
-                (context) => AvailableMeetingsScreen(idProspect: idProspect),
+            builder: (context) => AvailableMeetingsScreen(idProspect: idProspect),
           ),
         );
       } else {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder:
-                (context) => SelectContractScreen(
-                  clientDataId: idProspect,
-                  contracts: widget.contractIds,
-                  document: widget.document,
-                ),
+            builder: (context) => SelectContractScreen(
+              clientDataId: idProspect,
+              contracts: widget.contractIds,
+              document: widget.document,
+            ),
           ),
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      } else {
+        _isLoading = false;
+      }
     }
   }
 

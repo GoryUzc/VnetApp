@@ -159,7 +159,7 @@ class _ProspectEditScreenState extends State<ProspectEditScreen> {
         'plan': _planController.text,
         'franchise_id': int.parse(_selectedFranchiseId!), // Convertir a int
       });
-
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(AppStrings.prospectUpdated),

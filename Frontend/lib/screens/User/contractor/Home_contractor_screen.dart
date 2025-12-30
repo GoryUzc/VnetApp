@@ -8,7 +8,7 @@ import 'package:vnet_agenda/screens/init_select_user_screen.dart';
 import 'package:vnet_agenda/services/authentication/auth_service.dart';
 import 'package:vnet_agenda/services/crud/meeting_service.dart';
 import 'package:vnet_agenda/services/crud/prospect_service.dart';
-import 'package:vnet_agenda/services/crud/user_services.dart';
+// import 'package:vnet_agenda/services/crud/user_services.dart';
 import 'package:vnet_agenda/strings/app_strings.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
 import 'package:vnet_agenda/widgets/contractor_drawer.dart';
@@ -70,13 +70,13 @@ class _HomeContractorScreenState extends State<HomeContractorScreen> {
       _logger.d('ID => $user');
       _idUser = user;
 
-      // Tu API actual trae TODO de una vez
+      // Tu API actual trae todo de una vez
       if (!loadMore) {
         final data = await _meetingService.getAllMeetingUser();
         _meetings = data;
 
         // Para simular paginación, mostramos solo los primeros N items
-        final startIndex = 0;
+        const startIndex = 0;
         final endIndex = (_currentPage * _itemsPerPage).clamp(
           0,
           _meetings.length,
@@ -86,7 +86,7 @@ class _HomeContractorScreenState extends State<HomeContractorScreen> {
       } else {
         // Para "cargar más" - mostramos más items de los ya cargados
         _currentPage++;
-        final startIndex = 0;
+        const startIndex = 0;
         final endIndex = (_currentPage * _itemsPerPage).clamp(
           0,
           _meetings.length,

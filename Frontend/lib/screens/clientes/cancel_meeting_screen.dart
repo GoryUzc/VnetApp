@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:logger/logger.dart';
+// import 'package:logger/logger.dart';
 import 'package:vnet_agenda/screens/clientes/cancel_success_screen.dart';
 import 'package:vnet_agenda/services/crud/meeting_service.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
@@ -22,7 +22,7 @@ class CancelMeetingScreen extends StatefulWidget {
 }
 
 class _CancelMeetingScreenState extends State<CancelMeetingScreen> {
-  final Logger _logger = Logger();
+  // final Logger _logger = Logger();
   final MeetingService _meetingService = MeetingService();
   final _observationController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -85,6 +85,7 @@ class _CancelMeetingScreenState extends State<CancelMeetingScreen> {
     });
 
     try {
+      // ignore: unused_local_variable
       final motivo = _mapReason(_selectedReason);
       final observation = _observationController.text.trim();
       final status = _status;
@@ -184,7 +185,7 @@ class _CancelMeetingScreenState extends State<CancelMeetingScreen> {
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
+                color: Colors.orange.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.warning, color: Colors.orange, size: 60),

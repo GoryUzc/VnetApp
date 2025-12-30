@@ -142,7 +142,6 @@ class _HomeSupervisorScreenState extends State<HomeSupervisorScreen> {
         ),
       );
     } finally {
-      if (!mounted) return;
       setState(() {
         _rowLoading.remove(id);
       });
@@ -585,10 +584,10 @@ class _HomeSupervisorScreenState extends State<HomeSupervisorScreen> {
       backgroundColor: AppColors.primaryColor,
       actions: [
         IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
-            onPressed: () => _load(isRefreshing: true),
-            tooltip: 'Recargar',
-          ),
+          icon: const Icon(Icons.refresh, color: Colors.white),
+          onPressed: () => _load(isRefreshing: true),
+          tooltip: 'Recargar',
+        ),
         PopupMenuButton<String>(
           icon: const Icon(Icons.account_circle, color: Colors.white),
           tooltip: 'Mi cuenta',
@@ -616,6 +615,7 @@ class _HomeSupervisorScreenState extends State<HomeSupervisorScreen> {
                 );
               }
             } else if (value == 'delete') {
+              if (!mounted) return;
               final confirmed = await showDialog<bool>(
                 context: context,
                 builder:
@@ -639,7 +639,7 @@ class _HomeSupervisorScreenState extends State<HomeSupervisorScreen> {
                       ],
                     ),
               );
-
+              if (!mounted) return;
               if (confirmed == true) {
                 try {
                   await UserServices().deleteUser(userId);

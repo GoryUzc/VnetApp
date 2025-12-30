@@ -51,12 +51,14 @@ class _LoginUserScreenState extends State<LoginClienteScreen> {
 
   Future<void> _processLogin() async {
     if (!_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Por favor complete todos los campos correctamente'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Por favor complete todos los campos correctamente'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
       return;
     }
 
@@ -70,6 +72,8 @@ class _LoginUserScreenState extends State<LoginClienteScreen> {
       );
 
       _logger.d('📥 Resultado completo: $result');
+
+      if (!mounted) return;
 
       if (result['status'] == 'success') {
         final String clientId = result['prospect'].toString();
@@ -86,7 +90,10 @@ class _LoginUserScreenState extends State<LoginClienteScreen> {
         // Mostrar mensaje según si era nuevo o existente
         showStatusMessage(clientExists, clientId);
 
+        // ignore: unused_local_variable
         final sendOtp = await _otpService.sendToOtp(emailProspect, document);
+
+        if (!mounted) return;
 
         await Navigator.push(
           context,
@@ -105,23 +112,27 @@ class _LoginUserScreenState extends State<LoginClienteScreen> {
         final errorMessage = result['message'] ?? 'Error desconocido';
         _logger.e('❌ Error en la API: $errorMessage');
 
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: $errorMessage'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      }
+    } catch (e, st) {
+      _logger.e('💥 Error en _processLogin: $e', error: e, stackTrace: st);
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $errorMessage'),
+            content: Text('Error de conexión: $e'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),
           ),
         );
       }
-    } catch (e, st) {
-      _logger.e('💥 Error en _processLogin: $e', error: e, stackTrace: st);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error de conexión: $e'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 4),
-        ),
-      );
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

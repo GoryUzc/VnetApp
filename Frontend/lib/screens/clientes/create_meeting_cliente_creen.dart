@@ -24,10 +24,10 @@ class CreateMeetingClienteSCreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _CrearCitaScreenState createState() => _CrearCitaScreenState();
+  CrearCitaScreenState createState() => CrearCitaScreenState();
 }
 
-class _CrearCitaScreenState extends State<CreateMeetingClienteSCreen> {
+class CrearCitaScreenState extends State<CreateMeetingClienteSCreen> {
   final Logger _logger = Logger();
   final ClienteService _clienteService = ClienteService();
   DateTime? _fechaHora1;
@@ -232,7 +232,7 @@ class _CrearCitaScreenState extends State<CreateMeetingClienteSCreen> {
 
       final response = await _clienteService.createMeetingProspect(citaData);
       _logger.d('Respuesta: $response');
-
+      if (!mounted) return;
       if (response['meeting'] != null) {
         // Navegación CORRECTA - usando Navigator.of(context)
         Navigator.of(context).push(

@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:vnet_agenda/screens/User/crud/meeting/detail_meeting_install_screen.dart';
-import 'package:vnet_agenda/screens/User/crud/users/user_edit_screen.dart';
 import 'package:vnet_agenda/screens/init_select_user_screen.dart';
 import 'package:vnet_agenda/services/authentication/auth_service.dart';
 import 'package:vnet_agenda/services/crud/meeting_service.dart';
 import 'package:vnet_agenda/services/crud/prospect_service.dart';
-import 'package:vnet_agenda/services/crud/user_services.dart';
 import 'package:vnet_agenda/strings/app_strings.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
 import 'package:vnet_agenda/widgets/adaptive_data_view.dart';
-import 'package:vnet_agenda/widgets/data_table_custom.dart';
 import 'package:vnet_agenda/widgets/worker_drawer.dart';
 
 class HomeWorkerScreen extends StatefulWidget {
@@ -36,6 +32,7 @@ class _HomeWorkerScreenState extends State<HomeWorkerScreen> {
   bool _loading = false;
   String _errorMessage = '';
   bool _hasError = false;
+  // ignore: unused_field
   int _currentPage = 1;
   bool _isLoadingMore = true;
   bool _hasMore = true;

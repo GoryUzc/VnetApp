@@ -1,20 +1,20 @@
 import 'dart:convert';
 import 'dart:typed_data';
-import 'dart:io';
+// import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:vnet_agenda/services/authentication/auth_service.dart';
 import 'package:vnet_agenda/services/api_config.dart';
 import 'package:logger/logger.dart';
 import 'package:vnet_agenda/core/downloader.dart';
-import 'package:path_provider/path_provider.dart';
+// import 'package:path_provider/path_provider.dart';
 
 class OrderService {
-  Future<File> _savePdfBytes(Uint8List bytes, String filename) async {
-    final dir = await getApplicationDocumentsDirectory();
-    final file = File('${dir.path}/$filename');
-    await file.writeAsBytes(bytes, flush: true);
-    return file;
-  }
+  // Future<File> _savePdfBytes(Uint8List bytes, String filename) async {
+  //   final dir = await getApplicationDocumentsDirectory();
+  //   final file = File('${dir.path}/$filename');
+  //   await file.writeAsBytes(bytes, flush: true);
+  //   return file;
+  // }
 
   final AuthService _authService = AuthService();
   final Logger _logger = Logger();

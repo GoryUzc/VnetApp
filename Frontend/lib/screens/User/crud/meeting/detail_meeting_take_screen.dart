@@ -20,10 +20,7 @@ class MeetingDeatilTakeScreen extends StatefulWidget {
 }
 
 class _MeetingDetailTakeScreenState extends State<MeetingDeatilTakeScreen> {
-  final _formKey = GlobalKey<FormState>();
-
   int? role;
-
   final Logger _logger = Logger();
 
   // Servicios
@@ -382,8 +379,11 @@ class _MeetingDetailTakeScreenState extends State<MeetingDeatilTakeScreen> {
                         if (role == 3)
                           ElevatedButton(
                             onPressed: () async {
+                              final navigator = Navigator.of(context);
+                              if (!mounted) return;
                               await _takeMeeting(citaId);
-                              Navigator.of(context).pop();
+                              if (!mounted) return;
+                              navigator.pop();
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryColor,
@@ -406,8 +406,11 @@ class _MeetingDetailTakeScreenState extends State<MeetingDeatilTakeScreen> {
                         if (role == 4)
                           ElevatedButton(
                             onPressed: () async {
+                              final navigator = Navigator.of(context);
+                              if (!mounted) return;
                               await _takeMeeting(citaId);
-                              Navigator.of(context).pop();
+                              if (!mounted) return;
+                              navigator.pop();
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryColor,

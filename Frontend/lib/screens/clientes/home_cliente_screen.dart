@@ -19,10 +19,10 @@ class HomeClienteScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _HomeClienteScreenState createState() => _HomeClienteScreenState();
+  HomeClienteScreenState createState() => HomeClienteScreenState();
 }
 
-class _HomeClienteScreenState extends State<HomeClienteScreen> {
+class HomeClienteScreenState extends State<HomeClienteScreen> {
   final ClienteService _clienteService = ClienteService();
   Map<String, dynamic> _clienteData = {};
   bool _isLoading = true;

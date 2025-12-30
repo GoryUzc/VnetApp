@@ -173,6 +173,7 @@ class _ProspectListScreenState extends State<ProspectListScreen> {
     if (confirmed == true) {
       try {
         await _prospectService.deleteProspect(id);
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(AppStrings.prospectDeleted),

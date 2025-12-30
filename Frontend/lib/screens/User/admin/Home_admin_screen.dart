@@ -7,116 +7,65 @@ import 'package:vnet_agenda/screens/init_select_user_screen.dart';
 import 'package:vnet_agenda/screens/User/crud/users/user_edit_screen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-class HomeAdminScreen extends StatelessWidget {
+class HomeAdminScreen extends StatefulWidget {
   const HomeAdminScreen({super.key});
 
+  @override
+  State<HomeAdminScreen> createState() => _HomeAdminScreenState();
+}
+
+class _HomeAdminScreenState extends State<HomeAdminScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        backgroundColor: AppColors.primaryColor,
-        title: const Text(
-          "Panel de Administración VNET",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.account_circle, color: Colors.white),
-            tooltip: 'Mi cuenta',
-            onSelected: (value) async {
-              const storage = FlutterSecureStorage();
-              final userId = await storage.read(key: 'user_id');
-              if (userId == null || userId.isEmpty) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('No se pudo obtener el usuario actual'),
-                    ),
-                  );
-                }
-                return;
-              }
+      appBar: _buildAppBar(),
+      drawer: const CustomAdminDrawer(),
+      body: _buildWelcomeContent(),
+    );
+  }
 
-              if (value == 'edit') {
-                if (context.mounted) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => UserEditScreen(userId: userId),
-                    ),
-                  );
-                }
-              } else if (value == 'delete') {
-                final confirmed = await showDialog<bool>(
-                  context: context,
-                  builder:
-                      (ctx) => AlertDialog(
-                        title: const Text('Eliminar mi cuenta'),
-                        content: const Text(
-                          'Esta acción es irreversible. ¿Desea continuar?',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx, false),
-                            child: const Text('Cancelar'),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx, true),
-                            child: const Text(
-                              'Eliminar',
-                              style: TextStyle(color: Colors.red),
-                            ),
-                          ),
-                        ],
-                      ),
-                );
-
-                if (confirmed == true) {
-                  try {
-                    await UserServices().deleteUser(userId);
-                    await AuthService().logout();
-                    if (context.mounted) {
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(
-                          builder: (_) => const InitSelectUserScreen(),
-                        ),
-                        (route) => false,
-                      );
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(SnackBar(content: Text('Error: $e')));
-                    }
-                  }
-                }
-              }
-            },
-            itemBuilder:
-                (ctx) => const [
-                  PopupMenuItem(value: 'edit', child: Text('Editar mi perfil')),
-                  PopupMenuItem(
-                    value: 'delete',
-                    child: Text('Eliminar mi cuenta'),
+  AppBar _buildAppBar() {
+    return AppBar(
+      title: const Text('Supervisor'),
+      backgroundColor: AppColors.primaryColor,
+      actions: [
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.account_circle, color: Colors.white),
+          tooltip: 'Mi cuenta',
+          onSelected: (value) async {
+            const storage = FlutterSecureStorage();
+            final userId = await storage.read(key: 'user_id');
+            if (userId == null || userId.isEmpty) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('No se pudo obtener el usuario actual'),
                   ),
-                ],
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            tooltip: 'Cerrar sesión',
-            onPressed: () async {
+                );
+              }
+              return;
+            }
+
+            if (value == 'edit') {
+              if (mounted) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => UserEditScreen(userId: userId),
+                  ),
+                );
+              }
+            } else if (value == 'delete') {
+              if (!mounted) return;
               final confirmed = await showDialog<bool>(
                 context: context,
                 builder:
                     (ctx) => AlertDialog(
-                      title: const Text('Cerrar sesión'),
-                      content: const Text('¿Desea cerrar la sesión actual?'),
+                      title: const Text('Eliminar mi cuenta'),
+                      content: const Text(
+                        'Esta acción es irreversible. ¿Desea continuar?',
+                      ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(ctx, false),
@@ -125,15 +74,73 @@ class HomeAdminScreen extends StatelessWidget {
                         TextButton(
                           onPressed: () => Navigator.pop(ctx, true),
                           child: const Text(
-                            'Salir',
+                            'Eliminar',
                             style: TextStyle(color: Colors.red),
                           ),
                         ),
                       ],
                     ),
               );
+              if (!mounted) return;
               if (confirmed == true) {
-                await AuthService().logout();
+                try {
+                  await UserServices().deleteUser(userId);
+                  await AuthService().logout();
+                  if (mounted) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (_) => const InitSelectUserScreen(),
+                      ),
+                      (route) => false,
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text('Error: $e')));
+                  }
+                }
+              }
+            }
+          },
+          itemBuilder:
+              (ctx) => const [
+                PopupMenuItem(value: 'edit', child: Text('Editar mi perfil')),
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Text('Eliminar mi cuenta'),
+                ),
+              ],
+        ),
+        IconButton(
+          icon: const Icon(Icons.logout, color: Colors.white),
+          tooltip: 'Cerrar sesión',
+          onPressed: () async {
+            final confirmed = await showDialog<bool>(
+              context: context,
+              builder:
+                  (ctx) => AlertDialog(
+                    title: const Text('Cerrar sesión'),
+                    content: const Text('¿Desea cerrar la sesión actual?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: const Text('Cancelar'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: const Text(
+                          'Salir',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    ],
+                  ),
+            );
+            if (confirmed == true) {
+              await AuthService().logout();
+              if (mounted) {
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(
                     builder: (_) => const InitSelectUserScreen(),
@@ -141,15 +148,12 @@ class HomeAdminScreen extends StatelessWidget {
                   (route) => false,
                 );
               }
-            },
-          ),
-        ],
-        centerTitle: true,
-        elevation: 4,
-      ),
-      drawer:
-          const CustomAdminDrawer(), // ← Drawer personalizado con todas las funcionalidades
-      body: _buildWelcomeContent(), // ← Contenido simple de bienvenida
+            }
+          },
+        ),
+      ],
+      centerTitle: true,
+      elevation: 4,
     );
   }
 
@@ -172,7 +176,7 @@ class HomeAdminScreen extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             "Gestión y Automatización de Instalaciones de Fibra Óptica",
-            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
             textAlign: TextAlign.center,
           ),
         ],

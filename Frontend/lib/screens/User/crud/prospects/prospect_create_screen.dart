@@ -41,6 +41,7 @@ class _ProspectCreateScreenState extends State<ProspectCreateScreen> {
   Future<void> _loadFranchises() async {
     try {
       final franchises = await _franchiseService.getAllFranchises();
+      if (!mounted) return;
       setState(() {
         _franchises = franchises;
         _franchisesLoaded = true;
@@ -74,7 +75,7 @@ class _ProspectCreateScreenState extends State<ProspectCreateScreen> {
           _selectedFranchiseId!,
         ), // Convertir a int para cumplir con el API
       });
-
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Prospecto creado exitosamente'),

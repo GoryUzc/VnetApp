@@ -48,6 +48,7 @@ class _AvailableMeetingsScreenState extends State<AvailableMeetingsScreen> {
       );
 
       final Map<String, dynamic>? respMap =
+          // ignore: unnecessary_type_check
           resp is Map ? Map<String, dynamic>.from(resp as Map) : null;
 
       final List<dynamic> rawMeetings =
@@ -152,7 +153,7 @@ class _AvailableMeetingsScreenState extends State<AvailableMeetingsScreen> {
           border: Border.all(color: Colors.grey.shade200),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -164,10 +165,13 @@ class _AvailableMeetingsScreenState extends State<AvailableMeetingsScreen> {
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: AppColors.primaryColor.withOpacity(0.1),
+                color: AppColors.primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.receipt_long, color: AppColors.primaryColor),
+              child: const Icon(
+                Icons.receipt_long,
+                color: AppColors.primaryColor,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -307,6 +311,7 @@ class _AvailableMeetingsScreenState extends State<AvailableMeetingsScreen> {
     if (ok == true) {
       final String idMeeting =
           (meeting['id_meeting'] ?? meeting['id'] ?? '').toString();
+      // ignore: use_build_context_synchronously
       Navigator.of(context).push(
         MaterialPageRoute(
           builder:
@@ -384,14 +389,14 @@ class _AvailableMeetingsScreenState extends State<AvailableMeetingsScreen> {
                   : const Icon(Icons.refresh, color: Colors.white),
         ),
         IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            tooltip: 'Cerrar sesión',
-            onPressed: () async {
-              // Aquí debes integrar tu servicio de logout
-              // await otpService.logout();
-              Navigator.of(context).popUntil((route) => route.isFirst);
-            },
-          ),
+          icon: const Icon(Icons.logout, color: Colors.white),
+          tooltip: 'Cerrar sesión',
+          onPressed: () async {
+            // Aquí debes integrar tu servicio de logout
+            // await otpService.logout();
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          },
+        ),
       ],
       centerTitle: true,
       elevation: 4,

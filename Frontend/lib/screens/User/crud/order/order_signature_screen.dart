@@ -25,7 +25,7 @@ class SignatureScreen extends StatefulWidget {
 
 class SignatureScreenState extends State<SignatureScreen> {
   late final SignatureController _sigController;
-  MeetingService _meetingService = MeetingService();
+  final MeetingService _meetingService = MeetingService();
   final Logger _logger = Logger();
   String meetingId = '';
 

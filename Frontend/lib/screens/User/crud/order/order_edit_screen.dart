@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:logger/logger.dart';
+// import 'package:logger/logger.dart';
 import 'package:vnet_agenda/screens/User/crud/order/order_completion_screen.dart';
 import 'package:vnet_agenda/screens/User/crud/order/order_signature_screen.dart';
 import 'package:vnet_agenda/services/crud/order_service.dart';
@@ -25,7 +25,7 @@ class OrderEditScreen extends StatefulWidget {
 
 class _OrderEditScreenState extends State<OrderEditScreen> {
   final _formatKey = GlobalKey<FormState>();
-  final Logger _logger = Logger();
+  // final Logger _logger = Logger();
   //Servicios
   final UserServices _userServices = UserServices();
   final ProspectService _prospectService = ProspectService();
@@ -104,7 +104,7 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
   void initState() {
     super.initState();
     _initLoad();
-    }
+  }
 
   Future<void> _initLoad() async {
     setState(() {
@@ -227,7 +227,11 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
       await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => SignatureScreen(orderId: widget.orderId, meetingId: widget.meetingId,),
+          builder:
+              (context) => SignatureScreen(
+                orderId: widget.orderId,
+                meetingId: widget.meetingId,
+              ),
         ),
       );
       if (!mounted) return;
@@ -238,7 +242,7 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
           builder: (context) => OrderCompletionScreen(orderId: widget.orderId),
         ),
       );
-          // No hacer pop automáticamente aquí para no interferir con el flujo de firma
+      // No hacer pop automáticamente aquí para no interferir con el flujo de firma
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

@@ -49,26 +49,31 @@ class _LoginUserScreenState extends State<LoginUserScreen> {
 
       // Redirigir según el role_id
       if (role == 1) {
+        if (!mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomeAdminScreen()),
         );
       } else if (role == 2) {
+        if (!mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomeSupervisorScreen()),
         );
       } else if (role == 3) {
+        if (!mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomeContractorScreen()),
         );
       } else if (role == 4) {
+        if (!mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomeWorkerScreen()),
         );
       } else {
+        if (!mounted) return;
         // Para roles desconocidos
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

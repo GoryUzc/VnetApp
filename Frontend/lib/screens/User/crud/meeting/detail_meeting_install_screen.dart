@@ -23,6 +23,7 @@ class DetailMeetingInstallScreen extends StatefulWidget {
 
 class _DetailMeetingInstallScreenState
     extends State<DetailMeetingInstallScreen> {
+  // ignore: unused_field
   final _formaKey = GlobalKey<FormState>();
   final Logger _logger = Logger();
 
@@ -96,6 +97,7 @@ class _DetailMeetingInstallScreenState
 
       final r = widget.userId ?? '';
       _logger.d('Usuario a consultar: $r');
+      // ignore: unused_local_variable
       final idR = await _userService.getUserDetails(r);
       return;
     } catch (e) {
@@ -200,8 +202,10 @@ class _DetailMeetingInstallScreenState
           ),
     );
 
-    if (confirmed == true && mounted) {
+    if (confirmed == true) {
+      // ignore: unused_local_variable
       final initInstall = await _meetingService.initMeeting(citaId);
+      if (!mounted || !context.mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(
