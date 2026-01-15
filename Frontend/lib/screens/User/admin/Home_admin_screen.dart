@@ -27,7 +27,8 @@ class _HomeAdminScreenState extends State<HomeAdminScreen> {
 
   AppBar _buildAppBar() {
     return AppBar(
-      title: const Text('Supervisor'),
+      iconTheme: const IconThemeData(color: Colors.white),
+      title: const Text('Administrador'),
       backgroundColor: AppColors.primaryColor,
       actions: [
         PopupMenuButton<String>(

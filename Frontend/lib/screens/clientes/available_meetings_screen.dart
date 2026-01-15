@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
+import 'package:vnet_agenda/screens/clientes/login_clientes_screen.dart';
 import 'package:vnet_agenda/services/crud/meeting_service.dart';
 import 'package:vnet_agenda/strings/app_strings.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
@@ -353,6 +354,7 @@ class _AvailableMeetingsScreenState extends State<AvailableMeetingsScreen> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
+      automaticallyImplyLeading: false,
       backgroundColor: AppColors.primaryColor,
       title: const Text(
         'Citas disponibles',
@@ -392,9 +394,14 @@ class _AvailableMeetingsScreenState extends State<AvailableMeetingsScreen> {
           icon: const Icon(Icons.logout, color: Colors.white),
           tooltip: 'Cerrar sesión',
           onPressed: () async {
-            // Aquí debes integrar tu servicio de logout
-            // await otpService.logout();
-            Navigator.of(context).popUntil((route) => route.isFirst);
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const LoginClienteScreen(
+                ),
+              ),
+              (route) => false,
+            );
           },
         ),
       ],

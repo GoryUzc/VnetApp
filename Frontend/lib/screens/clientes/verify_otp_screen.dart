@@ -7,8 +7,6 @@ import 'package:vnet_agenda/screens/clientes/select_contract_screen.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
 import 'package:vnet_agenda/services/authentication/otp_service.dart';
 
-
-
 class VerifyOtpScreen extends StatefulWidget {
   final String document;
   final String email;
@@ -68,18 +66,20 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => AvailableMeetingsScreen(idProspect: idProspect),
+            builder:
+                (context) => AvailableMeetingsScreen(idProspect: idProspect),
           ),
         );
       } else {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => SelectContractScreen(
-              clientDataId: idProspect,
-              contracts: widget.contractIds,
-              document: widget.document,
-            ),
+            builder:
+                (context) => SelectContractScreen(
+                  clientDataId: idProspect,
+                  contracts: widget.contractIds,
+                  document: widget.document,
+                ),
           ),
         );
       }
@@ -129,9 +129,12 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                   fit: BoxFit.contain,
                 ),
                 const SizedBox(height: 20),
-                const Text(
-                  "Ingrese el código enviado a su correo",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                Text(
+                  "Ingrese el código enviado a su correo: ${widget.email}",
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 40),

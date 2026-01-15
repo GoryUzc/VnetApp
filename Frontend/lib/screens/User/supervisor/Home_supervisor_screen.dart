@@ -580,6 +580,7 @@ class _HomeSupervisorScreenState extends State<HomeSupervisorScreen> {
 
   AppBar _buildAppBar() {
     return AppBar(
+      iconTheme: const IconThemeData(color: Colors.white),
       title: const Text('Supervisor'),
       backgroundColor: AppColors.primaryColor,
       actions: [

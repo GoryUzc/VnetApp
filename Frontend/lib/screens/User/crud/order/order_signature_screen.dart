@@ -28,6 +28,7 @@ class SignatureScreenState extends State<SignatureScreen> {
   final MeetingService _meetingService = MeetingService();
   final Logger _logger = Logger();
   String meetingId = '';
+  bool _isUplLoading = false;
 
   @override
   void initState() {
@@ -117,10 +118,35 @@ class SignatureScreenState extends State<SignatureScreen> {
       },
     );
 
-    if (confirmed != true) return;
-
-    await _uploadToBackend(bytes);
-    await _meetingService.endMeeting(widget.meetingId);
+    if (confirmed == true) {
+      setState(() {
+        _isUplLoading = true;
+      });
+      try {
+        await _uploadToBackend(bytes);
+        await _meetingService.endMeeting(widget.meetingId);
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OrderCompletionScreen(orderId: widget.orderId),
+          ),
+        );
+      } catch (e) {
+        _logger.e('Error en el proceso final: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Ocurrió un error: $e')));
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isUplLoading = false;
+          });
+        }
+      }
+    }
   }
 
   Future<void> _uploadToBackend(Uint8List bytes) async {
@@ -149,14 +175,7 @@ class SignatureScreenState extends State<SignatureScreen> {
       _logger.d('📥 Respuesta backend: ${response.statusCode}');
 
       if (streamed.statusCode == 200 || streamed.statusCode == 201) {
-        if (!mounted) return;
-        // Ir a la vista del PDF
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => OrderCompletionScreen(orderId: widget.orderId),
-          ),
-        );
+        _logger.i('✅ Firma subida exitosamente.');
       } else {
         _logger.e('❌ Error subiendo firma: ${response.body}');
         if (!mounted) return;
@@ -179,65 +198,99 @@ class SignatureScreenState extends State<SignatureScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Firma del Cliente')),
-      body: Column(
+      body: Stack(
         children: [
-          Expanded(
-            child: Container(
-              color: const Color(0xFFE3F2FD), // azul claro para delimitar
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // Capa inferior informativa
-                  Container(
-                    color: Colors.red.withOpacity(0.05),
-                    child: const Center(
-                      child: Text(
-                        'ÁREA DE FIRMA',
-                        style: TextStyle(
-                          color: Colors.red,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+          Column(
+            children: [
+              Expanded(
+                child: Container(
+                  color: const Color(0xFFE3F2FD), // azul claro para delimitar
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // Capa inferior informativa
+                      Container(
+                        color: Colors.red.withOpacity(0.05),
+                        child: const Center(
+                          child: Text(
+                            'ÁREA DE FIRMA',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Área de firma
+                      Container(
+                        color: Colors.white,
+                        child: Signature(
+                          controller: _sigController,
+                          width: double.infinity,
+                          height: double.infinity,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed:
+                            _isUplLoading ? null : () => _sigController.clear(),
+                        icon: const Icon(Icons.cleaning_services_outlined),
+                        label: const Text(
+                          'Limpiar',
+                          style: TextStyle(color: Colors.black),
                         ),
                       ),
                     ),
-                  ),
-                  // Área de firma
-                  Container(
-                    color: Colors.white,
-                    child: Signature(
-                      controller: _sigController,
-                      width: double.infinity,
-                      height: double.infinity,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed:
+                            _isUplLoading
+                                ? null
+                                : () async {
+                                  await _confirmAndUpload();
+                                },
+                        icon: const Icon(Icons.check),
+                        label: const Text(
+                          'Guardar',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (_isUplLoading)
+            Container(
+              color: Colors.black45,
+              child: const Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(color: Colors.white),
+                    SizedBox(height: 20),
+                    Text(
+                      'Subiendo firma y finalizando...',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      _sigController.clear();
-                    },
-                    icon: const Icon(Icons.cleaning_services_outlined),
-                    label: const Text('Limpiar'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _confirmAndUpload,
-                    icon: const Icon(Icons.check),
-                    label: const Text('Guardar y continuar'),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );

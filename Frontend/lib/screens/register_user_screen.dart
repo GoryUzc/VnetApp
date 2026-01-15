@@ -4,7 +4,7 @@ import 'package:vnet_agenda/services/others/register_service_user.dart';
 import 'package:vnet_agenda/services/others/franchise_service.dart';
 import 'package:vnet_agenda/services/others/role_service.dart';
 import 'package:vnet_agenda/services/others/contractor_service.dart';
-import 'package:vnet_agenda/services/authentication/auth_service.dart'; 
+import 'package:vnet_agenda/services/authentication/auth_service.dart';
 
 class RegisterUserScreen extends StatefulWidget {
   const RegisterUserScreen({super.key});
@@ -82,7 +82,7 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
     super.initState();
     _loadFranchises();
     _loadRoles();
-    _loadCurrentUserRole(); 
+    _loadCurrentUserRole();
   }
 
   // Agregar método para cargar el rol del usuario actual
@@ -107,6 +107,12 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
       final data = await _franchiseService.getAllFranchises();
       setState(() {
         _franchises = data.map((e) => e).toList();
+        _franchises.sort((a, b) {
+          String nombreA = a['branch_office']?.toString().toLowerCase() ?? '';
+          String nombreB = b['branch_office']?.toString().toLowerCase() ?? '';
+
+          return nombreA.compareTo(nombreB);
+        });
       });
     } catch (_) {
       if (mounted) {

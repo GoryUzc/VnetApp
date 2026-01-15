@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:logger/logger.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:vnet_agenda/screens/User/contractor/home_contractor_screen.dart';
+import 'package:vnet_agenda/screens/User/worker/home_worker_screen.dart';
 import 'package:vnet_agenda/services/crud/meeting_service.dart';
 import 'package:intl/intl.dart';
 import 'package:vnet_agenda/services/crud/prospect_service.dart';
@@ -43,11 +45,13 @@ class _MeetingDetailTakeScreenState extends State<MeetingDeatilTakeScreen> {
   double latitude = 0.0;
   double longitude = 0.0;
   String citaId = '';
+  String ubicacionRef = '';
   // Estado
   bool _isLoading = true;
   bool _hasError = false;
   String? _errorMessage = '';
   bool _dateFormatInitialized = false;
+  bool _isTakingMeeting = false;
 
   @override
   void initState() {
@@ -77,6 +81,7 @@ class _MeetingDetailTakeScreenState extends State<MeetingDeatilTakeScreen> {
       dateTime = DateTime.parse(meetingData['date_time1']);
       latitude = double.parse(meetingData['latitude']);
       longitude = double.parse(meetingData['longitude']);
+      ubicacionRef = meetingData['direcc_refe'];
       final prospectData = await _prospectService.getProspectDetails(
         prospectId,
       );
@@ -326,25 +331,10 @@ class _MeetingDetailTakeScreenState extends State<MeetingDeatilTakeScreen> {
                             _buildInfoRow(
                               icon: Icons.location_on,
                               title: 'Ubicación',
-                              value: 'Coordenadas seleccionadas',
-                            ),
-                            const SizedBox(height: 8.0),
-
-                            Padding(
-                              padding: const EdgeInsets.only(left: 32.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Latitud: ${latitude.toStringAsFixed(6)}',
-                                    style: const TextStyle(fontSize: 14),
-                                  ),
-                                  Text(
-                                    'Longitud: ${longitude.toStringAsFixed(6)}',
-                                    style: const TextStyle(fontSize: 14),
-                                  ),
-                                ],
-                              ),
+                              value:
+                                  ubicacionRef.isNotEmpty
+                                      ? ubicacionRef
+                                      : AppStrings.notAvailable,
                             ),
                             const SizedBox(height: 16.0),
 
@@ -357,7 +347,10 @@ class _MeetingDetailTakeScreenState extends State<MeetingDeatilTakeScreen> {
                                       longitude,
                                     ),
                                 icon: const Icon(Icons.map, size: 20),
-                                label: const Text('Ver en Maps'),
+                                label: const Text(
+                                  'Ver en Maps',
+                                  style: TextStyle(color: Colors.white),
+                                ),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.secondaryColor,
                                   padding: const EdgeInsets.symmetric(
@@ -376,15 +369,35 @@ class _MeetingDetailTakeScreenState extends State<MeetingDeatilTakeScreen> {
                     const SizedBox(height: 32.0),
                     Column(
                       children: [
-                        if (role == 3)
+                        if (role == 3 || role == 4)
                           ElevatedButton(
-                            onPressed: () async {
-                              final navigator = Navigator.of(context);
-                              if (!mounted) return;
-                              await _takeMeeting(citaId);
-                              if (!mounted) return;
-                              navigator.pop();
-                            },
+                            onPressed:
+                                _isTakingMeeting
+                                    ? null
+                                    : () async {
+                                      final navigator = Navigator.of(context);
+                                      bool success = await _takeMeeting(citaId);
+                                      if (!mounted || !success) return;
+                                      if (role == 3) {
+                                        navigator.pushAndRemoveUntil(
+                                          MaterialPageRoute(
+                                            builder:
+                                                (context) =>
+                                                    const HomeContractorScreen(),
+                                          ),
+                                          (Route<dynamic> route) => false,
+                                        );
+                                      } else if (role == 4) {
+                                        navigator.pushAndRemoveUntil(
+                                          MaterialPageRoute(
+                                            builder:
+                                                (context) =>
+                                                    const HomeWorkerScreen(),
+                                          ),
+                                          (Route<dynamic> route) => false,
+                                        );
+                                      }
+                                    },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryColor,
                               padding: const EdgeInsets.symmetric(
@@ -395,40 +408,24 @@ class _MeetingDetailTakeScreenState extends State<MeetingDeatilTakeScreen> {
                                 borderRadius: BorderRadius.circular(8.0),
                               ),
                             ),
-                            child: const Text(
-                              'Tomar cita',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        if (role == 4)
-                          ElevatedButton(
-                            onPressed: () async {
-                              final navigator = Navigator.of(context);
-                              if (!mounted) return;
-                              await _takeMeeting(citaId);
-                              if (!mounted) return;
-                              navigator.pop();
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primaryColor,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 32.0,
-                                vertical: 16.0,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                              ),
-                            ),
-                            child: const Text(
-                              'Tomar cita',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            child:
+                                _isTakingMeeting
+                                    ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        color: AppColors.textColor,
+                                        strokeWidth: 2.0,
+                                      ),
+                                    )
+                                    : const Text(
+                                      'Tomar cita',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
                           ),
                       ],
                     ),
@@ -438,7 +435,11 @@ class _MeetingDetailTakeScreenState extends State<MeetingDeatilTakeScreen> {
     );
   }
 
-  Future<void> _takeMeeting(String id) async {
+  Future<bool> _takeMeeting(String id) async {
+    setState(() {
+      _isTakingMeeting = true;
+    });
+
     try {
       await _meetingService.takeMeeting(id);
       if (mounted) {
@@ -449,6 +450,7 @@ class _MeetingDetailTakeScreenState extends State<MeetingDeatilTakeScreen> {
           ),
         );
       }
+      return true;
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -457,6 +459,13 @@ class _MeetingDetailTakeScreenState extends State<MeetingDeatilTakeScreen> {
             backgroundColor: Colors.red,
           ),
         );
+      }
+      return false;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isTakingMeeting = false;
+        });
       }
     }
   }

@@ -605,54 +605,48 @@ class _AdaptiveDataViewState extends State<AdaptiveDataView> {
     final isTablet = MediaQuery.of(context).size.width < 900;
 
     // **SOLUCIÓN DEFINITIVA**: Envolver todo en un Container con altura definida
-    return Container(
-      constraints: BoxConstraints(
-        minHeight: 200,
-        maxHeight: MediaQuery.of(context).size.height * 0.7,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min, // ¡IMPORTANTE!
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Título
-          if (widget.title != null)
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                widget.title!,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-            ),
-
-          // Barra de búsqueda
-          _buildSearchBar(),
-
-          // Contador de resultados
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Título
+        if (widget.title != null)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.all(16),
             child: Text(
-              '${_filteredRows.length} ${_filteredRows.length == 1 ? 'elemento' : 'elementos'} encontrados',
-              style: const TextStyle(color: Colors.grey, fontSize: 14),
+              widget.title!,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
             ),
           ),
 
-          const SizedBox(height: 8),
+        // Barra de búsqueda
+        _buildSearchBar(),
 
-          // Vista principal - **SOLUCIÓN CLAVE**
-          if (_filteredRows.isEmpty)
-            Expanded(child: _buildEmptyState())
-          else if (isMobile)
-            Expanded(child: _buildMobileView())
-          else if (isTablet)
-            Expanded(child: _buildTabletView())
-          else
-            Expanded(child: _buildDesktopView()),
-        ],
-      ),
+        // Contador de resultados
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            '${_filteredRows.length} ${_filteredRows.length == 1 ? 'elemento' : 'elementos'} encontrados',
+            style: const TextStyle(color: Colors.grey, fontSize: 14),
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        Expanded(
+          child:
+              _filteredRows.isEmpty
+                  ? _buildEmptyState()
+                  : isMobile
+                  ? _buildMobileView()
+                  : isTablet
+                  ? _buildTabletView()
+                  : _buildDesktopView(),
+        ),
+      ],
     );
   }
 }

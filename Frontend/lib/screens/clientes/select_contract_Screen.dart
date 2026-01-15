@@ -37,17 +37,6 @@ class _SelectContractScreenState extends State<SelectContractScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // INFO DEL CLIENTE
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [Text('Documento: ${widget.document}')],
-                ),
-              ),
-            ),
-
             const SizedBox(height: 20),
             const Text(
               'Seleccione el contrato para la instalación:',
@@ -120,7 +109,10 @@ class _SelectContractScreenState extends State<SelectContractScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('Continuar', style: TextStyle(fontSize: 18)),
+                child: const Text(
+                  'Continuar',
+                  style: TextStyle(fontSize: 18, color: Colors.white),
+                ),
               ),
             ),
           ],

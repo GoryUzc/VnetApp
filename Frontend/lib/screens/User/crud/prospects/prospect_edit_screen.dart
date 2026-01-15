@@ -68,6 +68,12 @@ class _ProspectEditScreenState extends State<ProspectEditScreen> {
               franchises
                   .map((franchise) => franchise as Map<String, dynamic>)
                   .toList();
+          _franchises.sort((a, b) {
+            String nombreA = a['branch_office']?.toString().toLowerCase() ?? '';
+            String nombreB = b['branch_office']?.toString().toLowerCase() ?? '';
+
+            return nombreA.compareTo(nombreB);
+          });
           _franchisesLoaded = true;
         });
       } else {

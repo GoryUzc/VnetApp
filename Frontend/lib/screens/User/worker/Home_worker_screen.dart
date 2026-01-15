@@ -302,13 +302,13 @@ class _HomeWorkerScreenState extends State<HomeWorkerScreen> {
   }
 
   Widget _buildEmptyState() {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.assignment_turned_in, size: 80, color: Colors.green),
-          const SizedBox(height: 20),
-          const Text(
+          Icon(Icons.assignment_turned_in, size: 80, color: Colors.green),
+          SizedBox(height: 20),
+          Text(
             'Tome una cita de instalacion',
             style: TextStyle(
               fontSize: 18,
@@ -316,17 +316,6 @@ class _HomeWorkerScreenState extends State<HomeWorkerScreen> {
               color: Colors.green,
             ),
             textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () => _load(),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryColor,
-            ),
-            child: const Text(
-              'Recargar',
-              style: TextStyle(color: Colors.white),
-            ),
           ),
         ],
       ),
@@ -372,6 +361,7 @@ class _HomeWorkerScreenState extends State<HomeWorkerScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
+        iconTheme: const IconThemeData(color: Colors.white),
         backgroundColor: AppColors.primaryColor,
         title: const Text(
           'Panel de trabajador de Contratista',
@@ -383,11 +373,11 @@ class _HomeWorkerScreenState extends State<HomeWorkerScreen> {
         ),
         actions: [
           // Botón para recargar manualmente
-          // IconButton(
-          //   icon: const Icon(Icons.refresh, color: Colors.white),
-          //   onPressed: () => _load(isRefreshing: true),
-          //   tooltip: 'Recargar',
-          // ),
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: () => _load(isRefreshing: true),
+            tooltip: 'Recargar',
+          ),
           // PopupMenuButton<String>(
           //   icon: const Icon(Icons.account_circle, color: Colors.white),
           //   tooltip: 'Mi cuenta',

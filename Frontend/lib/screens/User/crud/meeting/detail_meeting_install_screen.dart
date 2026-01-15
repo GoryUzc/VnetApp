@@ -23,20 +23,14 @@ class DetailMeetingInstallScreen extends StatefulWidget {
 
 class _DetailMeetingInstallScreenState
     extends State<DetailMeetingInstallScreen> {
-  // ignore: unused_field
-  final _formaKey = GlobalKey<FormState>();
   final Logger _logger = Logger();
 
   // Servicios
   final MeetingService _meetingService = MeetingService();
   final ProspectService _prospectService = ProspectService();
   final UserServices _userService = UserServices();
-  // Diccionarios y listas
 
-  Map<String, dynamic> meetingList = {};
-  Map<String, dynamic> prospectList = {};
-
-  // Variables para los datos del cliente
+  // Variables de datos
   String clienteNombre = '';
   String clienteDocumento = '';
   String clienteDirecion = '';
@@ -48,11 +42,14 @@ class _DetailMeetingInstallScreenState
   double longitude = 0.0;
   String citaId = '';
   String user = '';
-  // Estado
+  String ubicacionRef = '';
+
+  // Estados
   bool _isLoading = true;
   bool _hasError = false;
-  String? _errorMessage = '';
+  String _errorMessage = '';
   bool _dateFormatInitialized = false;
+  bool _isStartingInstall = false; // Nueva variable para el botón
 
   @override
   void initState() {
@@ -70,7 +67,7 @@ class _DetailMeetingInstallScreenState
   Future<void> _initLoadData() async {
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
+      _errorMessage = '';
       _hasError = false;
     });
     try {
@@ -78,39 +75,33 @@ class _DetailMeetingInstallScreenState
         widget.meetingId ?? '',
       );
       prospectId = meetingData['prospect_aradial_id'].toString();
-      _logger.d('1:$prospectId');
       dateTime = DateTime.parse(meetingData['date_time1']);
       latitude = double.parse(meetingData['latitude']);
       longitude = double.parse(meetingData['longitude']);
+      ubicacionRef = meetingData['direcc_refe'] ?? '';
+
       final prospectData = await _prospectService.getProspectDetails(
         prospectId,
       );
       final data = prospectData['prospect'];
+
       clienteNombre = _formatName(data);
       clienteDocumento = data['document']?.toString() ?? '';
       clienteDirecion = data['address']?.toString() ?? '';
       clientePLan = data['plan']?.toString() ?? '';
       clienteTelefono = data['phone']?.toString() ?? '';
-      citaId = id(widget.meetingId);
-      user = id(widget.userId);
-      _logger.d('ID CITA: $citaId');
+      citaId = widget.meetingId ?? '';
+      user = widget.userId ?? '';
 
-      final r = widget.userId ?? '';
-      _logger.d('Usuario a consultar: $r');
-      // ignore: unused_local_variable
-      final idR = await _userService.getUserDetails(r);
-      return;
+      await _userService.getUserDetails(user);
     } catch (e) {
-      _errorMessage = e.toString();
+      setState(() {
+        _hasError = true;
+        _errorMessage = e.toString();
+      });
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  String id(dynamic data) {
-    final idM = data.toString();
-    _logger.d('El ID de la Cita: $idM');
-    return idM.isNotEmpty ? idM : AppStrings.anonymous;
   }
 
   String _formatName(dynamic clienteData) {
@@ -120,23 +111,71 @@ class _DetailMeetingInstallScreenState
     return fullname.isNotEmpty ? fullname : AppStrings.anonymous;
   }
 
-  Future<void> _abrirEnMapaExterno(double latitude, double longitude) async {
-    final String url;
+  Future<void> _abrirEnMapaExterno(double lat, double lng) async {
+    final url =
+        Theme.of(context).platform == TargetPlatform.iOS
+            ? 'https://maps.apple.com/?q=$lat,$lng'
+            : 'https://www.google.com/maps/search/?api=1&query=$lat,$lng';
 
-    // Detectar si es iOS o Android/Web
-    final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
-
-    if (isIOS) {
-      url = 'https://maps.apple.com/?q=$latitude,$longitude';
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url));
     } else {
-      url =
-          'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude';
+      _logger.e('No se pudo abrir el mapa');
     }
+  }
 
-    if (await canLaunch(url)) {
-      await launch(url);
-    } else {
-      throw 'No se puede mostrar el mapa $url';
+  Future<void> _starInstallationFlow() async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Comenzar con la instalación'),
+            content: const Text(
+              'Esta acción es irreversible. ¿Desea continuar?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancelar'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text(
+                  'Comenzar',
+                  style: TextStyle(color: Colors.green),
+                ),
+              ),
+            ],
+          ),
+    );
+
+    if (confirmed == true) {
+      setState(() => _isStartingInstall = true);
+      try {
+        await _meetingService.initMeeting(citaId);
+        if (!mounted) return;
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (_) => PreInstallMeetingCheckScreen(
+                  prospectName: clienteNombre,
+                  prospectId: prospectId,
+                  userId: user,
+                  meetingId: citaId,
+                ),
+          ),
+        );
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isStartingInstall = false);
+      }
     }
   }
 
@@ -177,63 +216,32 @@ class _DetailMeetingInstallScreenState
     );
   }
 
-  Future<void> _starInstallationFlow(BuildContext context) async {
-    final bool? confirmed = await showDialog(
-      context: context,
-      builder:
-          (ctx) => AlertDialog(
-            title: const Text('Comenzar con la instalacion'),
-            content: const Text(
-              'Esta accion es irreversible. ¿Desea continuar?',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Cancelar'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: const Text(
-                  'Comenzar',
-                  style: TextStyle(color: Colors.green),
-                ),
+  @override
+  Widget build(BuildContext context) {
+    if (!_dateFormatInitialized || _isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (_hasError) {
+      return Scaffold(
+        appBar: AppBar(title: const Text("Error")),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, color: Colors.red, size: 60),
+              const SizedBox(height: 16),
+              Text("Ocurrió un error: $_errorMessage"),
+              ElevatedButton(
+                onPressed: _initLoadData,
+                child: const Text("Reintentar"),
               ),
             ],
           ),
-    );
-
-    if (confirmed == true) {
-      // ignore: unused_local_variable
-      final initInstall = await _meetingService.initMeeting(citaId);
-      if (!mounted || !context.mounted) return;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder:
-              (_) => PreInstallMeetingCheckScreen(
-                prospectName: clienteNombre,
-                prospectId: prospectId,
-                userId: user,
-                meetingId: citaId,
-              ),
         ),
       );
     }
-  }
-  // METODO PARA LAS NOTIFICACIONES
-  //   void _notifyInstallationStart() {
-  //   // Aquí puedes integrar tu servicio de notificaciones
-  //   print('🚀 Iniciando instalación para: $clienteNombre');
-  // }
 
-  @override
-  Widget build(BuildContext context) {
-    if (!_dateFormatInitialized) {
-      return Scaffold(
-        backgroundColor: Colors.grey[50],
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
     final formattedDate = DateFormat(
       'EEEE, d MMMM y',
       'es_ES',
@@ -246,227 +254,80 @@ class _DetailMeetingInstallScreenState
         backgroundColor: AppColors.primaryColor,
         title: const Text(
           "Cita Agendada",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.white),
         ),
         centerTitle: true,
       ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _hasError
-              ? Center(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.green, size: 80),
+            const SizedBox(height: 16),
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error, size: 60, color: Colors.red),
+                    _buildInfoRow(
+                      icon: Icons.person,
+                      title: 'Cliente',
+                      value: clienteNombre,
+                    ),
+                    const Divider(height: 24),
+                    _buildInfoRow(
+                      icon: Icons.calendar_today,
+                      title: 'Fecha',
+                      value: formattedDate,
+                    ),
+                    _buildInfoRow(
+                      icon: Icons.access_time,
+                      title: 'Hora',
+                      value: formattedTime,
+                    ),
+                    const Divider(height: 24),
+                    _buildInfoRow(
+                      icon: Icons.location_on,
+                      title: 'Referencia',
+                      value: ubicacionRef,
+                    ),
                     const SizedBox(height: 16),
-                    Text(
-                      _errorMessage ?? '',
-                      style: const TextStyle(fontSize: 16, color: Colors.red),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: _initLoadData,
-                      child: const Text('Reintentar'),
-                    ),
-                  ],
-                ),
-              )
-              : SingleChildScrollView(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.1),
-                        shape: BoxShape.circle,
+                    ElevatedButton.icon(
+                      onPressed: () => _abrirEnMapaExterno(latitude, longitude),
+                      icon: const Icon(Icons.map),
+                      label: const Text(
+                        'Ver en Maps',
+                        style: TextStyle(color: Colors.white),
                       ),
-                      child: const Icon(
-                        Icons.check_circle,
-                        color: Colors.green,
-                        size: 60,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.secondaryColor,
                       ),
-                    ),
-                    const SizedBox(height: 24.0),
-
-                    Text(
-                      'Cita agendada',
-                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                    ),
-                    const SizedBox(height: 8.0),
-                    // Tarjeta con detalles de la cita
-                    Card(
-                      elevation: 3.0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(20.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Informacion del cliente
-                            _buildInfoRow(
-                              icon: Icons.person,
-                              title: 'Cliente',
-                              value:
-                                  clienteNombre.isNotEmpty
-                                      ? clienteNombre
-                                      : AppStrings.anonymous,
-                            ),
-                            const SizedBox(height: 12.0),
-
-                            _buildInfoRow(
-                              icon: Icons.badge,
-                              title: 'Documento',
-                              value:
-                                  clienteDocumento.isNotEmpty
-                                      ? clienteDocumento
-                                      : AppStrings.anonymous,
-                            ),
-                            const SizedBox(height: 16.0),
-
-                            _buildInfoRow(
-                              icon: Icons.phone,
-                              title: 'Telefono',
-                              value:
-                                  clienteTelefono.isNotEmpty
-                                      ? clienteTelefono
-                                      : AppStrings.anonymous,
-                            ),
-                            const SizedBox(height: 16.0),
-
-                            _buildInfoRow(
-                              icon: Icons.add_home,
-                              title: 'Direccion',
-                              value:
-                                  clienteDirecion.isNotEmpty
-                                      ? clienteDirecion
-                                      : AppStrings.anonymous,
-                            ),
-                            const SizedBox(height: 16.0),
-
-                            _buildInfoRow(
-                              icon: Icons.wifi_2_bar_sharp,
-                              title: 'Plan de internet',
-                              value:
-                                  clientePLan.isNotEmpty
-                                      ? clientePLan
-                                      : AppStrings.notAvailable,
-                            ),
-                            const SizedBox(height: 16.0),
-
-                            const Divider(),
-                            const SizedBox(height: 16.0),
-
-                            // Detalles de la cita
-                            _buildInfoRow(
-                              icon: Icons.calendar_today,
-                              title: 'Fecha',
-                              value: formattedDate,
-                            ),
-                            const SizedBox(height: 12.0),
-
-                            _buildInfoRow(
-                              icon: Icons.access_time,
-                              title: 'Hora',
-                              value: formattedTime,
-                            ),
-                            const SizedBox(height: 16.0),
-
-                            const Divider(),
-                            const SizedBox(height: 16.0),
-
-                            // Ubicación
-                            _buildInfoRow(
-                              icon: Icons.location_on,
-                              title: 'Ubicación',
-                              value: 'Coordenadas seleccionadas',
-                            ),
-                            const SizedBox(height: 8.0),
-
-                            Padding(
-                              padding: const EdgeInsets.only(left: 32.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Latitud: ${latitude.toStringAsFixed(6)}',
-                                    style: const TextStyle(fontSize: 14),
-                                  ),
-                                  Text(
-                                    'Longitud: ${longitude.toStringAsFixed(6)}',
-                                    style: const TextStyle(fontSize: 14),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 16.0),
-
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                onPressed:
-                                    () => _abrirEnMapaExterno(
-                                      latitude,
-                                      longitude,
-                                    ),
-                                icon: const Icon(Icons.map, size: 20),
-                                label: const Text('Ver en Maps'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.secondaryColor,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 12.0,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8.0),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 32.0),
-                    Column(
-                      children: [
-                        ElevatedButton(
-                          onPressed: () async {
-                            // Iniciar instalacion, relleno de Orden.
-                            await _starInstallationFlow(context);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryColor,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 32.0,
-                              vertical: 16.0,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                            ),
-                          ),
-                          child: const Text(
-                            'Iniciar Instalacion',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
                     ),
                   ],
                 ),
               ),
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: _isStartingInstall ? null : _starInstallationFlow,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryColor,
+                minimumSize: const Size(double.infinity, 54),
+              ),
+              child:
+                  _isStartingInstall
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                        'Iniciar Instalación',
+                        style: TextStyle(fontSize: 18, color: Colors.white),
+                      ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -35,6 +35,7 @@ class _PreInstallMeetingCheckScreenState
 
   int? _selectedMain; // 0 = si y 1 = no
   String? _selectedMotivo; // Observación si no se instala
+  bool _isLoading = false;
 
   final List<Map<String, String>> _motivos = [
     {'code': 'NAP', 'text': 'No hay puertos disponibles en la caja NAP'},
@@ -44,7 +45,13 @@ class _PreInstallMeetingCheckScreenState
   ];
 
   Future<void> _continuar() async {
-    Navigator.push(
+    setState(() {
+      _isLoading = true;
+    });
+
+    await Future.delayed(const Duration(microseconds: 300));
+    if (!mounted) return;
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder:
@@ -56,10 +63,19 @@ class _PreInstallMeetingCheckScreenState
             ),
       ),
     );
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _cancelar() async {
     if (_selectedMain != 1 || _selectedMotivo == null) return;
+
+    setState(() {
+      _isLoading = true;
+    });
 
     const String status = 'cancelada';
 
@@ -77,9 +93,14 @@ class _PreInstallMeetingCheckScreenState
         (route) => false,
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceAll('Exception', ''))),
-      );
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceAll('Exception', ''))),
+        );
+      }
     }
   }
 
@@ -93,189 +114,80 @@ class _PreInstallMeetingCheckScreenState
           'Verificacion previa',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.account_circle, color: Colors.white),
-            tooltip: 'Mi cuenta',
-            onSelected: (value) async {
-              const storage = FlutterSecureStorage();
-              final userId = await storage.read(key: 'user_id');
-              if (userId == null || userId.isEmpty) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('No se pudo obtener el usuario'),
-                    ),
-                  );
-                }
-                return;
-              }
-
-              if (value == 'edit') {
-                if (context.mounted) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => UserEditScreen(userId: userId),
-                    ),
-                  );
-                }
-              } else if (value == 'delete') {
-                if (context.mounted) {
-                  final confirmed = await showDialog<bool>(
-                    context: context,
-                    builder:
-                        (ctx) => AlertDialog(
-                          title: const Text('Eliminar mi cuenta'),
-                          content: const Text(
-                            'Esta acción es irreversible. ¿Desea continuar?',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx, false),
-                              child: const Text('Cancelar'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx, true),
-                              child: const Text(
-                                'Eliminar',
-                                style: TextStyle(color: Colors.red),
-                              ),
-                            ),
-                          ],
-                        ),
-                  );
-
-                  if (confirmed == true) {
-                    try {
-                      await UserServices().deleteUser(userId);
-                      await AuthService().logout();
-                      if (context.mounted) {
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                            builder: (_) => const InitSelectUserScreen(),
-                          ),
-                          (route) => false,
-                        );
-                      }
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(SnackBar(content: Text('Error: $e')));
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            itemBuilder:
-                (ctx) => const [
-                  PopupMenuItem(value: 'edit', child: Text('Editar mi perfil')),
-                  PopupMenuItem(
-                    value: 'delete',
-                    child: Text('Eliminar mi cuenta'),
-                  ),
-                ],
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            tooltip: 'Cerrar sesión',
-            onPressed: () async {
-              final confirmed = await showDialog<bool>(
-                context: context,
-                builder:
-                    (ctx) => AlertDialog(
-                      title: const Text('Cerrar sesión'),
-                      content: const Text('¿Desea cerrar la sesión actual?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx, false),
-                          child: const Text('Cancelar'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx, true),
-                          child: const Text(
-                            'Salir',
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        ),
-                      ],
-                    ),
-              );
-              if (confirmed == true) {
-                await AuthService().logout();
-                if (context.mounted) {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(
-                      builder: (_) => const InitSelectUserScreen(),
-                    ),
-                    (route) => false,
-                  );
-                }
-              }
-            },
-          ),
-        ],
-        centerTitle: true,
-        elevation: 4,
       ),
 
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _card(
-              title: '¿Se pueden realizar las condiciones de instalación?',
-              child: Column(
-                children: [
-                  _radioTile(0, 'Se puede realizar la instalación'),
-                  _radioTile(1, 'No se puede realizar la instalación'),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _card(
+                  title: '¿Se pueden realizar las condiciones de instalación?',
+                  child: Column(
+                    children: [
+                      _radioTile(0, 'Se puede realizar la instalación'),
+                      _radioTile(1, 'No se puede realizar la instalación'),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (_selectedMain == 1) ...[
+                  _card(
+                    title: 'Selecciona el motivo',
+                    child: Column(
+                      children:
+                          _motivos
+                              .map(
+                                (m) => _radioMotivoTile(m['code']!, m['text']!),
+                              )
+                              .toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                 ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            if (_selectedMain == 1) ...[
-              _card(
-                title: 'Selecciona el motivo',
-                child: Column(
-                  children:
-                      _motivos
-                          .map((m) => _radioMotivoTile(m['code']!, m['text']!))
-                          .toList(),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed:
-                    (_selectedMain == 0 ||
-                            (_selectedMain == 1 && _selectedMotivo != null))
-                        ? (_selectedMain == 0 ? _continuar : _cancelar)
-                        : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      _selectedMain == 0 ? AppColors.primaryColor : Colors.red,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed:
+                        (_selectedMain == 0 ||
+                                (_selectedMain == 1 && _selectedMotivo != null))
+                            ? (_selectedMain == 0 ? _continuar : _cancelar)
+                            : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          _selectedMain == 0
+                              ? AppColors.primaryColor
+                              : Colors.red,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text(
+                      _selectedMain == 0
+                          ? 'Continuar instalación'
+                          : 'Cancelar cita',
+                      style: AppTextStyles.buttonStyle.copyWith(
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
-                child: Text(
-                  _selectedMain == 0
-                      ? 'Continuar instalación'
-                      : 'Cancelar cita',
-                  style: AppTextStyles.buttonStyle.copyWith(
-                    color: Colors.white,
-                  ),
+              ],
+            ),
+          ),
+          if (_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.3),
+              child: const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

@@ -74,7 +74,16 @@ class _ContractorEditScreenState extends State<ContractorEditScreen> {
     setState(() => _loadingFranchises = true);
     try {
       final data = await _franchiseService.getAllFranchises();
-      setState(() => _franchises = data);
+      setState(() {
+        _franchises = data;
+        _franchises = data.map((e) => e).toList();
+        _franchises.sort((a, b) {
+          String nombreA = a['branch_office']?.toString().toLowerCase() ?? '';
+          String nombreB = b['branch_office']?.toString().toLowerCase() ?? '';
+
+          return nombreA.compareTo(nombreB);
+        });
+      });
     } catch (_) {
       // Manejo ya en _initLoad
     } finally {

@@ -380,6 +380,7 @@ class _HomeContractorScreenState extends State<HomeContractorScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
+        iconTheme: const IconThemeData(color: Colors.white),
         backgroundColor: AppColors.primaryColor,
         title: const Text(
           'Panel de Contratista',

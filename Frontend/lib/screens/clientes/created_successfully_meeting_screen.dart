@@ -290,25 +290,7 @@ class _CreatedSuccessfullyScreenState extends State<CreatedSuccessfullyScreen> {
                             _buildInfoRow(
                               icon: Icons.location_on,
                               title: 'Ubicación',
-                              value: 'Coordenadas seleccionadas',
-                            ),
-                            const SizedBox(height: 8.0),
-
-                            Padding(
-                              padding: const EdgeInsets.only(left: 32.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Latitud: ${latitude.toStringAsFixed(6)}',
-                                    style: const TextStyle(fontSize: 14),
-                                  ),
-                                  Text(
-                                    'Longitud: ${longitude.toStringAsFixed(6)}',
-                                    style: const TextStyle(fontSize: 14),
-                                  ),
-                                ],
-                              ),
+                              value: widget.citaData['direcc_refe'] ?? '',
                             ),
                             const SizedBox(height: 16.0),
 
@@ -322,7 +304,10 @@ class _CreatedSuccessfullyScreenState extends State<CreatedSuccessfullyScreen> {
                                       longitude,
                                     ),
                                 icon: const Icon(Icons.map, size: 20),
-                                label: const Text('Ver en Maps'),
+                                label: const Text(
+                                  'Ver en Maps',
+                                  style: TextStyle(color: Colors.white),
+                                ),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.secondaryColor,
                                   padding: const EdgeInsets.symmetric(
@@ -371,6 +356,7 @@ class _CreatedSuccessfullyScreenState extends State<CreatedSuccessfullyScreen> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
+                              color: Colors.white,
                             ),
                           ),
                         ),

@@ -146,7 +146,14 @@ class _LoginUserScreenState extends State<LoginClienteScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: AppColors.primaryColor,
-        title: const Text(AppStrings.appTitle),
+        title: const Text(
+          AppStrings.appTitle,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -247,7 +254,7 @@ class _LoginUserScreenState extends State<LoginClienteScreen> {
                           ),
                           child: const Text(
                             'Continuar',
-                            style: TextStyle(fontSize: 18),
+                            style: TextStyle(fontSize: 18, color: Colors.white),
                           ),
                         ),
                       ),

@@ -64,8 +64,9 @@ class InitSelectUserScreen extends StatelessWidget {
                         const Text(
                           AppStrings.systemDescription,
                           style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Colors.black,
                             height: 1.5,
                           ),
                           textAlign: TextAlign.center,
@@ -101,6 +102,7 @@ class InitSelectUserScreen extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
+                                  color: Colors.white,
                                 ),
                               ),
                             ),
@@ -137,6 +139,7 @@ class InitSelectUserScreen extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
+                                  color: Colors.white,
                                 ),
                               ),
                             ),
