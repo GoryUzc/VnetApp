@@ -10,6 +10,7 @@ import 'package:vnet_agenda/services/crud/prospect_service.dart';
 import 'package:vnet_agenda/services/crud/user_services.dart';
 import 'package:vnet_agenda/strings/app_strings.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class MeetingDeatilTakeScreen extends StatefulWidget {
   final String? meetingId;
@@ -122,36 +123,36 @@ class _MeetingDetailTakeScreenState extends State<MeetingDeatilTakeScreen> {
     return fullname.isNotEmpty ? fullname : AppStrings.anonymous;
   }
 
-Future<void> _abrirEnMapaExterno(double lat, double lng) async {
-  
-  final platform = Theme.of(context).platform; 
-  
-  Uri url;
-  if (platform == TargetPlatform.iOS) {
-    url = Uri.parse('apple.maps://?q=$lat,$lng');
-  } else {
-    url = Uri.parse('geo:$lat,$lng?q=$lat,$lng');
-  }
+  Future<void> _abrirEnMapaExterno(double lat, double lng) async {
+    // 1. Guardamos el contexto antes del async gap para evitar el error de 'mounted'
+    final isIOS = !kIsWeb && Theme.of(context).platform == TargetPlatform.iOS;
 
-  try {
+    Uri url;
 
-    final bool canLaunch = await canLaunchUrl(url);
-
-    if (!mounted) return; 
-
-    if (canLaunch) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    } else {
-      // Si necesitas mostrar un Snackbar o usar el context aquí, 
-      // el check de 'mounted' de arriba ya te protege.
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo abrir la aplicación de mapas')),
+    if (kIsWeb) {
+      // Para Web: Google Maps estándar con marcador
+      url = Uri.parse(
+        'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
       );
+    } else if (isIOS) {
+      // Para iOS App: Apple Maps
+      url = Uri.parse('https://maps.apple.com/?q=$lat,$lng');
+    } else {
+      // Para Android App: Esquema Geo (abre Google Maps directamente)
+      url = Uri.parse('geo:$lat,$lng?q=$lat,$lng');
     }
-  } catch (e) {
-    _logger.e('Error al abrir mapa: $e');
+
+    try {
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else if (kIsWeb) {
+        // Respaldo para Web en caso de bloqueo
+        await launchUrl(url, mode: LaunchMode.platformDefault);
+      }
+    } catch (e) {
+      debugPrint('No se pudo abrir el mapa: $e');
+    }
   }
-}
 
   Widget _buildInfoRow({
     required IconData icon,

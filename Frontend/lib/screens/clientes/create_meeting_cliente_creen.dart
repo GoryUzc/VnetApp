@@ -405,7 +405,7 @@ class CrearCitaScreenState extends State<CreateMeetingClienteSCreen> {
                             _horasLaborales().map((hora) {
                               return DropdownMenuItem(
                                 value: hora,
-                                child: Text(hora),
+                                child: Text(_formatearHora12(hora)),
                               );
                             }).toList(),
                         validator:
@@ -492,6 +492,26 @@ class CrearCitaScreenState extends State<CreateMeetingClienteSCreen> {
         ],
       ),
     );
+  }
+
+  String _formatearHora12(String hora24) {
+    try {
+      // Asumiendo que hora24 viene como "HH:mm"
+      final partes = hora24.split(':');
+      int hora = int.parse(partes[0]);
+      final minuto = partes[1];
+
+      final periodo = hora >= 12 ? 'PM' : 'AM';
+
+      // Convertir 0 a 12 (medianoche) y 13-23 a 1-11
+      hora = hora % 12;
+      if (hora == 0) hora = 12;
+
+      // Retorna formato "02:00 PM"
+      return "${hora.toString().padLeft(2, '0')}:$minuto $periodo";
+    } catch (e) {
+      return hora24; // Retorno seguro si falla el parseo
+    }
   }
 
   Widget _franchiseDropdown() {

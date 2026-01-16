@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
-import 'package:logger/logger.dart';
 import 'package:vnet_agenda/screens/clientes/available_meetings_screen.dart';
 import 'package:vnet_agenda/services/others/cliente_service.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
 import 'package:vnet_agenda/strings/app_strings.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class CreatedSuccessfullyScreen extends StatefulWidget {
   final Map<String, dynamic> citaData;
@@ -25,7 +25,6 @@ class CreatedSuccessfullyScreen extends StatefulWidget {
 
 class _CreatedSuccessfullyScreenState extends State<CreatedSuccessfullyScreen> {
   final ClienteService _clienteService = ClienteService();
-  final Logger _logger = Logger();
   Map<String, dynamic> _clienteData = {};
   bool _isLoading = true;
   bool _hasError = false;
@@ -92,33 +91,33 @@ class _CreatedSuccessfullyScreenState extends State<CreatedSuccessfullyScreen> {
   }
 
   Future<void> _abrirEnMapaExterno(double lat, double lng) async {
-    final platform = Theme.of(context).platform;
+    // 1. Guardamos el contexto antes del async gap para evitar el error de 'mounted'
+    final isIOS = !kIsWeb && Theme.of(context).platform == TargetPlatform.iOS;
 
     Uri url;
-    if (platform == TargetPlatform.iOS) {
-      url = Uri.parse('apple.maps://?q=$lat,$lng');
+
+    if (kIsWeb) {
+      // Para Web: Google Maps estándar con marcador
+      url = Uri.parse(
+        'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
+      );
+    } else if (isIOS) {
+      // Para iOS App: Apple Maps
+      url = Uri.parse('https://maps.apple.com/?q=$lat,$lng');
     } else {
+      // Para Android App: Esquema Geo (abre Google Maps directamente)
       url = Uri.parse('geo:$lat,$lng?q=$lat,$lng');
     }
 
     try {
-      final bool canLaunch = await canLaunchUrl(url);
-
-      if (!mounted) return;
-
-      if (canLaunch) {
+      if (await canLaunchUrl(url)) {
         await launchUrl(url, mode: LaunchMode.externalApplication);
-      } else {
-        // Si necesitas mostrar un Snackbar o usar el context aquí,
-        // el check de 'mounted' de arriba ya te protege.
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No se pudo abrir la aplicación de mapas'),
-          ),
-        );
+      } else if (kIsWeb) {
+        // Respaldo para Web en caso de bloqueo
+        await launchUrl(url, mode: LaunchMode.platformDefault);
       }
     } catch (e) {
-      _logger.e('Error al abrir mapa: $e');
+      debugPrint('No se pudo abrir el mapa: $e');
     }
   }
 
