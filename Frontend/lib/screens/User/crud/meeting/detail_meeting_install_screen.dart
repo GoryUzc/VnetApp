@@ -112,15 +112,33 @@ class _DetailMeetingInstallScreenState
   }
 
   Future<void> _abrirEnMapaExterno(double lat, double lng) async {
-    final url =
-        Theme.of(context).platform == TargetPlatform.iOS
-            ? 'https://maps.apple.com/?q=$lat,$lng'
-            : 'https://www.google.com/maps/search/?api=1&query=$lat,$lng';
+    final platform = Theme.of(context).platform;
 
-    if (await canLaunchUrl(Uri.parse(url))) {
-      await launchUrl(Uri.parse(url));
+    Uri url;
+    if (platform == TargetPlatform.iOS) {
+      url = Uri.parse('apple.maps://?q=$lat,$lng');
     } else {
-      _logger.e('No se pudo abrir el mapa');
+      url = Uri.parse('geo:$lat,$lng?q=$lat,$lng');
+    }
+
+    try {
+      final bool canLaunch = await canLaunchUrl(url);
+
+      if (!mounted) return;
+
+      if (canLaunch) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        // Si necesitas mostrar un Snackbar o usar el context aquí,
+        // el check de 'mounted' de arriba ya te protege.
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo abrir la aplicación de mapas'),
+          ),
+        );
+      }
+    } catch (e) {
+      _logger.e('Error al abrir mapa: $e');
     }
   }
 

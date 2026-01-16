@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
+import 'package:logger/logger.dart';
 import 'package:vnet_agenda/screens/clientes/available_meetings_screen.dart';
 import 'package:vnet_agenda/services/others/cliente_service.dart';
 import 'package:vnet_agenda/theme/app_colors.dart';
@@ -24,7 +25,7 @@ class CreatedSuccessfullyScreen extends StatefulWidget {
 
 class _CreatedSuccessfullyScreenState extends State<CreatedSuccessfullyScreen> {
   final ClienteService _clienteService = ClienteService();
-
+  final Logger _logger = Logger();
   Map<String, dynamic> _clienteData = {};
   bool _isLoading = true;
   bool _hasError = false;
@@ -90,31 +91,42 @@ class _CreatedSuccessfullyScreenState extends State<CreatedSuccessfullyScreen> {
     }
   }
 
+  Future<void> _abrirEnMapaExterno(double lat, double lng) async {
+    final platform = Theme.of(context).platform;
+
+    Uri url;
+    if (platform == TargetPlatform.iOS) {
+      url = Uri.parse('apple.maps://?q=$lat,$lng');
+    } else {
+      url = Uri.parse('geo:$lat,$lng?q=$lat,$lng');
+    }
+
+    try {
+      final bool canLaunch = await canLaunchUrl(url);
+
+      if (!mounted) return;
+
+      if (canLaunch) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        // Si necesitas mostrar un Snackbar o usar el context aquí,
+        // el check de 'mounted' de arriba ya te protege.
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo abrir la aplicación de mapas'),
+          ),
+        );
+      }
+    } catch (e) {
+      _logger.e('Error al abrir mapa: $e');
+    }
+  }
+
   String _formatName(Map<String, dynamic> clienteData) {
     final firstName = clienteData['name']?.toString() ?? '';
     final lastName = clienteData['last_name']?.toString() ?? '';
     final fullname = '$firstName $lastName'.trim();
     return fullname.isNotEmpty ? fullname : AppStrings.anonymous;
-  }
-
-  Future<void> _abrirEnMapaExterno(double latitude, double longitude) async {
-    final String url;
-
-    // Detectar si es iOS o Android/Web
-    final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
-
-    if (isIOS) {
-      url = 'https://maps.apple.com/?q=$latitude,$longitude';
-    } else {
-      url =
-          'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude';
-    }
-
-    if (await canLaunch(url)) {
-      await launch(url);
-    } else {
-      throw 'No se puede mostrar el mapa $url';
-    }
   }
 
   @override

@@ -179,40 +179,18 @@ class HomeClienteScreenState extends State<HomeClienteScreen> {
   }
 
   Widget _buildUserHeader() {
-    final fullName = _formatName(_clienteData);
-    final plan = _clienteData['plan'] ?? AppStrings.notAvailable;
-
     return Column(
       children: [
-        CircleAvatar(
-          radius: 50,
-          backgroundColor: AppColors.primaryColor,
-          child: Text(
-            fullName.isNotEmpty
-                ? '${fullName[0]}${fullName.contains(' ') ? fullName.split(' ')[1][0] : ''}'
-                : 'US',
-            style: const TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+        SizedBox(
+          child: Image.asset(
+            'assets/images/image001.png',
+            fit: BoxFit.contain,
+            errorBuilder:
+                (context, error, stackTrace) =>
+                    const Icon(Icons.error, size: 50, color: Colors.grey),
           ),
         ),
         const SizedBox(height: 16.0),
-        Text(
-          fullName,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: AppColors.secondaryColor,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 4.0),
-        Text(
-          plan,
-          style: AppTextStyles.subtitle.copyWith(color: AppColors.primaryColor),
-        ),
       ],
     );
   }

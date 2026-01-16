@@ -1,6 +1,6 @@
 {
-    "name": "vnet_eclipse",
-    "short_name": "vnet_eclipse",
+    "name": "vnet_agenda",
+    "short_name": "vnet_agenda",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

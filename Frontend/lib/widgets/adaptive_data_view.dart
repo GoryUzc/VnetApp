@@ -349,55 +349,61 @@ class _AdaptiveDataViewState extends State<AdaptiveDataView> {
 
   Widget _buildTabletView() {
     final importantCols =
-        _importantColumns
-            .where((col) => col != 'Acciones')
-            .take(4) // Máximo 4 columnas en tablet
-            .toList();
+        _importantColumns.where((col) => col != 'Acciones').take(4).toList();
 
     if (importantCols.isEmpty) return _buildMobileView();
 
+    // 1. Primer ScrollView: Vertical (por defecto)
     return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: DataTable(
-        columnSpacing: 20,
-        horizontalMargin: 16,
-        columns: [
-          ...importantCols.map(
-            (col) => DataColumn(
-              label: Text(
-                _getColumnLabel(col),
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
+      scrollDirection: Axis.vertical,
+      child: Column(
+        children: [
+          // 2. Segundo ScrollView: Horizontal
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              columnSpacing: 20,
+              horizontalMargin: 16,
+              columns: [
+                ...importantCols.map(
+                  (col) => DataColumn(
+                    label: Text(
+                      _getColumnLabel(col),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                if (widget.onEdit != null ||
+                    widget.onView != null ||
+                    widget.onDelete != null)
+                  const DataColumn(label: Text('Acciones')),
+              ],
+              rows:
+                  _filteredRows.map((row) {
+                    return DataRow(
+                      cells: [
+                        ...importantCols.map((col) {
+                          return DataCell(
+                            Container(
+                              constraints: const BoxConstraints(maxWidth: 150),
+                              child: Text(
+                                _formatValue(row[col]),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 2,
+                              ),
+                            ),
+                          );
+                        }),
+                        if (widget.onEdit != null ||
+                            widget.onView != null ||
+                            widget.onDelete != null)
+                          DataCell(_buildDesktopActions(row)),
+                      ],
+                    );
+                  }).toList(),
             ),
           ),
-          if (widget.onEdit != null ||
-              widget.onView != null ||
-              widget.onDelete != null)
-            const DataColumn(label: Text('Acciones')),
         ],
-        rows:
-            _filteredRows.map((row) {
-              return DataRow(
-                cells: [
-                  ...importantCols.map((col) {
-                    return DataCell(
-                      Container(
-                        constraints: const BoxConstraints(maxWidth: 150),
-                        child: Text(
-                          _formatValue(row[col]),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 2,
-                        ),
-                      ),
-                    );
-                  }),
-                  if (widget.onEdit != null ||
-                      widget.onView != null ||
-                      widget.onDelete != null)
-                    DataCell(_buildDesktopActions(row)),
-                ],
-              );
-            }).toList(),
       ),
     );
   }

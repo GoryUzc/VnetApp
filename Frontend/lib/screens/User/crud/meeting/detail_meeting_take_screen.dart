@@ -76,6 +76,7 @@ class _MeetingDetailTakeScreenState extends State<MeetingDeatilTakeScreen> {
       final meetingData = await _meetingService.getMeetingDetails(
         widget.meetingId ?? '',
       );
+      _logger.d('Datos de la cita $meetingData');
       prospectId = meetingData['prospect_aradial_id'].toString();
       _logger.d('1:$prospectId');
       dateTime = DateTime.parse(meetingData['date_time1']);
@@ -121,25 +122,36 @@ class _MeetingDetailTakeScreenState extends State<MeetingDeatilTakeScreen> {
     return fullname.isNotEmpty ? fullname : AppStrings.anonymous;
   }
 
-  Future<void> _abrirEnMapaExterno(double latitude, double longitude) async {
-    final String url;
-
-    // Detectar si es iOS o Android/Web
-    final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
-
-    if (isIOS) {
-      url = 'https://maps.apple.com/?q=$latitude,$longitude';
-    } else {
-      url =
-          'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude';
-    }
-
-    if (await canLaunch(url)) {
-      await launch(url);
-    } else {
-      throw 'No se puede mostrar el mapa $url';
-    }
+Future<void> _abrirEnMapaExterno(double lat, double lng) async {
+  
+  final platform = Theme.of(context).platform; 
+  
+  Uri url;
+  if (platform == TargetPlatform.iOS) {
+    url = Uri.parse('apple.maps://?q=$lat,$lng');
+  } else {
+    url = Uri.parse('geo:$lat,$lng?q=$lat,$lng');
   }
+
+  try {
+
+    final bool canLaunch = await canLaunchUrl(url);
+
+    if (!mounted) return; 
+
+    if (canLaunch) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      // Si necesitas mostrar un Snackbar o usar el context aquí, 
+      // el check de 'mounted' de arriba ya te protege.
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo abrir la aplicación de mapas')),
+      );
+    }
+  } catch (e) {
+    _logger.e('Error al abrir mapa: $e');
+  }
+}
 
   Widget _buildInfoRow({
     required IconData icon,

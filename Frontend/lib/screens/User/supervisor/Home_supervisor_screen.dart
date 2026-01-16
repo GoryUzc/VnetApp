@@ -342,8 +342,6 @@ class _HomeSupervisorScreenState extends State<HomeSupervisorScreen> {
       key: ValueKey('contract-$id-$nroContract'),
       direction: DismissDirection.endToStart,
       confirmDismiss: (direction) async {
-        // En vez de eliminar, usamos el gesto para mostrar acciones y regresamos false
-        // Mostramos un snackbar con acciones rápidas
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
