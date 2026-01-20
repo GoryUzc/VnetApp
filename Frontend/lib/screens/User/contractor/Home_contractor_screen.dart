@@ -377,152 +377,155 @@ class _HomeContractorScreenState extends State<HomeContractorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        iconTheme: const IconThemeData(color: Colors.white),
-        backgroundColor: AppColors.primaryColor,
-        title: const Text(
-          'Panel de Contratista',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          iconTheme: const IconThemeData(color: Colors.white),
+          backgroundColor: AppColors.primaryColor,
+          title: const Text(
+            'Panel de Contratista',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
-        actions: [
-          // IconButton(
-          //   icon: const Icon(Icons.refresh, color: Colors.white),
-          //   onPressed: () => _load(isRefreshing: true),
-          //   tooltip: 'Recargar',
-          // ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.account_circle, color: Colors.white),
-            tooltip: 'Mi cuenta',
-            onSelected: (value) async {
-              const storage = FlutterSecureStorage();
-              final userId = await storage.read(key: 'user_id');
-              if (userId == null || userId.isEmpty) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('No se pudo obtener el usuario'),
-                    ),
-                  );
+          actions: [
+            // IconButton(
+            //   icon: const Icon(Icons.refresh, color: Colors.white),
+            //   onPressed: () => _load(isRefreshing: true),
+            //   tooltip: 'Recargar',
+            // ),
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.account_circle, color: Colors.white),
+              tooltip: 'Mi cuenta',
+              onSelected: (value) async {
+                const storage = FlutterSecureStorage();
+                final userId = await storage.read(key: 'user_id');
+                if (userId == null || userId.isEmpty) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('No se pudo obtener el usuario'),
+                      ),
+                    );
+                  }
+                  return;
                 }
-                return;
-              }
 
-              if (value == 'edit') {
-                if (context.mounted) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => UserEditScreen(userId: userId),
-                    ),
-                  );
+                if (value == 'edit') {
+                  if (context.mounted) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => UserEditScreen(userId: userId),
+                      ),
+                    );
+                  }
+                  //   } else if (value == 'delete') {
+                  //     if (context.mounted) {
+                  //       final confirmed = await showDialog<bool>(
+                  //         context: context,
+                  //         builder:
+                  //             (ctx) => AlertDialog(
+                  //               title: const Text('Eliminar mi cuenta'),
+                  //               content: const Text(
+                  //                 'Esta acción es irreversible. ¿Desea continuar?',
+                  //               ),
+                  //               actions: [
+                  //                 TextButton(
+                  //                   onPressed: () => Navigator.pop(ctx, false),
+                  //                   child: const Text('Cancelar'),
+                  //                 ),
+                  //                 TextButton(
+                  //                   onPressed: () => Navigator.pop(ctx, true),
+                  //                   child: const Text(
+                  //                     'Eliminar',
+                  //                     style: TextStyle(color: Colors.red),
+                  //                   ),
+                  //                 ),
+                  //               ],
+                  //             ),
+                  //       );
+
+                  //       if (confirmed == true) {
+                  //         try {
+                  //           await UserServices().deleteUser(userId);
+                  //           await AuthService().logout();
+                  //           if (context.mounted) {
+                  //             Navigator.of(context).pushAndRemoveUntil(
+                  //               MaterialPageRoute(
+                  //                 builder: (_) => const InitSelectUserScreen(),
+                  //               ),
+                  //               (route) => false,
+                  //             );
+                  //           }
+                  //         } catch (e) {
+                  //           if (context.mounted) {
+                  //             ScaffoldMessenger.of(
+                  //               context,
+                  //             ).showSnackBar(SnackBar(content: Text('Error: $e')));
+                  //           }
+                  //         }
+                  //       }
+                  //     }
                 }
-                //   } else if (value == 'delete') {
-                //     if (context.mounted) {
-                //       final confirmed = await showDialog<bool>(
-                //         context: context,
-                //         builder:
-                //             (ctx) => AlertDialog(
-                //               title: const Text('Eliminar mi cuenta'),
-                //               content: const Text(
-                //                 'Esta acción es irreversible. ¿Desea continuar?',
-                //               ),
-                //               actions: [
-                //                 TextButton(
-                //                   onPressed: () => Navigator.pop(ctx, false),
-                //                   child: const Text('Cancelar'),
-                //                 ),
-                //                 TextButton(
-                //                   onPressed: () => Navigator.pop(ctx, true),
-                //                   child: const Text(
-                //                     'Eliminar',
-                //                     style: TextStyle(color: Colors.red),
-                //                   ),
-                //                 ),
-                //               ],
-                //             ),
-                //       );
-
-                //       if (confirmed == true) {
-                //         try {
-                //           await UserServices().deleteUser(userId);
-                //           await AuthService().logout();
-                //           if (context.mounted) {
-                //             Navigator.of(context).pushAndRemoveUntil(
-                //               MaterialPageRoute(
-                //                 builder: (_) => const InitSelectUserScreen(),
-                //               ),
-                //               (route) => false,
-                //             );
-                //           }
-                //         } catch (e) {
-                //           if (context.mounted) {
-                //             ScaffoldMessenger.of(
-                //               context,
-                //             ).showSnackBar(SnackBar(content: Text('Error: $e')));
-                //           }
-                //         }
-                //       }
-                //     }
-              }
-            },
-            itemBuilder:
-                (ctx) => [
-                  const PopupMenuItem(
-                    value: 'edit',
-                    child: Text('Editar mi perfil'),
-                  ),
-                ],
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            tooltip: 'Cerrar sesión',
-            onPressed: () async {
-              final confirmed = await showDialog<bool>(
-                context: context,
-                builder:
-                    (ctx) => AlertDialog(
-                      title: const Text('Cerrar sesión'),
-                      content: const Text('¿Desea cerrar la sesión actual?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx, false),
-                          child: const Text('Cancelar'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx, true),
-                          child: const Text(
-                            'Salir',
-                            style: TextStyle(color: Colors.red),
+              },
+              itemBuilder:
+                  (ctx) => [
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Text('Editar mi perfil'),
+                    ),
+                  ],
+            ),
+            IconButton(
+              icon: const Icon(Icons.logout, color: Colors.white),
+              tooltip: 'Cerrar sesión',
+              onPressed: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder:
+                      (ctx) => AlertDialog(
+                        title: const Text('Cerrar sesión'),
+                        content: const Text('¿Desea cerrar la sesión actual?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('Cancelar'),
                           ),
-                        ),
-                      ],
-                    ),
-              );
-              if (confirmed == true) {
-                await AuthService().logout();
-                if (context.mounted) {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(
-                      builder: (_) => const InitSelectUserScreen(),
-                    ),
-                    (route) => false,
-                  );
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text(
+                              'Salir',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ],
+                      ),
+                );
+                if (confirmed == true) {
+                  await AuthService().logout();
+                  if (context.mounted) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (_) => const InitSelectUserScreen(),
+                      ),
+                      (route) => false,
+                    );
+                  }
                 }
-              }
-            },
-          ),
-        ],
-        centerTitle: true,
-        elevation: 4,
+              },
+            ),
+          ],
+          centerTitle: true,
+          elevation: 4,
+        ),
+        drawer: CustomContractorDrawer(userId: _idUser),
+        body: _buildContent(),
       ),
-      drawer: CustomContractorDrawer(userId: _idUser),
-      body: _buildContent(),
     );
   }
 

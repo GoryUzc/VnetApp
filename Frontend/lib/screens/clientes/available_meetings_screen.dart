@@ -397,8 +397,7 @@ class _AvailableMeetingsScreenState extends State<AvailableMeetingsScreen> {
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(
-                builder: (context) => const LoginClienteScreen(
-                ),
+                builder: (context) => const LoginClienteScreen(),
               ),
               (route) => false,
             );
@@ -462,10 +461,13 @@ class _AvailableMeetingsScreenState extends State<AvailableMeetingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: _buildAppBar(),
-      body: _buildBody(),
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: _buildAppBar(),
+        body: _buildBody(),
+      ),
     );
   }
 }

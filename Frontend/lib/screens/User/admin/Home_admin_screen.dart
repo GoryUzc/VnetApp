@@ -17,11 +17,13 @@ class HomeAdminScreen extends StatefulWidget {
 class _HomeAdminScreenState extends State<HomeAdminScreen> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: _buildAppBar(),
-      drawer: const CustomAdminDrawer(),
-      body: _buildWelcomeContent(),
+    return PopScope(
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: _buildAppBar(),
+        drawer: const CustomAdminDrawer(),
+        body: _buildWelcomeContent(),
+      ),
     );
   }
 

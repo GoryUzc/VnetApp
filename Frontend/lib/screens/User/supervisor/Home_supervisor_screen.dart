@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
-
 import 'package:vnet_agenda/services/crud/meeting_service.dart';
 import 'package:vnet_agenda/services/crud/prospect_service.dart';
 import 'package:vnet_agenda/services/crud/user_services.dart';
@@ -173,7 +172,7 @@ class _HomeSupervisorScreenState extends State<HomeSupervisorScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    'ID prospecto: $id',
+                    'Contrato: $id',
                     style: const TextStyle(
                       fontFamily: 'monospace',
                       fontWeight: FontWeight.bold,
@@ -204,9 +203,9 @@ class _HomeSupervisorScreenState extends State<HomeSupervisorScreen> {
   }
 
   void _showContractDetails(Map<String, dynamic> meeting) {
-    final id = (meeting['id_prospect'] ?? '').toString();
     final status = (meeting['status'] ?? '').toString();
     final conectado = _isConnectedStatus(status);
+    final cliente = (meeting['name_cliente'] ?? '').toString();
 
     showModalBottomSheet(
       context: context,
@@ -267,7 +266,6 @@ class _HomeSupervisorScreenState extends State<HomeSupervisorScreen> {
               _detailRow('Contratista', meeting['contratista']),
               _detailRow('Usuario PPPoE', meeting['usuario_ppoe']),
               _detailRow('Password PPPoE', meeting['password_ppoe']),
-              _detailRow('ID Prospecto', id),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -282,7 +280,9 @@ class _HomeSupervisorScreenState extends State<HomeSupervisorScreen> {
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed:
-                          conectado ? null : () => _confirmConnectDialog(id),
+                          conectado
+                              ? null
+                              : () => _confirmConnectDialog(cliente),
                       icon: const Icon(Icons.power_settings_new),
                       label: Text(conectado ? 'Ya conectado' : 'Conectar'),
                       style: ElevatedButton.styleFrom(
@@ -749,11 +749,14 @@ class _HomeSupervisorScreenState extends State<HomeSupervisorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: _buildAppBar(),
-      drawer: const CustomSupervisorDrawer(),
-      body: _buildWelcomeContent(),
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: _buildAppBar(),
+        drawer: const CustomSupervisorDrawer(),
+        body: _buildWelcomeContent(),
+      ),
     );
   }
 }
